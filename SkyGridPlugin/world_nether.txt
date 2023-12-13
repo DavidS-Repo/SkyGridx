@@ -1,0 +1,49 @@
+#SkyGrid World Block Selection Guide:
+#
+#- Each line in the materials file corresponds to a block and its chance of appearing.
+#- Format: BlockID:Percentage (use block names or IDs).
+#- Example: "STONE:50" means a 50% chance of Stone appearing with in the 32 chunk distribution.
+#- You can include as many blocks as you want, and their percentages can be anything.
+#- The total percentage doesn't need to add up to 100%.
+#- If no percentage is specified for any of the blocks the plugin will distribute the percentage among all the blocks missing a percentage
+#- If you specify the percentage but for only some of the blocks and it doesn't add up to 100% the plugin will distribute the remainder to the rest of the blocks missing a percentage.
+#- These percentages should be interpreted as a probability distribution for selecting the blocks. So, for the END_STONE:80, on average, you'd expect END_STONE to be selected 80% of the time in your block distribution.
+#- You can use any of the materials in the bukkit Material page here https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Material.html
+#
+#Example (world.txt):
+# 50% chance of Stone
+#STONE:50
+# 25% chance of Grass
+#GRASS:25
+# 24.999% chance of Iron Ore
+#IRON_ORE:24.999
+# 0.001% chance of Diamond Ore
+#DIAMOND_ORE:0.001
+#
+#
+ANCIENT_DEBRIS:0.001
+BASALT:13
+BLACKSTONE:13
+BONE_BLOCK:2
+CHEST:0.001
+CRIMSON_NYLIUM:3
+CRIMSON_STEM:3
+GLOWSTONE:5
+GRAVEL:2
+LAVA_CAULDRON:3
+MAGMA_BLOCK:2
+NETHER_BRICKS:2
+NETHER_GOLD_ORE:2
+NETHER_QUARTZ_ORE:3
+NETHER_WART_BLOCK:3
+NETHERRACK:13
+OCHRE_FROGLIGHT:2
+PEARLESCENT_FROGLIGHT:2
+SHROOMLIGHT:2
+SOUL_SAND:3
+SOUL_SOIL:2
+SPAWNER:0.0001
+VERDANT_FROGLIGHT:1
+WARPED_NYLIUM:3
+WARPED_STEM:3
+WARPED_WART_BLOCK:3

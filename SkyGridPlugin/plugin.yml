@@ -1,0 +1,14 @@
+name: SkyGrid
+version: 1.20.2
+main: main.SkyGridPlugin
+author: Go0fy_Go0ber
+description: A plugin that generates a SkyGrid in Minecraft worlds and more.
+api-version: 1.17
+commands:
+  sgon:
+    description: Turn on skygrid generation
+    usage: /sgon
+    default: op
+  tpr:
+    description: Teleport to a random location in the world
+    usage: /tpr
