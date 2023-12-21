@@ -28,10 +28,10 @@ public class Generator implements Listener {
 	private final Chest chest; // Create a field to hold the Spawner instance
 
 	// Variable to set the number of chunks in which the blocks are distributed
-	private final double chunksForDistribution = 32;
+	private final double chunksForDistribution = 64;
 
 	// Delay in ticks before processing the chunk after it is loaded
-	private final int PROCESS_DELAY = 5;
+	private final int PROCESS_DELAY = 12;
 
 	// Variable to track the number of chunks being processed for each dimension
 	private final Map<World.Environment, Integer> chunksProcessedByDimension;
@@ -228,7 +228,7 @@ public class Generator implements Listener {
 		}
 
 		int totalChunks = chunksToProcess.size();
-		int batchSize = Math.max(1, (totalChunks + 49) / 50);
+		int batchSize = Math.max(1, (totalChunks + 1) / 2);
 
 		Bukkit.getScheduler().runTaskLater(plugin, () -> processChunksBatch(dimension, chunksToProcess, batchSize, 0, dimensionQueue), PROCESS_DELAY);
 	}
@@ -272,56 +272,61 @@ public class Generator implements Listener {
 			break;
 		default: // Overworld
 			minY = -64;
-			maxY = 256;
+			maxY = 64;
 			break;
 		}
 
 		for (int x = xStart + 1; x <= xStart + 13; x += 4) {
 			for (int z = zStart + 2; z <= zStart + 14; z += 4) {
 				for (int y = minY; y <= maxY; y += 4) {
-					Material material = getRandomMaterialForWorld(worldName, biomeName);
-					if (material != null) {
-						int chunkX = x & 0xF;
-						int chunkZ = z & 0xF;
-						int chunkY = Math.max(minY, Math.min(maxY, y));
+					try {
+						Material material = getRandomMaterialForWorld(worldName, biomeName);
+						if (material != null) {
+							int chunkX = x & 0xF;
+							int chunkZ = z & 0xF;
+							int chunkY = Math.max(minY, Math.min(maxY, y));
 
-						Block block = chunk.getBlock(chunkX, chunkY, chunkZ);
-						block.setType(material, false);
+							Block block = chunk.getBlock(chunkX, chunkY, chunkZ);
+							block.setType(material, false);
 
-						BlockData blockData = block.getBlockData();
+							BlockData blockData = block.getBlockData();
 
-						if (material == Material.CHORUS_FLOWER) {
-							if (blockData instanceof Ageable) {
-								Ageable ageable = (Ageable) blockData;
-								int maxAge = ageable.getMaximumAge();
-								ageable.setAge(Math.min(5, maxAge));
-								block.setBlockData(ageable, false);
+							if (material == Material.CHORUS_FLOWER) {
+								if (blockData instanceof Ageable) {
+									Ageable ageable = (Ageable) blockData;
+									int maxAge = ageable.getMaximumAge();
+									ageable.setAge(Math.min(5, maxAge));
+									block.setBlockData(ageable, false);
+								}
+							} else if (material.toString().endsWith("_LEAVES")) {
+								Leaves leaves = (Leaves) blockData;
+								leaves.setPersistent(true);
+								block.setBlockData(leaves, false);
+							} else if (blockData instanceof Bamboo) {
+								Bamboo bamboo = (Bamboo) blockData;
+								bamboo.setStage(1);
+								block.setBlockData(bamboo, false);
+							} else if (material == Material.CACTUS || material == Material.SUGAR_CANE || material == Material.KELP || material == Material.WHEAT || material == Material.BEETROOTS || material == Material.CARROTS || material == Material.POTATOES || material == Material.TORCHFLOWER_CROP || material == Material.PITCHER_CROP || material == Material.NETHER_WART || material == Material.CAVE_VINES) {
+								if (blockData instanceof Ageable) {
+									Ageable ageable = (Ageable) blockData;
+									int maxAge = ageable.getMaximumAge();
+									ageable.setAge(maxAge);
+									block.setBlockData(ageable, false);
+								}
+								if (material == Material.CAVE_VINES || material == Material.CAVE_VINES_PLANT) {
+									CaveVines caveVines = (CaveVines) block.getBlockData();
+									caveVines.setBerries(true);
+									block.setBlockData(caveVines, true);
+								}
+							} else if (material == Material.SPAWNER) {
+								spawner.BlockInfo(block);
+							}else if (material == Material.CHEST) {
+								chest.loadChest(block);
 							}
-						} else if (material.toString().endsWith("_LEAVES")) {
-							Leaves leaves = (Leaves) blockData;
-							leaves.setPersistent(true);
-							block.setBlockData(leaves, false);
-						} else if (blockData instanceof Bamboo) {
-							Bamboo bamboo = (Bamboo) blockData;
-							bamboo.setStage(1);
-							block.setBlockData(bamboo, false);
-						} else if (material == Material.CACTUS || material == Material.SUGAR_CANE || material == Material.KELP || material == Material.WHEAT || material == Material.BEETROOTS || material == Material.CARROTS || material == Material.POTATOES || material == Material.TORCHFLOWER_CROP || material == Material.PITCHER_CROP || material == Material.NETHER_WART || material == Material.CAVE_VINES) {
-							if (blockData instanceof Ageable) {
-								Ageable ageable = (Ageable) blockData;
-								int maxAge = ageable.getMaximumAge();
-								ageable.setAge(maxAge);
-								block.setBlockData(ageable, false);
-							}
-							if (material == Material.CAVE_VINES || material == Material.CAVE_VINES_PLANT) {
-								CaveVines caveVines = (CaveVines) block.getBlockData();
-								caveVines.setBerries(true);
-								block.setBlockData(caveVines, true);
-							}
-						} else if (material == Material.SPAWNER) {
-							spawner.BlockInfo(block);
-						}else if (material == Material.CHEST) {
-							chest.loadChest(block);
 						}
+					} catch (Exception e) {
+						plugin.getLogger().warning("Error placing block at x=" + (x & 0xF) + ", y=" + (Math.max(minY, Math.min(maxY, y))) + ", z=" + (z & 0xF));
+						e.printStackTrace();
 					}
 				}
 			}
