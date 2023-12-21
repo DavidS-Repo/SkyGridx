@@ -128,11 +128,11 @@ public class ChunkClearer implements Listener {
 			break;
 		case THE_END:
 			minY = 0;
-			maxY = 256;
+			maxY = 128;
 			break;
 		default:
 			minY = -64;
-			maxY = 256;
+			maxY = 64;
 			break;
 		}
 
