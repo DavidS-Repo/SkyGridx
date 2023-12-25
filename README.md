@@ -1,7 +1,12 @@
  
-The SkyGrid Plugin offers access to the latest blocks (1.20.2) and empowers users to fully customize the grids in the Overworld, Nether, and End dimensions. The initial generation process, which typically takes 1-5 minutes, adapts to the server's capabilities. Subsequently, all generation activities occur efficiently in real-time.
+The SkyGrid Plugin offers access to the latest blocks (1.20.4) and empowers users to fully customize the grids in the Overworld, Nether, and End dimensions. The initial generation process, which typically takes 1-5 minutes, adapts to the server's capabilities. Subsequently, all generation activities occur efficiently in real-time.
 
 This plugin also includes a built-in random teleport command for each dimension, ensuring that players can safely explore their chosen realm. Furthermore, it features an ore generator that can modify stone generation to create various blocks of your choice. While currently configured primarily for ores, the possibilities are virtually endless.
+
+**Important Note**: The '**/reload**' command isn't fully supported at the moment. If you opt to use '**/reload**,' please ensure to re-enable the Skygrid generation afterward by using '**/sgon**.' This step is necessary to maintain seamless functionality.
+
+**Plugin Test Server:** - **IP**: skygrid.live
+This server serves as an exclusive testing environment for the latest SkyGrid plugin features. Please note that frequent world resets occur during plugin updates or modifications, and the server is not moderated. Players are encouraged to explore commands and test functionalities rather than building, as the world is periodically cleared. It's important to note that the plugin version on the test server is the latest, featuring some functionalities not yet available in the publicly released version.
 
 ![Skygrid](https://www.toolsnexus.com/mc/sg3.jpg)
 
