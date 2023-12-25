@@ -43,7 +43,7 @@ public class SkyGridPlugin extends JavaPlugin implements Listener {
 		copyFileIfNotPresent("world.txt", "SkygridBlocks");
 		copyFileIfNotPresent("world_nether.txt", "SkygridBlocks");
 		copyFileIfNotPresent("world_the_end.txt", "SkygridBlocks");
-		copyFileIfNotPresent("ores.txt", "OreGenBlock");
+		copyFileIfNotPresent("ores.yml", "OreGenBlock");
 
 		// Register Fog as a command executor
 		getCommand("fogon").setExecutor(new Fog());
