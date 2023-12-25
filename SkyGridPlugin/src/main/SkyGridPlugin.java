@@ -4,6 +4,7 @@ import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -15,6 +16,7 @@ import java.nio.file.Paths;
 public class SkyGridPlugin extends JavaPlugin implements Listener {
 
 	private boolean pluginEnabled = false;
+
 
 	@Override
 	public void onEnable() {
@@ -42,6 +44,21 @@ public class SkyGridPlugin extends JavaPlugin implements Listener {
 		copyFileIfNotPresent("world_nether.txt", "SkygridBlocks");
 		copyFileIfNotPresent("world_the_end.txt", "SkygridBlocks");
 		copyFileIfNotPresent("ores.txt", "OreGenBlock");
+
+		// Register Fog as a command executor
+		getCommand("fogon").setExecutor(new Fog());
+		getCommand("fogoff").setExecutor(new Fog());
+
+		getServer().getPluginManager().registerEvents(new ResourcePackManager(), this);
+
+		// Register GrowthControl as a listener
+		GrowthControl growthControl = new GrowthControl(this);
+		growthControl.initialize();
+
+		// Set the executor for GrowthControlOn and GrowthControlOff commands
+		GrowthControlCommands commands = new GrowthControlCommands(this, growthControl);
+		getCommand("gclogson").setExecutor(commands);
+		getCommand("gclogsoff").setExecutor(commands);
 	}
 
 	@Override
@@ -82,6 +99,12 @@ public class SkyGridPlugin extends JavaPlugin implements Listener {
 
 		@Override
 		public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+			// Check if the sender is a player and has OP permission or if it's the console
+			if (!(sender instanceof Player) && !sender.isOp()) {
+				sender.sendMessage(ChatColor.RED + "You do not have permission to use this command.");
+				return true;
+			}
+
 			if (!plugin.pluginEnabled) {
 				plugin.pluginEnabled = true;
 				handleGeneration(sender);
