@@ -16,16 +16,12 @@ import java.nio.file.Paths;
 public class SkyGridPlugin extends JavaPlugin implements Listener {
 
 	private boolean pluginEnabled = false;
-
+	private boolean firstBoot = false;
 
 	@Override
 	public void onEnable() {
 		// Register listeners
 		getServer().getPluginManager().registerEvents(this, this);
-		getServer().getPluginManager().registerEvents(new ChunkClearer(), this);
-
-		// Start the auto-save task
-		startAutoSaveTask();
 
 		// Register commands
 		getCommand("sgon").setExecutor(new CommandEnable(this));
@@ -39,13 +35,13 @@ public class SkyGridPlugin extends JavaPlugin implements Listener {
 		createFoldersIfNotExist("SkygridBlocks");
 		createFoldersIfNotExist("OreGenBlock");
 
-		// Copy required files if not present
-		copyFileIfNotPresent("world.txt", "SkygridBlocks");
-		copyFileIfNotPresent("world_nether.txt", "SkygridBlocks");
-		copyFileIfNotPresent("world_the_end.txt", "SkygridBlocks");
-		copyFileIfNotPresent("ores.yml", "OreGenBlock");
+		// Check for files and set the firstBoot flag accordingly
+		firstBoot = checkForFirstBoot();
+		if (firstBoot) {
+			getLogger().info("We are setting up the spawn area. Thank you for installing our plugin!");
+		}
 
-		// Register Fog as a command executor
+		// Register Fog command executor
 		getCommand("fogon").setExecutor(new Fog());
 		getCommand("fogoff").setExecutor(new Fog());
 
@@ -61,13 +57,6 @@ public class SkyGridPlugin extends JavaPlugin implements Listener {
 		getCommand("gclogsoff").setExecutor(commands);
 	}
 
-	@Override
-	public void onDisable() {
-		// Save cleared chunks when the plugin is disabled
-		ChunkClearer.saveClearedChunks();
-		getLogger().info("SkyGridPlugin has been disabled.");
-	}
-
 	private void createFoldersIfNotExist(String folderName) {
 		File folder = new File(getDataFolder(), folderName);
 		if (!folder.exists()) {
@@ -75,12 +64,25 @@ public class SkyGridPlugin extends JavaPlugin implements Listener {
 		}
 	}
 
-	private void copyFileIfNotPresent(String fileName, String destinationFolder) {
+	private boolean checkForFirstBoot() {
+		boolean isFirstBoot = false;
+
+		if (copyFileIfNotPresent("world.txt", "SkygridBlocks")) {
+			isFirstBoot = true;
+		}
+		copyFileIfNotPresent("world_nether.txt", "SkygridBlocks");
+		copyFileIfNotPresent("world_the_end.txt", "SkygridBlocks");
+		copyFileIfNotPresent("ores.yml", "OreGenBlock");
+		return isFirstBoot;
+	}
+
+	private boolean copyFileIfNotPresent(String fileName, String destinationFolder) {
 		Path destinationPath = Paths.get(getDataFolder().getPath(), destinationFolder, fileName);
 		if (!Files.exists(destinationPath)) {
 			try (InputStream inputStream = getResource(fileName)) {
 				if (inputStream != null) {
 					Files.copy(inputStream, destinationPath);
+					return true;
 				} else {
 					getLogger().warning("Could not find " + fileName + " in the plugin resources.");
 				}
@@ -88,15 +90,18 @@ public class SkyGridPlugin extends JavaPlugin implements Listener {
 				e.printStackTrace();
 			}
 		}
+		return false;
+	}
+
+	public boolean isFirstBoot() {
+		return firstBoot;
 	}
 
 	private class CommandEnable implements CommandExecutor {
 		private final SkyGridPlugin plugin;
-
 		public CommandEnable(SkyGridPlugin plugin) {
 			this.plugin = plugin;
 		}
-
 		@Override
 		public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
 			// Check if the sender is a player and has OP permission or if it's the console
@@ -104,7 +109,6 @@ public class SkyGridPlugin extends JavaPlugin implements Listener {
 				sender.sendMessage(ChatColor.RED + "You do not have permission to use this command.");
 				return true;
 			}
-
 			if (!plugin.pluginEnabled) {
 				plugin.pluginEnabled = true;
 				handleGeneration(sender);
@@ -115,19 +119,8 @@ public class SkyGridPlugin extends JavaPlugin implements Listener {
 		}
 
 		private void handleGeneration(CommandSender sender) {
-			boolean clearChunksBeforeGeneration = true; // Set to true or false based on your requirement
-			Generator generator = new Generator(plugin, clearChunksBeforeGeneration);
-			sender.sendMessage(ChatColor.GREEN + "Custom Skygrid generation started.");
+			Generator generator = new Generator(plugin);
 			generator.initialize();
 		}
-	}
-
-	public void startAutoSaveTask() {
-		// Schedule a task to save cleared chunks every 15 seconds (20 ticks per second)
-		int saveInterval = 5 * 20; // 5 seconds
-		getServer().getScheduler().runTaskTimer(this, () -> {
-			// Call the method to save cleared chunks
-			ChunkClearer.saveClearedChunks();
-		}, saveInterval, saveInterval);
 	}
 }
