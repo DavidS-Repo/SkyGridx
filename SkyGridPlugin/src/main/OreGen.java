@@ -3,6 +3,7 @@ package main;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockFormEvent;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -61,7 +62,7 @@ public class OreGen implements Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGHEST)
     public void onBlockForm(BlockFormEvent event) {
         Block block = event.getBlock();
         Material toType = event.getNewState().getType();
