@@ -86,8 +86,11 @@ public class Generator implements Listener {
 						int count = (int) Math.ceil(parsePercentage(parts[1]) * chunksForDistribution);
 
 						if (currentBiome != null) {
-							Map<Material, Integer> biomeMaterialsMap = biomeMaterials.computeIfAbsent(currentBiome, k -> new HashMap<>());
-							biomeMaterialsMap.put(material, count);
+							String[] biomes = currentBiome.split(",");
+							for (String biome : biomes) {
+								Map<Material, Integer> biomeMaterialsMap = biomeMaterials.computeIfAbsent(biome, k -> new HashMap<>());
+								biomeMaterialsMap.put(material, count);
+							}
 						} else {
 							for (int i = 0; i < count; i++) {
 								materials.add(material);
@@ -141,7 +144,7 @@ public class Generator implements Listener {
 		if (!firstBootComplete && plugin instanceof SkyGridPlugin && ((SkyGridPlugin) plugin).isFirstBoot()) {
 			processAllLoadedChunks();
 			firstBootComplete = true;
-			plugin.getLogger().info("First boot generation complete.");
+			plugin.getServer().getConsoleSender().sendMessage("\u001B[32mFirst boot generation complete.\u001B[0m");
 		} else {
 			Chunk chunk = event.getChunk();
 			String chunkCoords = chunk.getX() + "," + chunk.getZ();
@@ -213,19 +216,19 @@ public class Generator implements Listener {
 			Bukkit.getScheduler().runTaskLater(plugin, () -> processChunksBatch(dimension, chunksToProcess, batchSize, batchIndex + 1, dimensionQueue), PROCESS_DELAY);
 		} else {
 			processNextDimension(dimensionQueue);
-			plugin.getLogger().info("Chunk generation completed for " + dimension.toString().toLowerCase().replace("_", " ") + "!");
 		}
 	}
 
 	private void processChunk(Chunk chunk) {
+		World world = chunk.getWorld();
+		String worldName = world.getName();
+		World.Environment dimension = world.getEnvironment();
+
 		int xStart = chunk.getX() << 4;
 		int zStart = chunk.getZ() << 4;
+
 		int minY;
 		int maxY;
-
-		String worldName = chunk.getWorld().getName();
-		World.Environment dimension = chunk.getWorld().getEnvironment();
-		String biomeName = getBiomeName(chunk);
 
 		switch (dimension) {
 		case NETHER: minY = 0; maxY = 128; break;
@@ -236,59 +239,55 @@ public class Generator implements Listener {
 		for (int x = xStart + 1; x <= xStart + 13; x += 4) {
 			for (int z = zStart + 2; z <= zStart + 14; z += 4) {
 				for (int y = minY; y <= maxY; y += 4) {
-					try {
-						Material material = getRandomMaterialForWorld(worldName, biomeName);
-						if (material != null) {
-							int chunkX = x & 0xF;
-							int chunkZ = z & 0xF;
-							int chunkY = Math.max(minY, Math.min(maxY, y));
+					int chunkX = x & 0xF;
+					int chunkZ = z & 0xF;
+					int chunkY = Math.max(minY, Math.min(maxY, y));
 
-							Block block = chunk.getBlock(chunkX, chunkY, chunkZ);
-							block.setType(material, false);
+					Block block = chunk.getBlock(chunkX, chunkY, chunkZ);
+					String biomeName = block.getBiome().name();
 
-							BlockData blockData = block.getBlockData();
+					Material material = getRandomMaterialForWorld(worldName, biomeName);
+					if (material != null) {
+						block.setType(material, false);
 
-							if (material == Material.CHORUS_FLOWER) {
-								if (blockData instanceof Ageable) {
-									Ageable ageable = (Ageable) blockData;
-									int maxAge = ageable.getMaximumAge();
-									ageable.setAge(Math.min(5, maxAge));
-									block.setBlockData(ageable, false);
-								}
-							} else if (material.toString().endsWith("_LEAVES")) {
-								Leaves leaves = (Leaves) blockData;
-								leaves.setPersistent(true);
-								block.setBlockData(leaves, false);
-							} else if (blockData instanceof Bamboo) {
-								Bamboo bamboo = (Bamboo) blockData;
-								bamboo.setStage(1);
-								block.setBlockData(bamboo, false);
-							} else if (material == Material.CACTUS || material == Material.SUGAR_CANE 
-									|| material == Material.KELP || material == Material.WHEAT 
-									|| material == Material.BEETROOTS || material == Material.CARROTS 
-									|| material == Material.POTATOES || material == Material.TORCHFLOWER_CROP 
-									|| material == Material.PITCHER_CROP || material == Material.NETHER_WART 
-									|| material == Material.CAVE_VINES) {
-								if (blockData instanceof Ageable) {
-									Ageable ageable = (Ageable) blockData;
-									int maxAge = ageable.getMaximumAge();
-									ageable.setAge(maxAge);
-									block.setBlockData(ageable, false);
-								}
-								if (material == Material.CAVE_VINES || material == Material.CAVE_VINES_PLANT) {
-									CaveVines caveVines = (CaveVines) block.getBlockData();
-									caveVines.setBerries(true);
-									block.setBlockData(caveVines, true);
-								}
-							} else if (material == Material.SPAWNER) {
-								spawner.BlockInfo(block);
-							} else if (material == Material.CHEST) {
-								chest.loadChest(block);
+						BlockData blockData = block.getBlockData();
+						if (material == Material.CHORUS_FLOWER) {
+							if (blockData instanceof Ageable) {
+								Ageable ageable = (Ageable) blockData;
+								int maxAge = ageable.getMaximumAge();
+								ageable.setAge(Math.min(5, maxAge));
+								block.setBlockData(ageable, false);
 							}
+						} else if (material.toString().endsWith("_LEAVES")) {
+							Leaves leaves = (Leaves) blockData;
+							leaves.setPersistent(true);
+							block.setBlockData(leaves, false);
+						} else if (blockData instanceof Bamboo) {
+							Bamboo bamboo = (Bamboo) blockData;
+							bamboo.setStage(1);
+							block.setBlockData(bamboo, false);
+						} else if (material == Material.CACTUS || material == Material.SUGAR_CANE
+								|| material == Material.KELP || material == Material.WHEAT
+								|| material == Material.BEETROOTS || material == Material.CARROTS
+								|| material == Material.POTATOES || material == Material.TORCHFLOWER_CROP
+								|| material == Material.PITCHER_CROP || material == Material.NETHER_WART
+								|| material == Material.CAVE_VINES) {
+							if (blockData instanceof Ageable) {
+								Ageable ageable = (Ageable) blockData;
+								int maxAge = ageable.getMaximumAge();
+								ageable.setAge(maxAge);
+								block.setBlockData(ageable, false);
+							}
+							if (material == Material.CAVE_VINES || material == Material.CAVE_VINES_PLANT) {
+								CaveVines caveVines = (CaveVines) block.getBlockData();
+								caveVines.setBerries(true);
+								block.setBlockData(caveVines, true);
+							}
+						} else if (material == Material.SPAWNER) {
+							spawner.BlockInfo(block);
+						} else if (material == Material.CHEST) {
+							chest.loadChest(block);
 						}
-					} catch (Exception e) {
-						plugin.getLogger().warning("Error placing block at x=" + (x & 0xF) + ", y=" + (Math.max(minY, Math.min(maxY, y))) + ", z=" + (z & 0xF));
-						e.printStackTrace();
 					}
 				}
 			}
@@ -297,30 +296,32 @@ public class Generator implements Listener {
 
 	private Material getRandomMaterialForWorld(String worldName, String biomeName) {
 		List<Material> materials = worldMaterials.get(worldName);
-		Map<Material, Integer> biomeMaterialsMap = biomeMaterials.get(biomeName);
+		Map<Material, Integer> biomeMaterialsMap = new HashMap<>();
 
-		if (materials != null && !materials.isEmpty()) {
-			if (biomeMaterialsMap != null && !biomeMaterialsMap.isEmpty()) {
-				List<Material> possibleMaterials = new ArrayList<>();
+		if (biomeMaterials.containsKey(biomeName)) {
+			biomeMaterialsMap.putAll(biomeMaterials.get(biomeName));
+		}
 
-				for (Map.Entry<Material, Integer> entry : biomeMaterialsMap.entrySet()) {
-					Material material = entry.getKey();
-					int count = entry.getValue();
-					for (int i = 0; i < count; i++) {
-						possibleMaterials.add(material);
-					}
-				}
-				if (!possibleMaterials.isEmpty()) {
-					int randomIndex = random.nextInt(possibleMaterials.size());
-					return possibleMaterials.get(randomIndex);
+		if (!biomeMaterialsMap.isEmpty()) {
+			List<Material> possibleMaterials = new ArrayList<>();
+
+			for (Map.Entry<Material, Integer> entry : biomeMaterialsMap.entrySet()) {
+				Material material = entry.getKey();
+				int count = entry.getValue();
+				for (int i = 0; i < count; i++) {
+					possibleMaterials.add(material);
 				}
 			}
+
+			if (!possibleMaterials.isEmpty()) {
+				int randomIndex = random.nextInt(possibleMaterials.size());
+				return possibleMaterials.get(randomIndex);
+			}
+		}
+		if (materials != null && !materials.isEmpty()) {
 			int randomIndex = random.nextInt(materials.size());
 			return materials.get(randomIndex);
 		}
 		return null;
-	}
-	private String getBiomeName(Chunk chunk) {
-		return chunk.getBlock(7, 64, 7).getBiome().name();
 	}
 }
