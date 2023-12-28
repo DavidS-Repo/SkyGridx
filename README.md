@@ -138,22 +138,25 @@ SAND:100​
 - In this example, when generating chunks in the "**OCEAN**" biome, there's a 50% chance of generating "SAND" blocks and a 50% chance of generating "WATER" blocks. In the "**DESERT**" biome, only "SAND" blocks will be generated. For the blocks above they will be generated on all biomes not specified in the file for that dimension. So, if you only want to have 1 custom biome with the rest having another variety of blocks you can do that.
 - Biomes are signified by the -**BIOME_NAME**-, everything under the biome header will generate only in that biome, unless there is another biome under it like in the example above.
  
-## Here is another example,
+## Here is an example with multiple biomes,
 ```
--OCEAN-
+-OCEAN,COLD_OCEAN,DEEP_COLD_OCEAN,DEEP_FROZEN_OCEAN,DEEP_LUKEWARM_OCEAN,DEEP_OCEAN,FROZEN_OCEAN,LUKEWARM_OCEAN-
 SAND:80
-SANDSTONE:9
-SEA_PICKLE:1
-TUBE_CORAL:1
-TUBE_CORAL_FAN:1
-HORN_CORAL:1
-HORN_CORAL_FAN:1
-FIRE_CORAL:1
-FIRE_CORAL_FAN:1
-BUBBLE_CORAL:1
-BUBBLE_CORAL_FAN:1
-BRAIN_CORAL:1
-BRAIN_CORAL_FAN:1
+SANDSTONE:9.0
+SEA_PICKLE:1.0
+TUBE_CORAL:1.0
+TUBE_CORAL_FAN:1.0
+HORN_CORAL:1.0
+HORN_CORAL_FAN:1.0
+FIRE_CORAL:1.0
+FIRE_CORAL_FAN:1.0
+BUBBLE_CORAL:1.0
+BUBBLE_CORAL_FAN:1.0
+BRAIN_CORAL:1.0
+BRAIN_CORAL_FAN:1.0
+-WARM_OCEAN-
+SAND:80
+SANDSTONE:20
 ```
 
 - Supported biomes can be found here: [Biomes](https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/block/Biome.html)
