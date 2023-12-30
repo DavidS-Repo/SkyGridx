@@ -23,6 +23,19 @@ public class SkyGridPlugin extends JavaPlugin implements Listener {
 		// Register listeners
 		getServer().getPluginManager().registerEvents(this, this);
 
+		// Create an instance of ResourcePackManager
+		ResourcePackManager manager = new ResourcePackManager();
+
+		// Register the instance as a listener without immediately activating it
+		getServer().getPluginManager().registerEvents(manager, this);
+
+		// Create an instance of Fog and pass the ResourcePackManager instance
+		Fog fogCommandExecutor = new Fog(manager);
+
+		// Set the command executor for your fog commands
+		getCommand("fogon").setExecutor(fogCommandExecutor);
+		getCommand("fogoff").setExecutor(fogCommandExecutor);
+
 		// Register commands
 		getCommand("sgon").setExecutor(new CommandEnable(this));
 		getCommand("tpr").setExecutor(new TPRCommand());
@@ -38,14 +51,8 @@ public class SkyGridPlugin extends JavaPlugin implements Listener {
 		// Check for files and set the firstBoot flag accordingly
 		firstBoot = checkForFirstBoot();
 		if (firstBoot) {
-			getLogger().info("We are setting up the spawn area. Thank you for installing our plugin!");
+			getLogger().info("Thank you for installing our plugin!");
 		}
-
-		// Register Fog command executor
-		getCommand("fogon").setExecutor(new Fog());
-		getCommand("fogoff").setExecutor(new Fog());
-
-		getServer().getPluginManager().registerEvents(new ResourcePackManager(), this);
 
 		// Register GrowthControl as a listener
 		GrowthControl growthControl = new GrowthControl(this);
