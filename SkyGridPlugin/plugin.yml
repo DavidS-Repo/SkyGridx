@@ -1,5 +1,5 @@
 name: SkyGrid
-version: 1.20.2
+version: 1.20.4
 main: main.SkyGridPlugin
 author: Go0fy_Go0ber
 description: A plugin that generates a SkyGrid in Minecraft worlds and more.
@@ -12,3 +12,26 @@ commands:
   tpr:
     description: Teleport to a random location in the world
     usage: /tpr
+    default: op
+  fogon:
+    description: Enable fog effects in Overworld and End
+    usage: /fogon
+    default: op
+  fogoff:
+    description: Disable fog effects in Overworld and End
+    usage: /fogoff
+    default: op
+  gclogson:
+    description: Enable GrowthControl logging
+    usage: /gclogson
+    default: op
+  gclogsoff:
+    description: Disable GrowthControl logging
+    usage: /gclogsoff
+    default: op
+  pregen:
+    description: Enable pre-generation with customizable parameters
+    usage: /pregen <chunksPerCycle> <Cycle(DelayinTicks)> <PrintUpdate(DelayinMinutes)>
+  pregenoff:
+    description: Disable pre-generation
+    usage: /pregenoff
