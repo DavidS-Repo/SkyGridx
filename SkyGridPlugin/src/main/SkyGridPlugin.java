@@ -62,6 +62,12 @@ public class SkyGridPlugin extends JavaPlugin implements Listener {
 		GrowthControlCommands commands = new GrowthControlCommands(this, growthControl);
 		getCommand("gclogson").setExecutor(commands);
 		getCommand("gclogsoff").setExecutor(commands);
+		
+		// Register the PreGeneratorCommands as the executor and tab completer for the /pregen command
+		PreGenerator preGenerator = new PreGenerator(this);
+		PreGeneratorCommands preGeneratorCommands = new PreGeneratorCommands(preGenerator);
+		getCommand("pregen").setExecutor(preGeneratorCommands);
+		getCommand("pregenoff").setExecutor(preGeneratorCommands);
 	}
 
 	private void createFoldersIfNotExist(String folderName) {
