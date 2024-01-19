@@ -104,8 +104,8 @@ SpawnerSettings:
 #End Biomes
 
   Spawner8:
-    Entities: [ENDER_DRAGON:10, ENDERMAN:40, ENDERMITE:10, SHULKER:40]
-    Biomes: [END_BARRENS, END_MIDLANDS, THE_END, SMALL_END_ISLANDS]
+    Entities: [ENDERMAN:40, ENDERMITE:10, SHULKER:40]
+    Biomes: [END_BARRENS, END_MIDLANDS, THE_END, SMALL_END_ISLANDS, END_HIGHLANDS]
     Delay: -1
     MaxNearbyEntities: 16
     MaxSpawnDelay: 800
@@ -113,14 +113,3 @@ SpawnerSettings:
     PlayerRange: 16
     SpawnCount: 4
     SpawnRange: 4
-    
-    Spawner9:
-    Entities: [ENDER_DRAGON:100]
-    Biomes: [END_HIGHLANDS]
-    Delay: -1
-    MaxNearbyEntities: 1
-    MaxSpawnDelay: 800
-    MinSpawnDelay: 200
-    PlayerRange: 16
-    SpawnCount: 1
-    SpawnRange: 8
