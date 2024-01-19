@@ -49,6 +49,19 @@ This server serves as an exclusive testing environment for the latest SkyGrid pl
    - Tiered loot distribution for added variety, each tier with its own set of items and probabilities.
    - Customize chest loot for specific biomes, allowing for a more immersive and thematic distribution of items based on the environment.
 
+**Pre-Generator Feature:**
+   - Built in async pre-generator feature that allows for efficient world generation. This feature is accessible through the **/pregen** command, with customizable parameters for chunks per cycle, cycle delay, and print update delay.
+   - Works best on paper servers, on none paper servers the async functionality will not be used. Recommend you go into your paper server paper-global.yml and update these
+
+```yaml
+chunk-system:
+  gen-parallelism: 'true'
+  io-threads: 12
+  worker-threads: 12
+```
+   - io-threads and worker-threads should match the number of threads for you CPU, if left at default only half will be used
+   - Usage: /pregen <chunksPerCycle> <CycleDelay(inTicks)> <PrintUpdateDelay(inMinutes)>
+
 **Demonstrations:**
    - Ore generation examples:
 
