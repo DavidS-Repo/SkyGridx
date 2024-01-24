@@ -20,7 +20,10 @@ public class PreGeneratorCommands implements CommandExecutor {
 					int chunksPerRun = Integer.parseInt(args[0]);
 					int taskDelay = Integer.parseInt(args[1]);
 					int printTime = Integer.parseInt(args[2]);
-					printTime = printTime * 1200;
+					if(taskDelay == 0) {
+						taskDelay = 1;
+					}
+					printTime = printTime * (taskDelay * 800);
 					preGenerator.setValues(chunksPerRun, taskDelay, printTime);
 					preGenerator.enable();
 					return true;
