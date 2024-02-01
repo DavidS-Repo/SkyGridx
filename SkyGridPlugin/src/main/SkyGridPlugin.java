@@ -7,6 +7,8 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
+import java.util.logging.Filter;
+import java.util.logging.LogRecord;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -62,12 +64,28 @@ public class SkyGridPlugin extends JavaPlugin implements Listener {
 		GrowthControlCommands commands = new GrowthControlCommands(this, growthControl);
 		getCommand("gclogson").setExecutor(commands);
 		getCommand("gclogsoff").setExecutor(commands);
-		
+
 		// Register the PreGeneratorCommands as the executor and tab completer for the /pregen command
 		PreGenerator preGenerator = new PreGenerator(this);
 		PreGeneratorCommands preGeneratorCommands = new PreGeneratorCommands(preGenerator);
 		getCommand("pregen").setExecutor(preGeneratorCommands);
 		getCommand("pregenoff").setExecutor(preGeneratorCommands);
+
+		// Create a custom filter to suppress specific warnings
+		Filter logFilter = new LogFilter();
+
+		// Get the logger for your plugin and set the custom filter
+		getLogger().setFilter(logFilter);
+	}
+
+	class LogFilter implements Filter {
+		private final String suppressedWarning = "Plugin is getting a faraway chunk async";
+
+		@Override
+		public boolean isLoggable(LogRecord record) {
+			// Avoid triggering additional log events within this method
+			return !record.getMessage().contains(suppressedWarning);
+		}
 	}
 
 	private void createFoldersIfNotExist(String folderName) {
