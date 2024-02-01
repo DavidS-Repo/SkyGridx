@@ -60,7 +60,7 @@ chunk-system:
   worker-threads: 12
 ```
    - io-threads and worker-threads should match the number of threads for you CPU, if left at default only half will be used
-   - Usage: /pregen <chunksPerCycle> <PrintUpdate(DelayinMinutes)>
+   - Usage: /pregen chunksPerCycle PrintUpdate(DelayinMinutes)
 
 **Demonstrations:**
    - Ore generation examples:
