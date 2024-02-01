@@ -15,25 +15,20 @@ public class PreGeneratorCommands implements CommandExecutor {
 	@Override
 	public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
 		if (label.equalsIgnoreCase("pregen")) {
-			if (args.length == 3) {
+			if (args.length == 2) {
 				try {
 					int chunksPerRun = Integer.parseInt(args[0]);
-					int taskDelay = Integer.parseInt(args[1]);
-					int printTime = Integer.parseInt(args[2]);
-					if(taskDelay == 0) {
-						taskDelay = 1;
-					}
-					printTime = printTime * (taskDelay * 800);
-					preGenerator.setValues(chunksPerRun, taskDelay, printTime);
+					int printTime = Integer.parseInt(args[1]);
+					preGenerator.setValues(chunksPerRun, printTime);
 					preGenerator.enable();
 					return true;
 				} catch (NumberFormatException e) {
-					Bukkit.broadcastMessage("Invalid numbers provided for chunksPerCycle and CycleDelayinTicks.");
+					Bukkit.broadcastMessage("Invalid numbers provided.");
 					return false;
 				}
 			}
 			else {
-				Bukkit.broadcastMessage("Usage: /pregen <chunksPerCycle> <Cycle(DelayinTicks)> <PrintUpdate(DelayinMinutes)>");
+				Bukkit.broadcastMessage("Usage: /pregen <chunksPerCycle> <PrintUpdate(DelayinMinutes)>");
 				return false;
 			}
 		} 
