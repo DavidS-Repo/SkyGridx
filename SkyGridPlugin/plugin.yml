@@ -31,7 +31,7 @@ commands:
     default: op
   pregen:
     description: Enable pre-generation with customizable parameters
-    usage: /pregen <chunksPerCycle> <Cycle(DelayinTicks)> <PrintUpdate(DelayinMinutes)>
+    usage: /pregen <chunksPerCycle> <PrintUpdate(DelayinMinutes)>
   pregenoff:
     description: Disable pre-generation
     usage: /pregenoff
