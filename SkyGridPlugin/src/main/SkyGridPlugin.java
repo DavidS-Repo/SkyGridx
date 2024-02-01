@@ -8,7 +8,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 import java.util.logging.Filter;
-import java.util.logging.LogRecord;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -76,16 +75,6 @@ public class SkyGridPlugin extends JavaPlugin implements Listener {
 
 		// Get the logger for your plugin and set the custom filter
 		getLogger().setFilter(logFilter);
-	}
-
-	class LogFilter implements Filter {
-		private final String suppressedWarning = "Plugin is getting a faraway chunk async";
-
-		@Override
-		public boolean isLoggable(LogRecord record) {
-			// Avoid triggering additional log events within this method
-			return !record.getMessage().contains(suppressedWarning);
-		}
 	}
 
 	private void createFoldersIfNotExist(String folderName) {
