@@ -1,10 +1,5 @@
 package main;
 
-import org.bukkit.ChatColor;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
-import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 import java.util.logging.Filter;
@@ -16,7 +11,6 @@ import java.nio.file.Paths;
 
 public class SkyGridPlugin extends JavaPlugin implements Listener {
 
-	private boolean pluginEnabled = false;
 	private boolean firstBoot = false;
 
 	@Override
@@ -37,11 +31,8 @@ public class SkyGridPlugin extends JavaPlugin implements Listener {
 		getCommand("fogon").setExecutor(fogCommandExecutor);
 		getCommand("fogoff").setExecutor(fogCommandExecutor);
 
-		// Register commands
-		getCommand("sgon").setExecutor(new CommandEnable(this));
+		//  Register command and Set the TPRAutoCompleter for the "/tpr" command
 		getCommand("tpr").setExecutor(new TPRCommand());
-
-		// Set the TPRAutoCompleter for the "/tpr" command
 		TPRAutoCompleter tprAutoCompleter = new TPRAutoCompleter();
 		getCommand("tpr").setTabCompleter(tprAutoCompleter);
 
@@ -53,6 +44,10 @@ public class SkyGridPlugin extends JavaPlugin implements Listener {
 		firstBoot = checkForFirstBoot();
 		if (firstBoot) {
 			getLogger().info("Thank you for installing our plugin!");
+			handleGeneration();
+		} else {
+			// Start the generator if it's not the first boot
+			handleGeneration();
 		}
 
 		// Register GrowthControl as a listener
@@ -117,30 +112,8 @@ public class SkyGridPlugin extends JavaPlugin implements Listener {
 		return firstBoot;
 	}
 
-	private class CommandEnable implements CommandExecutor {
-		private final SkyGridPlugin plugin;
-		public CommandEnable(SkyGridPlugin plugin) {
-			this.plugin = plugin;
-		}
-		@Override
-		public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-			// Check if the sender is a player and has OP permission or if it's the console
-			if (!(sender instanceof Player) && !sender.isOp()) {
-				sender.sendMessage(ChatColor.RED + "You do not have permission to use this command.");
-				return true;
-			}
-			if (!plugin.pluginEnabled) {
-				plugin.pluginEnabled = true;
-				handleGeneration(sender);
-			} else {
-				sender.sendMessage(ChatColor.RED + "Custom Skygrid generation is already enabled.");
-			}
-			return true;
-		}
-
-		private void handleGeneration(CommandSender sender) {
-			Generator generator = new Generator(plugin);
-			generator.initialize();
-		}
+	private void handleGeneration() {
+		Generator generator = new Generator(this);
+		generator.initialize();
 	}
 }
