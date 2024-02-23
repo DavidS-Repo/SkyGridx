@@ -3,8 +3,6 @@ The SkyGrid Plugin offers access to the latest blocks (1.20.4) and empowers user
 
 This plugin also includes a built-in random teleport command for each dimension, ensuring that players can safely explore their chosen realm. Furthermore, it features an ore generator that can modify stone generation to create various blocks of your choice. While currently configured primarily for ores, the possibilities are virtually endless.
 
-**Important Note**: The '**/reload**' command isn't fully supported at the moment. If you opt to use '**/reload**,' please ensure to re-enable the Skygrid generation afterward by using '**/sgon**.' This step is necessary to maintain seamless functionality.
-
 **Plugin Test Server:** - **IP**: skygrid.live
 This server serves as an exclusive testing environment for the latest SkyGrid plugin features. Please note that frequent world resets occur during plugin updates or modifications, and the server is not moderated. Players are encouraged to explore commands and test functionalities rather than building, as the world is periodically cleared. It's important to note that the plugin version on the test server is the latest, featuring some functionalities not yet available in the publicly released version.
 
@@ -109,23 +107,11 @@ pause
 4.**Server Launch & World Generation:**
  - Re-run the **.bat** file to start the server and allow all necessary files to generate.
  - Watch for console messages indicating completion:
-
-```
-[INFO]: Done (14.909s)! For help, type "help"
-[INFO]: Timings Reset
-```
  
- - **Do not shut down the server yet.**
+![instrunctions step 11](https://www.toolsnexus.com/mc/new-11.png)
  
-5.**Spawn Chunk Configuration:**
- - Choose between two options:
-  - For clear spawn chunks without Skygrid, perform a **save-all** command, then reboot the server. Enable Skygrid generation **sgon** afterward.
-  - To generate Skygrid in spawn chunks, enable the plugin **sgon** right after the console messages appear. Connect to the server to verify completion ([INFO]: First boot generation complete).
- 
-![instrunctions step 11](https://www.toolsnexus.com/mc/11.png)
- 
-6.**Enjoy the SkyGrid World:**
- - Once the spawn chunk configuration is set as desired, players can join the server and delve into the adventurous SkyGrid world.
+5.**Enjoy the SkyGrid World:**
+ - Connect to the server to verify completion ([INFO]: First boot generation complete).
   
  
 ## Biome-Specific Block Generation
@@ -332,7 +318,6 @@ Sample of 10 chest from the Overworld, Nether, and End with the included Pre-Con
  
 # Commands:
  
-- **/sgon** (turns on the SkyGrid generation)
 - **/tpr** (random teleport in the Overworld)
 - **/tpr nether** (random teleport in the Nether)
 - **/tpr end** (random teleport in the End)
