@@ -48,7 +48,7 @@ This server serves as an exclusive testing environment for the latest SkyGrid pl
    - Customize chest loot for specific biomes, allowing for a more immersive and thematic distribution of items based on the environment.
 
 **Pre-Generator Feature:**
-   - Built in async pre-generator feature that allows for efficient world generation. This feature is accessible through the **/pregen** command, with customizable parameters for chunks per cycle, cycle delay, and print update delay.
+   - Built in async pre-generator feature that allows for efficient world generation. This feature is accessible through the **/pregen** command, with customizable parameters for chunks per cycle and print update delay.
    - Works best on paper servers, on none paper servers the async functionality will not be used. Recommend you go into your paper server paper-global.yml and update these
 
 ```yaml
@@ -62,6 +62,8 @@ chunk-system:
 
 **Demonstrations:**
    - Ore generation examples:
+![instrunctions step 1](https://i3.ytimg.com/vi/UrzhCaiLKyI/maxresdefault.jpg)
+![instrunctions step 1](https://i3.ytimg.com/vi/NMkvj6UvmLg/maxresdefault.jpg)
 
 ---
  
@@ -325,6 +327,8 @@ Sample of 10 chest from the Overworld, Nether, and End with the included Pre-Con
 - **/fogoff** (turns fog off)
 - **/gclogson** (turns on growth control logs)
 - **/gclogsoff** (turns off growth control logs)
+- **/pregen** (Pregenerates the overworld, nether and end)
+- **/pregenoff** (Turns of pregeneration process)
  
 # Config:
  
