@@ -70,6 +70,9 @@ public class SkyGridPlugin extends JavaPlugin implements Listener {
 
 		// Get the logger for your plugin and set the custom filter
 		getLogger().setFilter(logFilter);
+
+		// Register PatchCommand as command executor for /patch
+		getCommand("patch").setExecutor(new PatchCommand(this));
 	}
 
 	private void createFoldersIfNotExist(String folderName) {
