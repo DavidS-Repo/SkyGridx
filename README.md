@@ -329,6 +329,7 @@ Sample of 10 chest from the Overworld, Nether, and End with the included Pre-Con
 - **/gclogsoff** (turns off growth control logs)
 - **/pregen** (Pregenerates the overworld, nether and end)
 - **/pregenoff** (Turns of pregeneration process)
+- **/patch** (Patch files to update materials and entities to newest version, if you update the plugin from an old version)
  
 # Config:
  
