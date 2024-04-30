@@ -1,5 +1,5 @@
 name: SkyGrid
-version: 1.20.4
+version: 1.20.6
 main: main.SkyGridPlugin
 author: Go0fy_Go0ber
 description: A plugin that generates a SkyGrid in Minecraft worlds and more.
@@ -31,3 +31,6 @@ commands:
   pregenoff:
     description: Disable pre-generation
     usage: /pregenoff
+  patch:
+    description: Patch files to update materials and entities to newest version, if you update the plugin from an old version.
+    usage: /patch confirm
