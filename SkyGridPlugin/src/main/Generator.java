@@ -64,7 +64,6 @@ public class Generator implements Listener {
 
 		if (file.exists()) {
 			List<Material> materials = new ArrayList<>();
-			List<Material> materialsWithoutPercentage = new ArrayList<>();
 			double remainingPercentage = 100.0;
 
 			try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
@@ -83,32 +82,34 @@ public class Generator implements Listener {
 					Material material = Material.getMaterial(parts[0]);
 
 					if (material != null) {
-						int count = (int) Math.ceil(parsePercentage(parts[1]) * chunksForDistribution);
+						double percentage = 1.0; // Default percentage is 1.0
+
+						if (parts.length > 1) {
+							percentage = parsePercentage(parts[1]);
+						}
+
+						int count = (int) Math.ceil(percentage * chunksForDistribution);
 
 						if (currentBiome != null) {
-							String[] biomes = currentBiome.split(",");
-							for (String biome : biomes) {
-								Map<Material, Integer> biomeMaterialsMap = biomeMaterials.computeIfAbsent(biome, k -> new HashMap<>());
-								biomeMaterialsMap.put(material, count);
-							}
+							Map<Material, Integer> biomeMaterialsMap = biomeMaterials.computeIfAbsent(currentBiome, k -> new HashMap<>());
+							biomeMaterialsMap.put(material, count);
 						} else {
-							for (int i = 0; i < count; i++) {
-								materials.add(material);
-							}
-							remainingPercentage -= parsePercentage(parts[1]);
-						}
-					}
-				}
-				int remainingItemCount = materialsWithoutPercentage.size();
-				if (remainingItemCount > 0 && remainingPercentage > 0) {
-					double percentagePerItem = remainingPercentage / remainingItemCount;
-					for (Material material : materialsWithoutPercentage) {
-						int count = (int) Math.ceil(percentagePerItem * chunksForDistribution);
-						for (int i = 0; i < count; i++) {
 							materials.add(material);
+							remainingPercentage -= percentage;
 						}
+					} else {
+						// Material is null, log a warning
+						plugin.getLogger().warning("Invalid material: " + parts[0]);
 					}
 				}
+
+				// Calculate scaling factor if total percentage exceeds 100%
+				double totalInitialPercentage = materials.stream().mapToDouble(this::getInitialPercentage).sum();
+				double scalingFactor = totalInitialPercentage > 100 ? 100 / totalInitialPercentage : 1.0;
+
+				// Adjust percentages and redistribute remaining percentage
+				adjustAndRedistributePercentages(materials, scalingFactor, remainingPercentage);
+
 				if (!materials.isEmpty()) {
 					String worldName = getWorldNameFromFileName(fileName);
 					plugin.getLogger().info("Materials loaded for world: " + worldName);
@@ -120,6 +121,53 @@ public class Generator implements Listener {
 		} else {
 			plugin.getLogger().warning("Missing file: " + fileName);
 		}
+	}
+
+	private void adjustAndRedistributePercentages(List<Material> materials, double scalingFactor, double remainingPercentage) {
+		for (Material material : materials) {
+			double initialPercentage = getInitialPercentage(material);
+			double adjustedPercentage = initialPercentage * scalingFactor;
+			int count = (int) Math.ceil(adjustedPercentage * chunksForDistribution);
+
+			// Add the material to the list the appropriate number of times
+			for (int i = 0; i < count; i++) {
+				materials.add(material);
+			}
+		}
+
+		// Redistribute remaining percentage among materials without specified percentages
+		redistributeRemainingPercentage(materials, remainingPercentage);
+	}
+
+	private void redistributeRemainingPercentage(List<Material> materials, double remainingPercentage) {
+		if (remainingPercentage > 0 && !materials.isEmpty()) {
+			double totalInitialPercentage = materials.stream().mapToDouble(this::getInitialPercentage).sum();
+
+			// Calculate the scale factor to adjust the percentages
+			double scaleFactor = 1.0;
+			if (totalInitialPercentage > 100.0) {
+				scaleFactor = 100.0 / totalInitialPercentage;
+			}
+
+			// Calculate the redistributed percentage for each material
+			for (Material material : materials) {
+				double initialPercentage = getInitialPercentage(material);
+				double redistributedPercentage = initialPercentage * scaleFactor;
+				int count = (int) Math.ceil(redistributedPercentage * chunksForDistribution);
+
+				// Add the material to the list the appropriate number of times
+				for (int i = 0; i < count; i++) {
+					materials.add(material);
+				}
+			}
+		}
+	}
+
+	private double getInitialPercentage(Material material) {
+		// Return the default percentage (1.0) if no percentage is specified
+		return biomeMaterials.values().stream()
+				.mapToInt(biome -> biome.getOrDefault(material, 0))
+				.sum();
 	}
 
 	private double parsePercentage(String percentageString) {
@@ -223,12 +271,8 @@ public class Generator implements Listener {
 		World world = chunk.getWorld();
 		String worldName = world.getName();
 		World.Environment dimension = world.getEnvironment();
-
-		int xStart = chunk.getX() << 4;
-		int zStart = chunk.getZ() << 4;
-
-		int minY;
-		int maxY;
+		int xStart = chunk.getX() << 4, zStart = chunk.getZ() << 4;
+		int minY, maxY;
 
 		switch (dimension) {
 		case NETHER: minY = 0; maxY = 128; break;
@@ -301,7 +345,6 @@ public class Generator implements Listener {
 		if (biomeMaterials.containsKey(biomeName)) {
 			biomeMaterialsMap.putAll(biomeMaterials.get(biomeName));
 		}
-
 		if (!biomeMaterialsMap.isEmpty()) {
 			List<Material> possibleMaterials = new ArrayList<>();
 
@@ -312,7 +355,6 @@ public class Generator implements Listener {
 					possibleMaterials.add(material);
 				}
 			}
-
 			if (!possibleMaterials.isEmpty()) {
 				int randomIndex = random.nextInt(possibleMaterials.size());
 				return possibleMaterials.get(randomIndex);

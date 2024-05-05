@@ -205,6 +205,7 @@ public class Spawner {
 			}
 		}
 		spawnerSettings = YamlConfiguration.loadConfiguration(spawnerSettingsFile);
+		plugin.getLogger().info("Custom Skygrid generation started.");
 		plugin.getLogger().info("SpawnerSettings Loaded");
 	}
 }

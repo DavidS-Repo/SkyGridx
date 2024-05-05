@@ -100,7 +100,7 @@ public class PreGenerator {
 		this.chunksPerRun = chunksPerRun;
 		this.printTime = printTime;
 	}
-	
+
 	// start generation
 	private void startGeneration() {o_startGeneration();n_startGeneration();e_startGeneration();}
 	private void o_startGeneration() {o_generateChunkBatch();}
@@ -243,42 +243,23 @@ public class PreGenerator {
 	}
 
 	private void printInfo() {
-		//overworld
-		o_chunksPerSec = ((o_chunkPerMin)/ (60 * printTime));
-		long o_remainingChunks = o_totalWorldChunks - o_totalChunksProcessed;
-		double o_remainingPercentage = 100 - ((double) o_remainingChunks / o_totalWorldChunks * 100);
-		Bukkit.broadcastMessage(String.format("Overworld - Completed %.10f%%, Chunks Remaining: %d, Chunks/Sec: %d", 
-				o_remainingPercentage, o_remainingChunks, o_chunksPerSec));
+		o_chunksPerSec = ((o_chunkPerMin) / (60 * printTime));
+		n_chunksPerSec = ((n_chunkPerMin) / (60 * printTime));
+		e_chunksPerSec = ((e_chunkPerMin) / (60 * printTime));
 
-		//nether
-		n_chunksPerSec = ((n_chunkPerMin)/ (60 * printTime));
-		long n_remainingChunks = n_totalWorldChunks - n_totalChunksProcessed;
-		double n_remainingPercentage = 100 - ((double) n_remainingChunks / n_totalWorldChunks * 100);
-		Bukkit.broadcastMessage(String.format("   Nether - Completed %.10f%%, Chunks Remaining: %d, Chunks/Sec: %d", 
-				n_remainingPercentage, n_remainingChunks, n_chunksPerSec));
-
-		// end
-		e_chunksPerSec = ((e_chunkPerMin)/ (60 * printTime));
-		long e_remainingChunks = e_totalWorldChunks - e_totalChunksProcessed;
-		double e_remainingPercentage = 100 - ((double) e_remainingChunks / e_totalWorldChunks * 100);
-		Bukkit.broadcastMessage(String.format("      End - Completed %.10f%%, Chunks Remaining: %d, Chunks/Sec: %d", 
-				e_remainingPercentage, e_remainingChunks, e_chunksPerSec));
-
-		//total
-		Bukkit.broadcastMessage("------------------------------------------------------------------------------------");
 		chunksPerSec = o_chunksPerSec + n_chunksPerSec + e_chunksPerSec;
-		Bukkit.broadcastMessage(String.format("                                                                 Total Chunks/Sec: %d", chunksPerSec));
+		Bukkit.broadcastMessage("Pregen Chunks/Sec: " + chunksPerSec);
 
-		//reset
+		// reset
 		o_chunksPerSec = 0;
-		o_chunkPerMin = 0;
+		o_chunkPerMin  = 0;
 		n_chunksPerSec = 0;
-		n_chunkPerMin = 0;
+		n_chunkPerMin  = 0;
 		e_chunksPerSec = 0;
-		e_chunkPerMin = 0;
-
+		e_chunkPerMin  = 0;
 	}
-	
+
+
 	private void saveProcessedChunks() {
 		o_saveProcessedChunks();
 		n_saveProcessedChunks();

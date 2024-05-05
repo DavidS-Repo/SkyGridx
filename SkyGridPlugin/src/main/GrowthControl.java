@@ -23,7 +23,7 @@ public class GrowthControl implements Listener {
 
 	public void initialize() {
 		plugin.getServer().getPluginManager().registerEvents(this, plugin);
-		plugin.getLogger().info("GrowthControl has been turned on.");
+		plugin.getLogger().info("GrowthControl Enabled.");
 	}
 
 	public void enableLogging() {
