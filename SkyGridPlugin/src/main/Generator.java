@@ -59,125 +59,105 @@ public class Generator implements Listener {
 	}
 
 	private void loadMaterialsForWorld(String fileName) {
-		plugin.getLogger().info("Loading materials for world from file: " + fileName);
-		File file = new File(plugin.getDataFolder(), "SkygridBlocks/" + fileName);
+	    plugin.getLogger().info("Loading materials for world from file: " + fileName);
+	    File file = new File(plugin.getDataFolder(), "SkygridBlocks/" + fileName);
 
-		if (file.exists()) {
-			List<Material> materials = new ArrayList<>();
-			double remainingPercentage = 100.0;
+	    if (file.exists()) {
+	        List<Material> materials = new ArrayList<>();
+	        Map<String, List<Material>> biomeMaterialsMap = new HashMap<>();
+	        double remainingPercentage = 100.0;
 
-			try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-				String line;
-				String currentBiome = null;
+	        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+	            String line;
+	            Set<String> currentBiomes = new HashSet<>();
 
-				while ((line = reader.readLine()) != null) {
-					if (line.trim().startsWith("#")) {
-						continue;
-					}
-					if (line.trim().startsWith("-")) {
-						currentBiome = line.trim().replace("-", "");
-						continue;
-					}
-					String[] parts = line.split(":");
-					Material material = Material.getMaterial(parts[0]);
+	            while ((line = reader.readLine()) != null) {
+	                if (line.trim().startsWith("#")) {
+	                    continue;
+	                }
+	                if (line.trim().startsWith("-")) {
+	                    String[] biomes = line.trim().replace("-", "").split(",");
+	                    currentBiomes.addAll(Arrays.asList(biomes));
+	                    continue;
+	                }
+	                String[] parts = line.split(":");
+	                Material material = Material.getMaterial(parts[0]);
 
-					if (material != null) {
-						double percentage = 1.0; // Default percentage is 1.0
+	                if (material != null) {
+	                    double percentage = parts.length > 1 ? parsePercentage(parts[1]) : 1.0;
 
-						if (parts.length > 1) {
-							percentage = parsePercentage(parts[1]);
-						}
+	                    if (!currentBiomes.isEmpty()) {
+	                        for (String biome : currentBiomes) {
+	                            List<Material> biomeMaterials = biomeMaterialsMap.computeIfAbsent(biome, k -> new ArrayList<>());
+	                            for (int i = 0; i < Math.ceil(percentage * chunksForDistribution); i++) {
+	                                biomeMaterials.add(material);
+	                            }
+	                        }
+	                    } else {
+	                        for (int i = 0; i < Math.ceil(percentage * chunksForDistribution); i++) {
+	                            materials.add(material);
+	                        }
+	                        remainingPercentage -= percentage;
+	                    }
+	                }
+	            }
 
-						int count = (int) Math.ceil(percentage * chunksForDistribution);
+	            if (currentBiomes.isEmpty() && !materials.isEmpty()) {
+	                // Redistribute remaining percentage among materials without specified biome
+	                redistributeRemainingPercentage(materials, remainingPercentage);
+	            }
 
-						if (currentBiome != null) {
-							Map<Material, Integer> biomeMaterialsMap = biomeMaterials.computeIfAbsent(currentBiome, k -> new HashMap<>());
-							biomeMaterialsMap.put(material, count);
-						} else {
-							materials.add(material);
-							remainingPercentage -= percentage;
-						}
-					} else {
-						// Material is null, log a warning
-						plugin.getLogger().warning("Invalid material: " + parts[0]);
-					}
-				}
+	            if (!materials.isEmpty()) {
+	                String worldName = getWorldNameFromFileName(fileName);
+	                plugin.getLogger().info("Materials loaded for world: " + worldName);
+	                worldMaterials.put(worldName, materials);
+	            }
 
-				// Calculate scaling factor if total percentage exceeds 100%
-				double totalInitialPercentage = materials.stream().mapToDouble(this::getInitialPercentage).sum();
-				double scalingFactor = totalInitialPercentage > 100 ? 100 / totalInitialPercentage : 1.0;
+	            for (String biome : currentBiomes) {
+	                redistributeRemainingPercentage(biomeMaterialsMap.get(biome), 100.0); // Redistribute percentages for each biome list
+	                // Store biome-specific materials
+	                biomeMaterials.put(biome, calculateMaterialDistribution(biomeMaterialsMap.get(biome)));
+	            }
 
-				// Adjust percentages and redistribute remaining percentage
-				adjustAndRedistributePercentages(materials, scalingFactor, remainingPercentage);
-
-				if (!materials.isEmpty()) {
-					String worldName = getWorldNameFromFileName(fileName);
-					plugin.getLogger().info("Materials loaded for world: " + worldName);
-					worldMaterials.put(worldName, materials);
-				}
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		} else {
-			plugin.getLogger().warning("Missing file: " + fileName);
-		}
+	        } catch (IOException e) {
+	            e.printStackTrace();
+	        }
+	    } else {
+	        plugin.getLogger().warning("Missing file: " + fileName);
+	    }
 	}
 
-	private void adjustAndRedistributePercentages(List<Material> materials, double scalingFactor, double remainingPercentage) {
-		for (Material material : materials) {
-			double initialPercentage = getInitialPercentage(material);
-			double adjustedPercentage = initialPercentage * scalingFactor;
-			int count = (int) Math.ceil(adjustedPercentage * chunksForDistribution);
-
-			// Add the material to the list the appropriate number of times
-			for (int i = 0; i < count; i++) {
-				materials.add(material);
-			}
-		}
-
-		// Redistribute remaining percentage among materials without specified percentages
-		redistributeRemainingPercentage(materials, remainingPercentage);
+	private List<Material> redistributeRemainingPercentage(List<Material> materials, double remainingPercentage) {
+	    List<Material> redistributedMaterials = new ArrayList<>();
+	    int remainingItemCount = materials.size();
+	    if (remainingItemCount > 0 && remainingPercentage > 0) {
+	        double percentagePerItem = remainingPercentage / remainingItemCount;
+	        for (Material material : materials) {
+	            int repetitionCount = (int) Math.ceil(percentagePerItem * chunksForDistribution);
+	            for (int i = 0; i < repetitionCount; i++) {
+	                redistributedMaterials.add(material);
+	            }
+	        }
+	    }
+	    return redistributedMaterials;
 	}
 
-	private void redistributeRemainingPercentage(List<Material> materials, double remainingPercentage) {
-		if (remainingPercentage > 0 && !materials.isEmpty()) {
-			double totalInitialPercentage = materials.stream().mapToDouble(this::getInitialPercentage).sum();
-
-			// Calculate the scale factor to adjust the percentages
-			double scaleFactor = 1.0;
-			if (totalInitialPercentage > 100.0) {
-				scaleFactor = 100.0 / totalInitialPercentage;
-			}
-
-			// Calculate the redistributed percentage for each material
-			for (Material material : materials) {
-				double initialPercentage = getInitialPercentage(material);
-				double redistributedPercentage = initialPercentage * scaleFactor;
-				int count = (int) Math.ceil(redistributedPercentage * chunksForDistribution);
-
-				// Add the material to the list the appropriate number of times
-				for (int i = 0; i < count; i++) {
-					materials.add(material);
-				}
-			}
-		}
+	private Map<Material, Integer> calculateMaterialDistribution(List<Material> materials) {
+	    Map<Material, Integer> materialDistribution = new HashMap<>();
+	    for (Material material : materials) {
+	        materialDistribution.put(material, materialDistribution.getOrDefault(material, 0) + 1);
+	    }
+	    return materialDistribution;
 	}
 
-	private double getInitialPercentage(Material material) {
-		// Return the default percentage (1.0) if no percentage is specified
-		return biomeMaterials.values().stream()
-				.mapToInt(biome -> biome.getOrDefault(material, 0))
-				.sum();
-	}
-
-	private double parsePercentage(String percentageString) {
-		try {
-			return Double.parseDouble(percentageString);
-		} catch (NumberFormatException e) {
-			plugin.getLogger().warning("Invalid percentage format: " + percentageString);
-			return 1.0;
-		}
-	}
+    private double parsePercentage(String percentageString) {
+        try {
+            return Double.parseDouble(percentageString);
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid percentage format: " + percentageString);
+            return 1.0;
+        }
+    }
 
 	private String getWorldNameFromFileName(String fileName) {
 		return fileName.substring(0, fileName.lastIndexOf('.'));
