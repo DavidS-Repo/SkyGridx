@@ -1,112 +1,168 @@
-#SkyGrid World Block Selection Guide:
-#
-#- Each line in the materials file corresponds to a block and its chance of appearing.
-#- Format: BlockID:Percentage (use block names or IDs).
-#- Example: "STONE:50" means a 50% chance of Stone appearing with in the 32 chunk distribution.
-#- You can include as many blocks as you want, and their percentages can be anything.
-#- The total percentage doesn't need to add up to 100%.
-#- If no percentage is specified for any of the blocks the plugin will distribute the percentage among all the blocks missing a percentage
-#- If you specify the percentage but for only some of the blocks and it doesn't add up to 100% the plugin will distribute the remainder to the rest of the blocks missing a percentage.
-#- These percentages should be interpreted as a probability distribution for selecting the blocks. So, for the END_STONE:80, on average, you'd expect END_STONE to be selected 80% of the time in your block distribution.
-#- You can use any of the materials in the bukkit Material page here https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Material.html
-#
-#Example (world.txt):
-# 50% chance of Stone
-#STONE:50
-# 25% chance of Grass
-#GRASS:25
-# 24.999% chance of Iron Ore
-#IRON_ORE:24.999
-# 0.001% chance of Diamond Ore
-#DIAMOND_ORE:0.001
-#
-#
-ACACIA_LEAVES:0.972
-ACACIA_LOG:0.972
-AMETHYST_BLOCK:0.972
-ANDESITE:0.972
-AZALEA:0.972
-AZALEA_LEAVES:0.972
-BAMBOO:0.972
-BEE_NEST:0.972
-BIRCH_LEAVES:0.972
-BIRCH_LOG:0.972
-BLUE_ICE:0.972
-BONE_BLOCK:0.972
-BOOKSHELF:0.972
-BRAIN_CORAL_BLOCK:0.972
-BROWN_MUSHROOM_BLOCK:0.972
-BUBBLE_CORAL_BLOCK:0.972
-BUDDING_AMETHYST:0.972
-CACTUS:0.972
-CALCITE:0.972
-CHERRY_LEAVES:0.972
-CHERRY_LOG:0.972
-CHEST:0.05
-CLAY:0.972
-COAL_ORE:2.972
-COARSE_DIRT:0.972
-COBBLED_DEEPSLATE:0.972
-COBBLESTONE:0.972
-COPPER_ORE:0.972
-CRYING_OBSIDIAN:0.972
-CUT_SANDSTONE:0.972
-DARK_OAK_LEAVES:0.972
-DARK_OAK_LOG:0.972
-DARK_PRISMARINE:0.972
-DEEPSLATE:6.722
+# SkyGrid World Block Selection Guide:
+
+# Each line in the materials file corresponds to a block and its chance of appearing.
+# Format: BlockID:Percentage (use block names or IDs).
+# Example: "STONE:50" means a 50% chance of Stone appearing within the 32-chunk distribution.
+# You can include as many blocks as you want, and their percentages can be anything.
+# The total percentage doesn't need to add up to 100%.
+# You can use any of the materials in the Bukkit Material page here: [https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Material.html]
+
+# Block Distribution Rules:
+
+# 1. No Percentage Specified for a Block:
+#    - If a percentage is not specified for a block, the code assigns it a default percentage of 1.0. This ensures that all blocks are accounted for in the distribution process.
+#    - For example:
+#      STONE:50
+#      DIRT:49
+#      SAND:
+#      Explanation:
+#      The code will interpret SAND as having a default percentage of 1.0 since no percentage is specified. After allocating 50% for STONE and 49% for DIRT, the remaining 1% will be distributed to SAND.
+
+# 2. Total Percentage Exceeds 100%:
+#    - When the total percentage exceeds 100%, the code scales down the percentages proportionally to ensure they sum up to 100%. This prevents over-allocation of blocks.
+#    - For example:
+#      STONE:80
+#      DIRT:60
+#      SAND:
+#      -RIVER-
+#      AIR:120
+#      WATER:
+#      Explanation:
+#      The initial total percentage for each list is calculated. To scale down the percentages, the scaling factor is calculated by dividing 100 by the sum of the initial percentages. Each percentage is multiplied by its respective scaling factor to adjust it accordingly.
+
+# 3. Biome-Dependent Allocation:
+#    - Blocks can be listed under specific biome headers, allowing for biome-dependent allocation.
+#    - If the percentages within a biome list do not add up to 100%, the remaining percentage is redistributed among the blocks within that specific biome's list.
+#    - For example:
+#      STONE:50
+#      DIRT:30
+#      SAND:
+#      AIR:
+#      -OCEAN-
+#      WATER:30
+#      SAND:20
+#      SANDSTONE:
+#      Explanation:
+#      Each biome header gets its own redistribution percentage. For each biome list, percentages are calculated separately. Here, the remaining percentage is redistributed evenly among the blocks within each biome list.
+#      When the block percentages in a biome's list don't add up to 100%, the leftover percentage is redistributed among the blocks within that specific biome's list. This ensures that the total percentage for that biome accurately represents the distribution of blocks in the world.
+
+# Biome-Specific Block Generation:
+# - Customize the block generation in your world based on different biomes.
+# - Specify unique block materials and percentages for each biome in the world.
+# - Biomes are signified by the -BIOME_NAME- header, and everything under the biome header will generate only in that biome unless another biome is specified.
+# - Multiple biomes in the header of the material files are supported. You can now specify multiple biomes separated by commas.
+# - Supported biomes can be found here: [https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/block/Biome.html]
+
+# How to Use/Configure Biome-Specific Blocks:
+#    - Specify block materials and their respective percentages for each biome in your world.
+#    - Example:
+#      DIRT:20
+#      STONE:20
+#      GRASS_BLOCK:20
+#      -OCEAN,COLD_OCEAN,DEEP_COLD_OCEAN,DEEP_FROZEN_OCEAN,DEEP_LUKEWARM_OCEAN,DEEP_OCEAN,FROZEN_OCEAN,LUKEWARM_OCEAN-
+#      SAND:80
+#      SANDSTONE:9.0
+#      SEA_PICKLE:1.0
+#      TUBE_CORAL:1.0
+#      TUBE_CORAL_FAN:1.0
+#      HORN_CORAL:1.0
+#      HORN_CORAL_FAN:1.0
+#      FIRE_CORAL:1.0
+#      FIRE_CORAL_FAN:1.0
+#      BUBBLE_CORAL:1.0
+#      BUBBLE_CORAL_FAN:1.0
+#      BRAIN_CORAL:1.0
+#      BRAIN_CORAL_FAN:1.0
+#      -WARM_OCEAN-
+#      SAND:80
+#      SANDSTONE:20
+
+ACACIA_LEAVES:
+ACACIA_LOG:
+AMETHYST_BLOCK:
+ANDESITE:
+AZALEA:
+AZALEA_LEAVES:
+BAMBOO:
+BEE_NEST:
+BIRCH_LEAVES:
+BIRCH_LOG:
+BLUE_ICE:
+BONE_BLOCK:
+BOOKSHELF:
+BRAIN_CORAL_BLOCK:
+BROWN_MUSHROOM_BLOCK:
+BUBBLE_CORAL_BLOCK:
+BUDDING_AMETHYST:
+CACTUS:
+CALCITE:
+CHERRY_LEAVES:
+CHERRY_LOG:
+CHEST:0.005
+CLAY:
+COAL_ORE:
+COARSE_DIRT:
+COBBLED_DEEPSLATE:
+COBBLESTONE:
+COPPER_ORE:
+CRYING_OBSIDIAN:
+CUT_SANDSTONE:
+DARK_OAK_LEAVES:
+DARK_OAK_LOG:
+DARK_PRISMARINE:
+DEEPSLATE:10
 DIAMOND_ORE:0.001
-DIORITE:0.972
-DIRT:0.972
-DRIPSTONE_BLOCK:0.972
+DIORITE:
+DIRT:
+DRIPSTONE_BLOCK:
 EMERALD_ORE:0.001
-FIRE_CORAL_BLOCK:0.972
-GLASS:0.972
-GOLD_ORE:0.972
-GRANITE:0.972
-GRASS_BLOCK:7.972
-GRAVEL:0.972
-HAY_BLOCK:0.972
-HORN_CORAL_BLOCK:0.972
+FIRE_CORAL_BLOCK:
+GLASS:
+GOLD_ORE:
+GRANITE:
+GRASS_BLOCK:10
+GRAVEL:
+HAY_BLOCK:
+HORN_CORAL_BLOCK:
 IRON_ORE:3
-JUNGLE_LEAVES:0.972
-JUNGLE_LOG:0.972
-LAPIS_ORE:0.972
-LARGE_AMETHYST_BUD:0.972
-LAVA_CAULDRON:0.972
-MANGROVE_LEAVES:0.972
-MANGROVE_LOG:0.972
-MELON:0.972
-MOSS_BLOCK:0.972
-MOSSY_COBBLESTONE:0.972
-MUD:0.972
-MUDDY_MANGROVE_ROOTS:0.972
-MYCELIUM:0.972
-OAK_LEAVES:0.972
-OAK_LOG:0.972
-OBSIDIAN:0.972
-PACKED_ICE:0.972
-PACKED_MUD:0.972
-PODZOL:0.972
-POINTED_DRIPSTONE:0.972
-PRISMARINE:0.972
-PUMPKIN:0.972
-RAW_IRON_BLOCK:1.943
-RED_MUSHROOM_BLOCK:0.972
-RED_SAND:0.972
-REDSTONE_ORE:1.943
-ROOTED_DIRT:0.972
-SAND:6.722
-SANDSTONE:0.972
-SEA_LANTERN:0.972
-SEA_PICKLE:0.972
-SNOW_BLOCK:0.972
-SPAWNER:0.0001
-STONE:6.5
-SUGAR_CANE:0.972
-SUSPICIOUS_GRAVEL:0.972
-SUSPICIOUS_SAND:0.972
-TERRACOTTA:0.972
-TUBE_CORAL_BLOCK:0.972
-TUFF:0.972
-WET_SPONGE:0.972
+JUNGLE_LEAVES:
+JUNGLE_LOG:
+LAPIS_ORE:
+LARGE_AMETHYST_BUD:
+LAVA_CAULDRON:
+MANGROVE_LEAVES:
+MANGROVE_LOG:
+MELON:
+MOSS_BLOCK:
+MOSSY_COBBLESTONE:
+MUD:
+MUDDY_MANGROVE_ROOTS:
+MYCELIUM:
+OAK_LEAVES:
+OAK_LOG:
+OBSIDIAN:
+PACKED_ICE:
+PACKED_MUD:
+PODZOL:
+POINTED_DRIPSTONE:
+PRISMARINE:
+PUMPKIN:
+RAW_IRON_BLOCK:2
+RED_MUSHROOM_BLOCK:
+RED_SAND:
+REDSTONE_ORE:2
+ROOTED_DIRT:
+SAND:10
+SANDSTONE:
+SEA_LANTERN:
+SEA_PICKLE:
+SNOW_BLOCK:
+SPAWNER:0.00001
+STONE:10
+SUGAR_CANE:
+SUSPICIOUS_GRAVEL:
+SUSPICIOUS_SAND:
+TERRACOTTA:
+TUBE_CORAL_BLOCK:
+TUFF:
+WET_SPONGE:
