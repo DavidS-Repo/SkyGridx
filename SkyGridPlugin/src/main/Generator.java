@@ -15,13 +15,12 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.server.ServerLoadEvent;
 import org.bukkit.event.world.ChunkLoadEvent;
-import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.*;
 import java.util.*;
 
 public class Generator implements Listener {
-	private final JavaPlugin plugin;
+	private final SkyGridPlugin plugin;
 	private final Random random;
 	private final Map<String, List<Material>> worldMaterials;
 	private final Map<String, Set<String>> generatedChunksByWorld;
@@ -30,10 +29,8 @@ public class Generator implements Listener {
 	private final Chest chest;
 	private final int PROCESS_DELAY = 10;
 	private final double chunksForDistribution = 64;
-	private boolean firstBootComplete = false;
-	private boolean serverLoaded = false;
 
-	public Generator(JavaPlugin plugin) {
+	public Generator(SkyGridPlugin plugin) {
 		this.plugin = plugin;
 		this.random = new Random();
 		this.worldMaterials = new HashMap<>();
@@ -171,27 +168,23 @@ public class Generator implements Listener {
 
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onServerLoad(ServerLoadEvent event) {
-		serverLoaded = true;
-		if (!firstBootComplete) {
+		if (plugin.isFirstBoot()) {
 			processAllLoadedChunks();
-			firstBootComplete = true;
 			plugin.getServer().getConsoleSender().sendMessage("\u001B[32mFirst boot generation complete.\u001B[0m");
 		}
 	}
 
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onChunkLoad(ChunkLoadEvent event) {
-		if (serverLoaded) {
-			Chunk chunk = event.getChunk();
-			String chunkCoords = chunk.getX() + "," + chunk.getZ();
-			String worldName = chunk.getWorld().getName();
-			Set<String> generatedChunks = generatedChunksByWorld.getOrDefault(worldName, new HashSet<>());
+		Chunk chunk = event.getChunk();
+		String chunkCoords = chunk.getX() + "," + chunk.getZ();
+		String worldName = chunk.getWorld().getName();
+		Set<String> generatedChunks = generatedChunksByWorld.getOrDefault(worldName, new HashSet<>());
 
-			if (event.isNewChunk() && !generatedChunks.contains(chunkCoords)) {
-				Bukkit.getScheduler().runTaskLater(plugin, () -> processChunk(chunk), PROCESS_DELAY);
-			} else {
-				generatedChunks.add(chunkCoords);
-			}
+		if (event.isNewChunk() && !generatedChunks.contains(chunkCoords)) {
+			Bukkit.getScheduler().runTaskLater(plugin, () -> processChunk(chunk), PROCESS_DELAY);
+		} else {
+			generatedChunks.add(chunkCoords);
 		}
 	}
 
