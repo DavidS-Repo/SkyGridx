@@ -1,5 +1,5 @@
  
-The SkyGrid Plugin offers access to the latest blocks (1.20.4) and empowers users to fully customize the grids in the Overworld, Nether, and End dimensions. The initial generation process, which typically takes 1-5 minutes, adapts to the server's capabilities. Subsequently, all generation activities occur efficiently in real-time.
+The SkyGrid Plugin offers access to the latest blocks (1.20.6) and empowers users to fully customize the grids in the Overworld, Nether, and End dimensions. The initial generation process, which typically takes 1-5 minutes, adapts to the server's capabilities. Subsequently, all generation activities occur efficiently in real-time.
 
 This plugin also includes a built-in random teleport command for each dimension, ensuring that players can safely explore their chosen realm. Furthermore, it features an ore generator that can modify stone generation to create various blocks of your choice. While currently configured primarily for ores, the possibilities are virtually endless.
 
@@ -88,7 +88,7 @@ pause
 ![instrunctions step 3](https://www.toolsnexus.com/mc/3.png)
 
 3.**Download Plugin and Datapack:**
- - Obtain the latest version of the plugin from [SkyGridX](https://cdn.modrinth.com/data/ihjAiP7L/versions/zJuOwswe/SkyGrid.jar) and place it into the auto-generated "plugins" folder.
+ - Obtain the latest version of the plugin from [SkyGridX](https://cdn.modrinth.com/data/ihjAiP7L/versions/YoptZJ49/SkyGrid.jar) and place it into the auto-generated "plugins" folder.
 
 ![instrunctions step 4](https://www.toolsnexus.com/mc/4.png)
 ![instrunctions step 5](https://www.toolsnexus.com/mc/5.png)
@@ -398,208 +398,415 @@ COBBLESTONE:
   DEEPSLATE_LAPIS_ORE: 0.2
   DEEPSLATE_REDSTONE_ORE: 0.3
 ```
- 
+
 ## SkyGrid World Block Selection
 (found in the SkygridBlocks folder):
+
+### Chest Settings: (**ChestSettings.yml**)
  
+```YML
+# The available items for use can be found at https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Material.html
+# The available biomes can be found here: https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/block/Biome.html
+
+# In YAML, identifiers or keys (such as "Chest1" in your example) are subject to certain rules.
+
+# - Do's -
+# Alphanumeric Characters: Identifiers can contain letters (both uppercase and lowercase) and numbers. For example, "Chest1" is a valid identifier.
+# Underscores: You can use underscores (_) in identifiers. For instance, "my_chest" is a valid identifier.
+# Hyphens in Quoted Strings: If an identifier contains special characters or spaces, you can enclose it in single or double quotes. For example, "'Special Chest'" or "\"Special Chest\"" are valid.
+
+# - Don'ts -
+# Special Characters: Avoid using special characters like !, @, #, $, %, etc., in identifiers without enclosing them in quotes. For example, "Chest@123" should be written as "'Chest@123'" if you want to use special characters.
+# Leading Spaces: Identifiers should not have leading spaces. For instance, " MyChest" with a space at the beginning is not a valid identifier.
+# Trailing Spaces: Similarly, identifiers should not have trailing spaces. "MyChest " with a space at the end is not valid.
+# Spaces in the Middle: While you can use spaces within identifiers if they are enclosed in quotes, it's generally a good practice to avoid spaces within identifiers for clarity. For example, "My Chest" is valid, but "MyChest" is more commonly used.
+# Reserved Keywords: Avoid using YAML reserved keywords as identifiers. These keywords have special meaning in YAML and should not be used as keys. For example, "true," "false," and "null" are reserved keywords.
+# Case Sensitivity: YAML is case-sensitive. "myChest" and "MyChest" would be considered as two different identifiers.
+
+# ChestSettings: This is the top-level section of the YAML configuration and acts as the main container for all chest settings.
+# Chest1: This represents the first chest configuration, which we'll be using as an example. The code will look for a chest configuration with the key "Chest1." The key can be whatever you want; it serves as an identifier.
+# Items: Under the "Chest1" configuration, there is an "Items" section. The code will process the items listed here to determine what should be placed in the chest's inventory. Formatting: "- ITEM_NAME:PERCENTAGE:MAX_AMOUNT"
+# Biomes: This section lists the biomes in which the chest's item configuration will apply. Formatting: "- BIOME_NAME"
+
+ChestSettings:
+  Chest1:
+    Items:
+      - MYCELIUM:30:5
+      - RED_MUSHROOM:20:5
+      - BROWN_MUSHROOM:20:5
+      - RED_MUSHROOM_BLOCK:10:5
+      - BROWN_MUSHROOM_BLOCK:10:5
+      - MUSHROOM_STEM:10:5
+    Biomes:
+      - MUSHROOM_FIELDS
+
+# The YAML above will be interpreted as follows:
+
+# For a chest located in the "MUSHROOM_FIELDS" biome, the code will use the specified item settings to randomly populate the chest's inventory. The percentage chances and amount ranges for each item will be considered when filling the chest.
+# MYCELIUM:30:5 - This line specifies an item with the name "MYCELIUM" with a chance of 30% (percentage) of being placed in the chest, and the max amount of this item is 5. The code will randomly select a value between 1 and 5 for the number of MYCELIUM to place in the chest.
+
+
+# This is a more compact way of formatting the above. Both versions are valid.
+# How to format item entries: [ITEM_NAME:PERCENTAGE:MAX_AMOUNT]. If there is more than one item, you can do [ITEM_NAME:PERCENTAGE:MAX_AMOUNT, ITEM_NAME:PERCENTAGE:MAX_AMOUNT].
+# If you are doing multiple biomes, this is also a more compact way of formatting it.
+# How to format biome entries: [BIOME_NAME]. If there is more than one biome, you can do [BIOME_NAME, BIOME_NAME].
+
+#Overworld Biomes
+
+  Chest2:
+    Items: [WOODEN_AXE:20:1, WOODEN_PICKAXE:20:1, CROSSBOW:20:1, NAME_TAG:20:1, GOLDEN_APPLE:20:1, ENCHANTED_GOLDEN_APPLE:20:1, APPLE:40:2, OAK_LOG:40:2, DARK_OAK_LOG:40:2, RAIL:40:2, DIAMOND:40:2, STRING:90:5, ARROW:90:5, STICK:90:5, WHEAT:90:5, IRON_INGOT:90:5, TORCH:90:5, ARMADILLO_SCUTE:90:5]
+    Biomes: [BADLANDS, BAMBOO_JUNGLE, BIRCH_FOREST, CHERRY_GROVE, DARK_FOREST, DESERT, DRIPSTONE_CAVES, ERODED_BADLANDS, FLOWER_FOREST, FOREST, GROVE, JAGGED_PEAKS, JUNGLE, LUSH_CAVES, MANGROVE_SWAMP, MEADOW, OLD_GROWTH_BIRCH_FOREST, OLD_GROWTH_PINE_TAIGA, OLD_GROWTH_SPRUCE_TAIGA, PLAINS, SAVANNA, SAVANNA_PLATEAU, SPARSE_JUNGLE, STONY_PEAKS, STONY_SHORE, SUNFLOWER_PLAINS, SWAMP, TAIGA, WINDSWEPT_FOREST, WINDSWEPT_GRAVELLY_HILLS, WINDSWEPT_HILLS, WINDSWEPT_SAVANNA, WOODED_BADLANDS, OCEAN, WARM_OCEAN, LUKEWARM_OCEAN, FROZEN_OCEAN, DEEP_FROZEN_OCEAN, DEEP_LUKEWARM_OCEAN, DEEP_OCEAN, DEEP_COLD_OCEAN, COLD_OCEAN, FROZEN_RIVER, RIVER, BEACH, SNOWY_BEACH, SNOWY_PLAINS, SNOWY_SLOPES, SNOWY_TAIGA, FROZEN_PEAKS, ICE_SPIKES, DEEP_DARK]
+
+
+# Nether Biomes:
+
+  Chest3:
+    Items: [GOLDEN_APPLE:20:1, ENCHANTED_GOLDEN_APPLE:20:1, GOLD_BLOCK:20:1, GOLDEN_AXE:20:1, IRON_BLOCK:20:1, SNOUT_ARMOR_TRIM_SMITHING_TEMPLATE:20:1, NETHERITE_UPGRADE_SMITHING_TEMPLATE:20:1, IRON_SWORD:20:1, GOLDEN_HELMET:20:1, MUSIC_DISC_PIGSTEP:20:1, DIAMOND:40:2, ANCIENT_DEBRIS:40:2, BONE_BLOCK:40:2, GOLDEN_CARROT:40:2, OBSIDIAN:40:2, CRYING_OBSIDIAN:40:2, IRON_INGOT:90:5, GILDED_BLACKSTONE:90:5, CHAIN:90:5, GOLD_INGOT:90:5, MAGMA_CREAM:90:5, GOLD_NUGGET:90:5, SPECTRAL_ARROW:90:5, STRING:90:5, IRON_NUGGET:90:5, ARROW:90:5, COOKED_PORKCHOP:90:5]
+    Biomes: [BASALT_DELTAS, NETHER_WASTES, CRIMSON_FOREST, SOUL_SAND_VALLEY, WARPED_FOREST]
+
+
+#End Biomes
+
+  Chest4:
+    Items: [ELYTRA:20:1, DRAGON_HEAD:20:1, DRAGON_EGG:20:1, END_CRYSTAL:20:1, ENDER_CHEST:20:1, SHULKER_SHELL:40:2, DIAMOND:40:2, END_ROD:90:5, PURPUR_BLOCK:90:5, MAGENTA_STAINED_GLASS:90:5, GOLD_INGOT:90:5, IRON_INGOT:90:5, OBSIDIAN:90:5]
+    Biomes: [END_BARRENS, END_HIGHLANDS, END_MIDLANDS, SMALL_END_ISLANDS]
+```
+
+### Spawner Settings: (**SpawnerSettings.yml**)
+ 
+```YML
+# The available entities for use can be found at https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/entity/EntityType.html
+# The available biomes can be found here: https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/block/Biome.html
+
+
+# Entities - Define entities and their spawn percentages. Formatting "- DOLPHIN:33.33"
+# Biomes -  List the biomes where this spawner will spawn. Formatting "- BEACH"
+# Delay: - Set the spawner's delay. If set to -1, the delay will be randomized (randomly choose a delay between min and max spawn delays).
+# MaxNearbyEntities - Set the maximum nearby entities (of the same type) allowed. Default value is 16.
+# MaxSpawnDelay - The maximum spawn delay amount (in ticks). This value must be greater than 0 and less than or equal to MaxSpawnDelay. Default value is 800 ticks.
+# MinSpawnDelay - The minimum spawn delay amount (in ticks). Default value is 200 ticks.
+# PlayerRange - Set the range for player activation (given that there are players online). Default value is 16.
+# SpawnCount - Set how many mobs attempt to spawn. Default value is 4.
+# SpawnRange - Set the radius around which the spawner will attempt to spawn mobs in. Default value is 4.
+
+SpawnerSettings:
+  Spawner1:
+    Entities:
+      - MUSHROOM_COW:100
+    Biomes:
+      - MUSHROOM_FIELDS
+    Delay: -1
+    MaxNearbyEntities: 16
+    MaxSpawnDelay: 800
+    MinSpawnDelay: 200
+    PlayerRange: 16
+    SpawnCount: 4
+    SpawnRange: 4
+  
+# This is is a more compact way of formatting the above, both versions are valid. 
+# How to format entity entries: [ENTITY_NAME:PERCENTAGE] if there is more than one entity you can do [ENTITY_NAME:PERCENTAGE, ENTITY_NAME:PERCENTAGE]
+# If you are doing multiple biomes this is also a more compact way of formatting it.
+# How to format biome entries: [BIOME_NAME] if there is more than one biome you can do [BIOME_NAME, BIOME_NAME] 
+
+# Nether Biomes:
+  
+  Spawner2:
+    Entities: [PIGLIN:10, PIGLIN_BRUTE:10, BLAZE:10, GHAST:10, HOGLIN:10, WITHER_SKELETON:10, ZOMBIFIED_PIGLIN:10, STRIDER:10, MAGMA_CUBE:10, ZOGLIN:10]
+    Biomes: [BASALT_DELTAS, NETHER_WASTES, CRIMSON_FOREST, SOUL_SAND_VALLEY, WARPED_FOREST]
+    Delay: -1
+    MaxNearbyEntities: 16
+    MaxSpawnDelay: 800
+    MinSpawnDelay: 200
+    PlayerRange: 16
+    SpawnCount: 4
+    SpawnRange: 4
+
+#Overworld Biomes
+
+  Spawner3:
+    Entities: [ALLAY:2, AXOLOTL:2, BAT:2, BEE:2, CAMEL:2, CAT:2, CAVE_SPIDER:2, CHICKEN:2, COW:2, CREEPER:2, DONKEY:2, EVOKER:2, FOX:2, FROG:2, GOAT:2, HORSE:2, HUSK:2, ILLUSIONER:2, IRON_GOLEM:2, LLAMA:2, MULE:2, OCELOT:2, PANDA:2, PARROT:2, PHANTOM:2, PIG:2, PILLAGER:2, RABBIT:2, RAVAGER:2, SHEEP:2, SILVERFISH:2, SKELETON:2, SKELETON_HORSE:2, SLIME:2, SNIFFER:2, SPIDER:2, STRAY:2, TRADER_LLAMA:2, VEX:2, VILLAGER:2, VINDICATOR:2, WANDERING_TRADER:2, WITCH:2, WITHER:2, WOLF:2, ZOMBIE:2, ZOMBIE_HORSE:2, ZOMBIE_VILLAGER:2, ARMADILLO:2]
+    Biomes: [BADLANDS, BAMBOO_JUNGLE, BIRCH_FOREST, CHERRY_GROVE, DARK_FOREST, DESERT, DRIPSTONE_CAVES, ERODED_BADLANDS, FLOWER_FOREST, FOREST, GROVE, JAGGED_PEAKS, JUNGLE, LUSH_CAVES, MANGROVE_SWAMP, MEADOW, OLD_GROWTH_BIRCH_FOREST, OLD_GROWTH_PINE_TAIGA, OLD_GROWTH_SPRUCE_TAIGA, PLAINS, SAVANNA, SAVANNA_PLATEAU, SPARSE_JUNGLE, STONY_PEAKS, STONY_SHORE, SUNFLOWER_PLAINS, SWAMP, TAIGA, WINDSWEPT_FOREST, WINDSWEPT_GRAVELLY_HILLS, WINDSWEPT_HILLS, WINDSWEPT_SAVANNA, WOODED_BADLANDS]
+    Delay: -1
+    MaxNearbyEntities: 16
+    MaxSpawnDelay: 800
+    MinSpawnDelay: 200
+    PlayerRange: 16
+    SpawnCount: 4
+    SpawnRange: 4
+
+  Spawner4:
+    Entities: [COD:10, DOLPHIN:10, DROWNED:10, ELDER_GUARDIAN:10, GUARDIAN:10, SALMON:10, SQUID:10, TADPOLE:10, TROPICAL_FISH:10, PUFFERFISH:10]
+    Biomes: [OCEAN, WARM_OCEAN, LUKEWARM_OCEAN, FROZEN_OCEAN, DEEP_FROZEN_OCEAN, DEEP_LUKEWARM_OCEAN, DEEP_OCEAN, DEEP_COLD_OCEAN, COLD_OCEAN, FROZEN_RIVER, RIVER]
+    Delay: -1
+    MaxNearbyEntities: 16
+    MaxSpawnDelay: 800
+    MinSpawnDelay: 200
+    PlayerRange: 16
+    SpawnCount: 4
+    SpawnRange: 4
+
+  Spawner5:
+    Entities: [TURTLE:100]
+    Biomes: [BEACH, SNOWY_BEACH]
+    Delay: -1
+    MaxNearbyEntities: 16
+    MaxSpawnDelay: 800
+    MinSpawnDelay: 200
+    PlayerRange: 16
+    SpawnCount: 4
+    SpawnRange: 4
+
+  Spawner6:
+    Entities: [SNOWMAN:50, POLAR_BEAR:50]
+    Biomes: [SNOWY_PLAINS, SNOWY_SLOPES, SNOWY_TAIGA, FROZEN_PEAKS, ICE_SPIKES]
+    Delay: -1
+    MaxNearbyEntities: 16
+    MaxSpawnDelay: 800
+    MinSpawnDelay: 200
+    PlayerRange: 16
+    SpawnCount: 4
+    SpawnRange: 4
+
+  Spawner7:
+    Entities: [WARDEN:100]
+    Biomes: [DEEP_DARK]
+    Delay: -1
+    MaxNearbyEntities: 1
+    MaxSpawnDelay: 800
+    MinSpawnDelay: 200
+    PlayerRange: 16
+    SpawnCount: 1
+    SpawnRange: 8
+
+#End Biomes
+
+  Spawner8:
+    Entities: [ENDERMAN:40, ENDERMITE:10, SHULKER:40]
+    Biomes: [END_BARRENS, END_MIDLANDS, THE_END, SMALL_END_ISLANDS, END_HIGHLANDS]
+    Delay: -1
+    MaxNearbyEntities: 16
+    MaxSpawnDelay: 800
+    MinSpawnDelay: 200
+    PlayerRange: 16
+    SpawnCount: 4
+    SpawnRange: 4
+```
+
+
 ### Overworld (**world.txt**):
  
 ```
-#SkyGrid World Block Selection Guide:
-#
-#- Each line in the materials file corresponds to a block and its chance of appearing.
-#- Format: BlockID:Percentage (use block names or IDs).
-#- Example: "STONE:50" means a 50% chance of Stone appearing with in the 32 chunk distribution.
-#- You can include as many blocks as you want, and their percentages can be anything.
-#- The total percentage doesn't need to add up to 100%.
-#- If no percentage is specified for any of the blocks the plugin will distribute the percentage among all the blocks missing a percentage
-#- If you specify the percentage but for only some of the blocks and it doesn't add up to 100% the plugin will distribute the remainder to the rest of the blocks missing a percentage.
-#- These percentages should be interpreted as a probability distribution for selecting the blocks. So, for the END_STONE:80, on average, you'd expect END_STONE to be selected 80% of the time in your block distribution.
-#- You can use any of the materials in the bukkit Material page here https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Material.html
-#
-#Example (world.txt):
-# 50% chance of Stone
-#STONE:50
-# 25% chance of Grass
-#GRASS:25
-# 24.999% chance of Iron Ore
-#IRON_ORE:24.999
-# 0.001% chance of Diamond Ore
-#DIAMOND_ORE:0.001
-#
-#
-ACACIA_LEAVES:0.972
-ACACIA_LOG:0.972
-AMETHYST_BLOCK:0.972
-ANDESITE:0.972
-AZALEA:0.972
-AZALEA_LEAVES:0.972
-BAMBOO:0.972
-BEE_NEST:0.972
-BIRCH_LEAVES:0.972
-BIRCH_LOG:0.972
-BLUE_ICE:0.972
-BONE_BLOCK:0.972
-BOOKSHELF:0.972
-BRAIN_CORAL_BLOCK:0.972
-BROWN_MUSHROOM_BLOCK:0.972
-BUBBLE_CORAL_BLOCK:0.972
-BUDDING_AMETHYST:0.972
-CACTUS:0.972
-CALCITE:0.972
-CHERRY_LEAVES:0.972
-CHERRY_LOG:0.972
-CLAY:0.972
-COAL_ORE:2.972
-COARSE_DIRT:0.972
-COBBLED_DEEPSLATE:0.972
-COBBLESTONE:0.972
-COPPER_ORE:0.972
-CRYING_OBSIDIAN:0.972
-CUT_SANDSTONE:0.972
-DARK_OAK_LEAVES:0.972
-DARK_OAK_LOG:0.972
-DARK_PRISMARINE:0.972
-DEEPSLATE:6.722
+# SkyGrid World Block Selection Guide:
+
+# Each line in the materials file corresponds to a block and its chance of appearing.
+# Format: BlockID:Percentage (use block names or IDs).
+# Example: "STONE:50" means a 50% chance of Stone appearing within the 32-chunk distribution.
+# You can include as many blocks as you want, and their percentages can be anything.
+# The total percentage doesn't need to add up to 100%.
+# You can use any of the materials in the Bukkit Material page here: [https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Material.html]
+
+# Block Distribution Rules:
+
+# 1. No Percentage Specified for a Block:
+#    - If a percentage is not specified for a block, the code assigns it a default percentage of 1.0. This ensures that all blocks are accounted for in the distribution process.
+#    - For example:
+#      STONE:50
+#      DIRT:49
+#      SAND:
+#      Explanation:
+#      The code will interpret SAND as having a default percentage of 1.0 since no percentage is specified. After allocating 50% for STONE and 49% for DIRT, the remaining 1% will be distributed to SAND.
+
+# 2. Total Percentage Exceeds 100%:
+#    - When the total percentage exceeds 100%, the code scales down the percentages proportionally to ensure they sum up to 100%. This prevents over-allocation of blocks.
+#    - For example:
+#      STONE:80
+#      DIRT:60
+#      SAND:
+#      -RIVER-
+#      AIR:120
+#      WATER:
+#      Explanation:
+#      The initial total percentage for each list is calculated. To scale down the percentages, the scaling factor is calculated by dividing 100 by the sum of the initial percentages. Each percentage is multiplied by its respective scaling factor to adjust it accordingly.
+
+# 3. Biome-Dependent Allocation:
+#    - Blocks can be listed under specific biome headers, allowing for biome-dependent allocation.
+#    - If the percentages within a biome list do not add up to 100%, the remaining percentage is redistributed among the blocks within that specific biome's list.
+#    - For example:
+#      STONE:50
+#      DIRT:30
+#      SAND:
+#      AIR:
+#      -OCEAN-
+#      WATER:30
+#      SAND:20
+#      SANDSTONE:
+#      Explanation:
+#      Each biome header gets its own redistribution percentage. For each biome list, percentages are calculated separately. Here, the remaining percentage is redistributed evenly among the blocks within each biome list.
+#      When the block percentages in a biome's list don't add up to 100%, the leftover percentage is redistributed among the blocks within that specific biome's list. This ensures that the total percentage for that biome accurately represents the distribution of blocks in the world.
+
+# Biome-Specific Block Generation:
+# - Customize the block generation in your world based on different biomes.
+# - Specify unique block materials and percentages for each biome in the world.
+# - Biomes are signified by the -BIOME_NAME- header, and everything under the biome header will generate only in that biome unless another biome is specified.
+# - Multiple biomes in the header of the material files are supported. You can now specify multiple biomes separated by commas.
+# - Supported biomes can be found here: [https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/block/Biome.html]
+
+# How to Use/Configure Biome-Specific Blocks:
+#    - Specify block materials and their respective percentages for each biome in your world.
+#    - Example:
+#      DIRT:20
+#      STONE:20
+#      GRASS_BLOCK:20
+#      -OCEAN,COLD_OCEAN,DEEP_COLD_OCEAN,DEEP_FROZEN_OCEAN,DEEP_LUKEWARM_OCEAN,DEEP_OCEAN,FROZEN_OCEAN,LUKEWARM_OCEAN-
+#      SAND:80
+#      SANDSTONE:9.0
+#      SEA_PICKLE:1.0
+#      TUBE_CORAL:1.0
+#      TUBE_CORAL_FAN:1.0
+#      HORN_CORAL:1.0
+#      HORN_CORAL_FAN:1.0
+#      FIRE_CORAL:1.0
+#      FIRE_CORAL_FAN:1.0
+#      BUBBLE_CORAL:1.0
+#      BUBBLE_CORAL_FAN:1.0
+#      BRAIN_CORAL:1.0
+#      BRAIN_CORAL_FAN:1.0
+#      -WARM_OCEAN-
+#      SAND:80
+#      SANDSTONE:20
+
+ACACIA_LEAVES:
+ACACIA_LOG:
+AMETHYST_BLOCK:
+ANDESITE:
+AZALEA:
+AZALEA_LEAVES:
+BAMBOO:
+BEE_NEST:
+BIRCH_LEAVES:
+BIRCH_LOG:
+BLUE_ICE:
+BONE_BLOCK:
+BOOKSHELF:
+BRAIN_CORAL_BLOCK:
+BROWN_MUSHROOM_BLOCK:
+BUBBLE_CORAL_BLOCK:
+BUDDING_AMETHYST:
+CACTUS:
+CALCITE:
+CHERRY_LEAVES:
+CHERRY_LOG:
+CHEST:0.005
+CLAY:
+COAL_ORE:
+COARSE_DIRT:
+COBBLED_DEEPSLATE:
+COBBLESTONE:
+COPPER_ORE:
+CRYING_OBSIDIAN:
+CUT_SANDSTONE:
+DARK_OAK_LEAVES:
+DARK_OAK_LOG:
+DARK_PRISMARINE:
+DEEPSLATE:10
 DIAMOND_ORE:0.001
-DIORITE:0.972
-DIRT:0.972
-DRIPSTONE_BLOCK:0.972
+DIORITE:
+DIRT:
+DRIPSTONE_BLOCK:
 EMERALD_ORE:0.001
-FIRE_CORAL_BLOCK:0.972
-GLASS:0.972
-GOLD_ORE:0.972
-GRANITE:0.972
-GRASS_BLOCK:7.972
-GRAVEL:0.972
-HAY_BLOCK:0.972
-HORN_CORAL_BLOCK:0.972
+FIRE_CORAL_BLOCK:
+GLASS:
+GOLD_ORE:
+GRANITE:
+GRASS_BLOCK:10
+GRAVEL:
+HAY_BLOCK:
+HORN_CORAL_BLOCK:
 IRON_ORE:3
-JUNGLE_LEAVES:0.972
-JUNGLE_LOG:0.972
-LAPIS_ORE:0.972
-LARGE_AMETHYST_BUD:0.972
-LAVA_CAULDRON:0.972
-MANGROVE_LEAVES:0.972
-MANGROVE_LOG:0.972
-MELON:0.972
-MOSSY_COBBLESTONE:0.972
-MOSS_BLOCK:0.972
-MUD:0.972
-MUDDY_MANGROVE_ROOTS:0.972
-MYCELIUM:0.972
-OAK_LEAVES:0.972
-OAK_LOG:0.972
-OBSIDIAN:0.972
-PACKED_ICE:0.972
-PACKED_MUD:0.972
-PODZOL:0.972
-POINTED_DRIPSTONE:0.972
-PRISMARINE:0.972
-PUMPKIN:0.972
-RAW_IRON_BLOCK:1.943
-REDSTONE_ORE:1.943
-RED_MUSHROOM_BLOCK:0.972
-RED_SAND:0.972
-ROOTED_DIRT:0.972
-SAND:6.722
-SANDSTONE:0.972
-SEA_LANTERN:0.972
-SEA_PICKLE:0.972
-SNOW_BLOCK:0.972
-STONE:6.5
-SUGAR_CANE:0.972
-SUSPICIOUS_GRAVEL:0.972
-SUSPICIOUS_SAND:0.972
-TERRACOTTA:0.972
-TUBE_CORAL_BLOCK:0.972
-TUFF:0.972
-WET_SPONGE:0.972
+JUNGLE_LEAVES:
+JUNGLE_LOG:
+LAPIS_ORE:
+LARGE_AMETHYST_BUD:
+LAVA_CAULDRON:
+MANGROVE_LEAVES:
+MANGROVE_LOG:
+MELON:
+MOSS_BLOCK:
+MOSSY_COBBLESTONE:
+MUD:
+MUDDY_MANGROVE_ROOTS:
+MYCELIUM:
+OAK_LEAVES:
+OAK_LOG:
+OBSIDIAN:
+PACKED_ICE:
+PACKED_MUD:
+PODZOL:
+POINTED_DRIPSTONE:
+PRISMARINE:
+PUMPKIN:
+RAW_IRON_BLOCK:2
+RED_MUSHROOM_BLOCK:
+RED_SAND:
+REDSTONE_ORE:2
+ROOTED_DIRT:
+SAND:10
+SANDSTONE:
+SEA_LANTERN:
+SEA_PICKLE:
+SNOW_BLOCK:
+SPAWNER:0.00001
+STONE:10
+SUGAR_CANE:
+SUSPICIOUS_GRAVEL:
+SUSPICIOUS_SAND:
+TERRACOTTA:
+TUBE_CORAL_BLOCK:
+TUFF:
+WET_SPONGE:
 ```
  
 ### Nether (**world_nether.txt**):
  
 ```
-#SkyGrid World Block Selection Guide:
-#
-#- Each line in the materials file corresponds to a block and its chance of appearing.
-#- Format: BlockID:Percentage (use block names or IDs).
-#- Example: "STONE:50" means a 50% chance of Stone appearing with in the 32 chunk distribution.
-#- You can include as many blocks as you want, and their percentages can be anything.
-#- The total percentage doesn't need to add up to 100%.
-#- If no percentage is specified for any of the blocks the plugin will distribute the percentage among all the blocks missing a percentage
-#- If you specify the percentage but for only some of the blocks and it doesn't add up to 100% the plugin will distribute the remainder to the rest of the blocks missing a percentage.
-#- These percentages should be interpreted as a probability distribution for selecting the blocks. So, for the END_STONE:80, on average, you'd expect END_STONE to be selected 80% of the time in your block distribution.
-#- You can use any of the materials in the bukkit Material page here https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Material.html
-#
-#Example (world.txt):
-# 50% chance of Stone
-#STONE:50
-# 25% chance of Grass
-#GRASS:25
-# 24.999% chance of Iron Ore
-#IRON_ORE:24.999
-# 0.001% chance of Diamond Ore
-#DIAMOND_ORE:0.001
-#
-#
-NETHERRACK:13
-SOUL_SAND:3
-NETHER_QUARTZ_ORE:3
-GLOWSTONE:5
-NETHER_BRICKS:2
+ANCIENT_DEBRIS:0.001
 BASALT:13
 BLACKSTONE:13
-MAGMA_BLOCK:2
+BONE_BLOCK:2
+CHEST:0.0001
 CRIMSON_NYLIUM:3
 CRIMSON_STEM:3
-NETHER_WART_BLOCK:3
-SHROOMLIGHT:2
-NETHER_GOLD_ORE:2
-ANCIENT_DEBRIS:0.001
+GLOWSTONE:5
 GRAVEL:2
+LAVA_CAULDRON:3
+MAGMA_BLOCK:2
+NETHER_BRICKS:2
+NETHER_GOLD_ORE:2
+NETHER_QUARTZ_ORE:3
+NETHER_WART_BLOCK:3
+NETHERRACK:13
+OCHRE_FROGLIGHT:2
+PEARLESCENT_FROGLIGHT:2
+SHROOMLIGHT:2
+SOUL_SAND:3
 SOUL_SOIL:2
-BONE_BLOCK:2
+SPAWNER:0.00001
+VERDANT_FROGLIGHT:1
 WARPED_NYLIUM:3
 WARPED_STEM:3
 WARPED_WART_BLOCK:3
-LAVA_CAULDRON:3
-OCHRE_FROGLIGHT:2
-PEARLESCENT_FROGLIGHT:2
-VERDANT_FROGLIGHT:1
 ```
  
 ### End (**world_the_end.txt**):
  
 ```
-#SkyGrid World Block Selection Guide:
-#
-#- Each line in the materials file corresponds to a block and its chance of appearing.
-#- Format: BlockID:Percentage (use block names or IDs).
-#- Example: "STONE:50" means a 50% chance of Stone appearing with in the 32 chunk distribution.
-#- You can include as many blocks as you want, and their percentages can be anything.
-#- The total percentage doesn't need to add up to 100%.
-#- If no percentage is specified for any of the blocks the plugin will distribute the percentage among all the blocks missing a percentage
-#- If you specify the percentage but for only some of the blocks and it doesn't add up to 100% the plugin will distribute the remainder to the rest of the blocks missing a percentage.
-#- These percentages should be interpreted as a probability distribution for selecting the blocks. So, for the END_STONE:80, on average, you'd expect END_STONE to be selected 80% of the time in your block distribution.
-#- You can use any of the materials in the bukkit Material page here https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Material.html
-#
-#Example (world.txt):
-# 50% chance of Stone
-#STONE:50
-# 25% chance of Grass
-#GRASS:25
-# 24.999% chance of Iron Ore
-#IRON_ORE:24.999
-# 0.001% chance of Diamond Ore
-#DIAMOND_ORE:0.001
-#
-#
-END_STONE:40
-PURPUR_BLOCK:25
-END_STONE_BRICKS:15
-OBSIDIAN:12
-CHORUS_FLOWER:2
-END_ROD:1
+CHEST:0.00001
+CHORUS_FLOWER:4
+END_ROD:2
+END_STONE:78
+END_STONE_BRICKS:30
+OBSIDIAN:24
+PURPUR_BLOCK:50
+SPAWNER:0.000001
 ```
  
