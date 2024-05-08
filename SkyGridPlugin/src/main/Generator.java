@@ -13,6 +13,7 @@ import org.bukkit.block.data.type.Leaves;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.server.ServerLoadEvent;
 import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -30,6 +31,7 @@ public class Generator implements Listener {
 	private final int PROCESS_DELAY = 10;
 	private final double chunksForDistribution = 64;
 	private boolean firstBootComplete = false;
+	private boolean serverLoaded = false;
 
 	public Generator(JavaPlugin plugin) {
 		this.plugin = plugin;
@@ -42,14 +44,13 @@ public class Generator implements Listener {
 	}
 
 	public void initialize() {
-		loadWorldMaterials();
 		registerEvents();
+		loadWorldMaterials();
 		callOreGen();
 	}
 
-	private void callOreGen() {
-		OreGen oreGen = new OreGen(plugin);
-		plugin.getServer().getPluginManager().registerEvents(oreGen, plugin);
+	private void registerEvents() {
+		plugin.getServer().getPluginManager().registerEvents(this, plugin);
 	}
 
 	private void loadWorldMaterials() {
@@ -58,122 +59,129 @@ public class Generator implements Listener {
 		loadMaterialsForWorld("world_the_end.txt");
 	}
 
+	private void callOreGen() {
+		OreGen oreGen = new OreGen(plugin);
+		plugin.getServer().getPluginManager().registerEvents(oreGen, plugin);
+	}
+
 	private void loadMaterialsForWorld(String fileName) {
-	    plugin.getLogger().info("Loading materials for world from file: " + fileName);
-	    File file = new File(plugin.getDataFolder(), "SkygridBlocks/" + fileName);
+		plugin.getLogger().info("Loading materials for world from file: " + fileName);
+		File file = new File(plugin.getDataFolder(), "SkygridBlocks/" + fileName);
 
-	    if (file.exists()) {
-	        List<Material> materials = new ArrayList<>();
-	        Map<String, List<Material>> biomeMaterialsMap = new HashMap<>();
-	        double remainingPercentage = 100.0;
+		if (file.exists()) {
+			List<Material> materials = new ArrayList<>();
+			Map<String, List<Material>> biomeMaterialsMap = new HashMap<>();
+			double remainingPercentage = 100.0;
 
-	        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-	            String line;
-	            Set<String> currentBiomes = new HashSet<>();
+			try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+				String line;
+				Set<String> currentBiomes = new HashSet<>();
 
-	            while ((line = reader.readLine()) != null) {
-	                if (line.trim().startsWith("#")) {
-	                    continue;
-	                }
-	                if (line.trim().startsWith("-")) {
-	                    String[] biomes = line.trim().replace("-", "").split(",");
-	                    currentBiomes.addAll(Arrays.asList(biomes));
-	                    continue;
-	                }
-	                String[] parts = line.split(":");
-	                Material material = Material.getMaterial(parts[0]);
+				while ((line = reader.readLine()) != null) {
+					if (line.trim().startsWith("#")) {
+						continue;
+					}
+					if (line.trim().startsWith("-")) {
+						String[] biomes = line.trim().replace("-", "").split(",");
+						currentBiomes.addAll(Arrays.asList(biomes));
+						continue;
+					}
+					String[] parts = line.split(":");
+					Material material = Material.getMaterial(parts[0]);
 
-	                if (material != null) {
-	                    double percentage = parts.length > 1 ? parsePercentage(parts[1]) : 1.0;
+					if (material != null) {
+						double percentage = parts.length > 1 ? parsePercentage(parts[1]) : 1.0;
 
-	                    if (!currentBiomes.isEmpty()) {
-	                        for (String biome : currentBiomes) {
-	                            List<Material> biomeMaterials = biomeMaterialsMap.computeIfAbsent(biome, k -> new ArrayList<>());
-	                            for (int i = 0; i < Math.ceil(percentage * chunksForDistribution); i++) {
-	                                biomeMaterials.add(material);
-	                            }
-	                        }
-	                    } else {
-	                        for (int i = 0; i < Math.ceil(percentage * chunksForDistribution); i++) {
-	                            materials.add(material);
-	                        }
-	                        remainingPercentage -= percentage;
-	                    }
-	                }
-	            }
+						if (!currentBiomes.isEmpty()) {
+							for (String biome : currentBiomes) {
+								List<Material> biomeMaterials = biomeMaterialsMap.computeIfAbsent(biome, k -> new ArrayList<>());
+								for (int i = 0; i < Math.ceil(percentage * chunksForDistribution); i++) {
+									biomeMaterials.add(material);
+								}
+							}
+						} else {
+							for (int i = 0; i < Math.ceil(percentage * chunksForDistribution); i++) {
+								materials.add(material);
+							}
+							remainingPercentage -= percentage;
+						}
+					}
+				}
 
-	            if (currentBiomes.isEmpty() && !materials.isEmpty()) {
-	                // Redistribute remaining percentage among materials without specified biome
-	                redistributeRemainingPercentage(materials, remainingPercentage);
-	            }
+				if (currentBiomes.isEmpty() && !materials.isEmpty()) {
+					// Redistribute remaining percentage among materials without specified biome
+					redistributeRemainingPercentage(materials, remainingPercentage);
+				}
 
-	            if (!materials.isEmpty()) {
-	                String worldName = getWorldNameFromFileName(fileName);
-	                plugin.getLogger().info("Materials loaded for world: " + worldName);
-	                worldMaterials.put(worldName, materials);
-	            }
+				if (!materials.isEmpty()) {
+					String worldName = getWorldNameFromFileName(fileName);
+					plugin.getLogger().info("Materials loaded for world: " + worldName);
+					worldMaterials.put(worldName, materials);
+				}
 
-	            for (String biome : currentBiomes) {
-	                redistributeRemainingPercentage(biomeMaterialsMap.get(biome), 100.0); // Redistribute percentages for each biome list
-	                // Store biome-specific materials
-	                biomeMaterials.put(biome, calculateMaterialDistribution(biomeMaterialsMap.get(biome)));
-	            }
+				for (String biome : currentBiomes) {
+					redistributeRemainingPercentage(biomeMaterialsMap.get(biome), 100.0); // Redistribute percentages for each biome list
+					// Store biome-specific materials
+					biomeMaterials.put(biome, calculateMaterialDistribution(biomeMaterialsMap.get(biome)));
+				}
 
-	        } catch (IOException e) {
-	            e.printStackTrace();
-	        }
-	    } else {
-	        plugin.getLogger().warning("Missing file: " + fileName);
-	    }
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		} else {
+			plugin.getLogger().warning("Missing file: " + fileName);
+		}
 	}
 
 	private List<Material> redistributeRemainingPercentage(List<Material> materials, double remainingPercentage) {
-	    List<Material> redistributedMaterials = new ArrayList<>();
-	    int remainingItemCount = materials.size();
-	    if (remainingItemCount > 0 && remainingPercentage > 0) {
-	        double percentagePerItem = remainingPercentage / remainingItemCount;
-	        for (Material material : materials) {
-	            int repetitionCount = (int) Math.ceil(percentagePerItem * chunksForDistribution);
-	            for (int i = 0; i < repetitionCount; i++) {
-	                redistributedMaterials.add(material);
-	            }
-	        }
-	    }
-	    return redistributedMaterials;
+		List<Material> redistributedMaterials = new ArrayList<>();
+		int remainingItemCount = materials.size();
+		if (remainingItemCount > 0 && remainingPercentage > 0) {
+			double percentagePerItem = remainingPercentage / remainingItemCount;
+			for (Material material : materials) {
+				int repetitionCount = (int) Math.ceil(percentagePerItem * chunksForDistribution);
+				for (int i = 0; i < repetitionCount; i++) {
+					redistributedMaterials.add(material);
+				}
+			}
+		}
+		return redistributedMaterials;
 	}
 
 	private Map<Material, Integer> calculateMaterialDistribution(List<Material> materials) {
-	    Map<Material, Integer> materialDistribution = new HashMap<>();
-	    for (Material material : materials) {
-	        materialDistribution.put(material, materialDistribution.getOrDefault(material, 0) + 1);
-	    }
-	    return materialDistribution;
+		Map<Material, Integer> materialDistribution = new HashMap<>();
+		for (Material material : materials) {
+			materialDistribution.put(material, materialDistribution.getOrDefault(material, 0) + 1);
+		}
+		return materialDistribution;
 	}
 
-    private double parsePercentage(String percentageString) {
-        try {
-            return Double.parseDouble(percentageString);
-        } catch (NumberFormatException e) {
-            System.out.println("Invalid percentage format: " + percentageString);
-            return 1.0;
-        }
-    }
+	private double parsePercentage(String percentageString) {
+		try {
+			return Double.parseDouble(percentageString);
+		} catch (NumberFormatException e) {
+			System.out.println("Invalid percentage format: " + percentageString);
+			return 1.0;
+		}
+	}
 
 	private String getWorldNameFromFileName(String fileName) {
 		return fileName.substring(0, fileName.lastIndexOf('.'));
 	}
 
-	private void registerEvents() {
-		plugin.getServer().getPluginManager().registerEvents(this, plugin);
+	@EventHandler(priority = EventPriority.HIGHEST)
+	public void onServerLoad(ServerLoadEvent event) {
+		serverLoaded = true;
+		if (!firstBootComplete) {
+			processAllLoadedChunks();
+			firstBootComplete = true;
+			plugin.getServer().getConsoleSender().sendMessage("\u001B[32mFirst boot generation complete.\u001B[0m");
+		}
 	}
 
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onChunkLoad(ChunkLoadEvent event) {
-		if (!firstBootComplete && plugin instanceof SkyGridPlugin && ((SkyGridPlugin) plugin).isFirstBoot()) {
-			processAllLoadedChunks();
-			firstBootComplete = true;
-			plugin.getServer().getConsoleSender().sendMessage("\u001B[32mFirst boot generation complete.\u001B[0m");
-		} else {
+		if (serverLoaded) {
 			Chunk chunk = event.getChunk();
 			String chunkCoords = chunk.getX() + "," + chunk.getZ();
 			String worldName = chunk.getWorld().getName();
