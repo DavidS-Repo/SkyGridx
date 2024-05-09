@@ -30,6 +30,18 @@ public class Generator implements Listener {
 	private final int PROCESS_DELAY = 10;
 	private final double chunksForDistribution = 64;
 
+	private static final List<Material> CROP_MATERIALS = Arrays.asList(
+			Material.CACTUS, Material.SUGAR_CANE, Material.KELP, Material.WHEAT,
+			Material.BEETROOTS, Material.CARROTS, Material.POTATOES, Material.TORCHFLOWER_CROP,
+			Material.PITCHER_CROP, Material.NETHER_WART, Material.CAVE_VINES
+			);
+
+	private static final List<Material> LEAVES = Arrays.asList(
+			Material.ACACIA_LEAVES, Material.AZALEA_LEAVES, Material.BIRCH_LEAVES, Material.CHERRY_LEAVES, 
+			Material.DARK_OAK_LEAVES, Material.FLOWERING_AZALEA_LEAVES, Material.JUNGLE_LEAVES, 
+			Material.MANGROVE_LEAVES, Material.OAK_LEAVES, Material.SPRUCE_LEAVES
+			);
+
 	public Generator(SkyGridPlugin plugin) {
 		this.plugin = plugin;
 		this.random = new Random();
@@ -274,40 +286,14 @@ public class Generator implements Listener {
 					Material material = getRandomMaterialForWorld(worldName, biomeName);
 					if (material != null) {
 						block.setType(material, false);
-
-						BlockData blockData = block.getBlockData();
-						if (material == Material.CHORUS_FLOWER) {
-							if (blockData instanceof Ageable) {
-								Ageable ageable = (Ageable) blockData;
-								int maxAge = ageable.getMaximumAge();
-								ageable.setAge(Math.min(5, maxAge));
-								block.setBlockData(ageable, false);
-							}
-						} else if (material.toString().endsWith("_LEAVES")) {
-							Leaves leaves = (Leaves) blockData;
-							leaves.setPersistent(true);
-							block.setBlockData(leaves, false);
-						} else if (blockData instanceof Bamboo) {
-							Bamboo bamboo = (Bamboo) blockData;
-							bamboo.setStage(1);
-							block.setBlockData(bamboo, false);
-						} else if (material == Material.CACTUS || material == Material.SUGAR_CANE
-								|| material == Material.KELP || material == Material.WHEAT
-								|| material == Material.BEETROOTS || material == Material.CARROTS
-								|| material == Material.POTATOES || material == Material.TORCHFLOWER_CROP
-								|| material == Material.PITCHER_CROP || material == Material.NETHER_WART
-								|| material == Material.CAVE_VINES) {
-							if (blockData instanceof Ageable) {
-								Ageable ageable = (Ageable) blockData;
-								int maxAge = ageable.getMaximumAge();
-								ageable.setAge(maxAge);
-								block.setBlockData(ageable, false);
-							}
-							if (material == Material.CAVE_VINES || material == Material.CAVE_VINES_PLANT) {
-								CaveVines caveVines = (CaveVines) block.getBlockData();
-								caveVines.setBerries(true);
-								block.setBlockData(caveVines, true);
-							}
+						if (LEAVES.contains(material)) {
+							handleLeaves(block);
+						} else if (CROP_MATERIALS.contains(material)) {
+							handleCrop(block);
+						} else if (material == Material.CHORUS_FLOWER) {
+							handleChorusFlower(block);
+						} else if (material == Material.BAMBOO) {
+							handleBamboo(block);
 						} else if (material == Material.SPAWNER) {
 							spawner.BlockInfo(block);
 						} else if (material == Material.CHEST) {
@@ -317,6 +303,56 @@ public class Generator implements Listener {
 				}
 			}
 		}
+	}
+
+	public void handleLeaves(Block block) {
+		BlockData blockData = block.getBlockData();
+		if (blockData instanceof Leaves) {
+			Leaves leaves = (Leaves) blockData;
+			leaves.setPersistent(true);
+			block.setBlockData(leaves, false);
+		}
+	}
+
+	public void handleCrop(Block block) {
+		BlockData blockData = block.getBlockData();
+		if (blockData instanceof Ageable) {
+			Ageable ageable = (Ageable) blockData;
+			int maxAge = ageable.getMaximumAge();
+			ageable.setAge(maxAge);
+			block.setBlockData(ageable, false);
+		}
+		else if (block.getType() == Material.CAVE_VINES || block.getType() == Material.CAVE_VINES_PLANT) {
+			CaveVines caveVines = (CaveVines) block.getBlockData();
+			caveVines.setBerries(true);
+			block.setBlockData(caveVines, true);
+		}
+	}
+
+	public void handleChorusFlower(Block block) {
+		BlockData blockData = block.getBlockData();
+		if (blockData instanceof Ageable) {
+			Ageable ageable = (Ageable) blockData;
+			int maxAge = ageable.getMaximumAge();
+			ageable.setAge(Math.min(5, maxAge));
+			block.setBlockData(ageable, false);
+		}
+	}
+
+	public void handleBamboo(Block block) {
+		BlockData blockData = block.getBlockData();
+		if (blockData instanceof Bamboo) {
+			Bamboo bamboo = (Bamboo) blockData;
+			bamboo.setStage(1);
+			bamboo.setLeaves(getRandomLeafSize());
+			block.setBlockData(bamboo, false);
+		}
+	}
+
+	private Bamboo.Leaves getRandomLeafSize() {
+		Bamboo.Leaves[] values = Bamboo.Leaves.values();
+		int randomIndex = random.nextInt(values.length);
+		return values[randomIndex];
 	}
 
 	private Material getRandomMaterialForWorld(String worldName, String biomeName) {
