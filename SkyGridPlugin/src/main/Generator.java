@@ -16,19 +16,21 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.server.ServerLoadEvent;
 import org.bukkit.event.world.ChunkLoadEvent;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class Generator implements Listener {
 	private final SkyGridPlugin plugin;
-	private final Random random;
-	private final Map<String, List<Material>> worldMaterials;
+	private final ThreadLocalRandom random;
 	private final Map<String, Set<String>> generatedChunksByWorld;
-	private final Map<String, Map<Material, Integer>> biomeMaterials;
+	private final MaterialManager materialManager;
 	private final Spawner spawner;
 	private final Chest chest;
 	private final int PROCESS_DELAY = 10;
-	private final double chunksForDistribution = 64;
 
 	private static final List<Material> CROP_MATERIALS = Arrays.asList(
 			Material.CACTUS, Material.SUGAR_CANE, Material.KELP, Material.WHEAT,
@@ -44,10 +46,9 @@ public class Generator implements Listener {
 
 	public Generator(SkyGridPlugin plugin) {
 		this.plugin = plugin;
-		this.random = new Random();
-		this.worldMaterials = new HashMap<>();
+		this.random = ThreadLocalRandom.current();
+		this.materialManager = new MaterialManager(plugin);
 		this.generatedChunksByWorld = new HashMap<>();
-		this.biomeMaterials = new HashMap<>();
 		this.spawner = Spawner.getInstance(plugin);
 		this.chest = Chest.getInstance(plugin);
 	}
@@ -63,119 +64,44 @@ public class Generator implements Listener {
 	}
 
 	private void loadWorldMaterials() {
-		loadMaterialsForWorld("world.txt");
-		loadMaterialsForWorld("world_nether.txt");
-		loadMaterialsForWorld("world_the_end.txt");
+		if (hasBiomeHeaders()) {
+			materialManager.loadMaterialsForWorldMultiBiome("world.txt");
+			materialManager.loadMaterialsForWorldMultiBiome("world_nether.txt");
+			materialManager.loadMaterialsForWorldMultiBiome("world_the_end.txt");
+		} else {
+			materialManager.loadMaterialsForWorld("world.txt");
+			materialManager.loadMaterialsForWorld("world_nether.txt");
+			materialManager.loadMaterialsForWorld("world_the_end.txt");
+		}
+	}
+
+	private boolean hasBiomeHeaders() {
+		List<String> fileNames = Arrays.asList("world.txt", "world_nether.txt", "world_the_end.txt");
+
+		for (String fileName : fileNames) {
+			File file = new File(plugin.getDataFolder(), "SkygridBlocks/" + fileName);
+
+			if (file.exists()) {
+				try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+					String line;
+					while ((line = reader.readLine()) != null) {
+						if (!line.trim().startsWith("#") && line.trim().startsWith("-")) {
+							return true;
+						}
+					}
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			} else {
+				plugin.getLogger().warning("Missing file: " + fileName);
+			}
+		}
+		return false;
 	}
 
 	private void callOreGen() {
 		OreGen oreGen = new OreGen(plugin);
 		plugin.getServer().getPluginManager().registerEvents(oreGen, plugin);
-	}
-
-	private void loadMaterialsForWorld(String fileName) {
-		plugin.getLogger().info("Loading materials for world from file: " + fileName);
-		File file = new File(plugin.getDataFolder(), "SkygridBlocks/" + fileName);
-
-		if (file.exists()) {
-			List<Material> materials = new ArrayList<>();
-			Map<String, List<Material>> biomeMaterialsMap = new HashMap<>();
-			double remainingPercentage = 100.0;
-
-			try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-				String line;
-				Set<String> currentBiomes = new HashSet<>();
-
-				while ((line = reader.readLine()) != null) {
-					if (line.trim().startsWith("#")) {
-						continue;
-					}
-					if (line.trim().startsWith("-")) {
-						String[] biomes = line.trim().replace("-", "").split(",");
-						currentBiomes.addAll(Arrays.asList(biomes));
-						continue;
-					}
-					String[] parts = line.split(":");
-					Material material = Material.getMaterial(parts[0]);
-
-					if (material != null) {
-						double percentage = parts.length > 1 ? parsePercentage(parts[1]) : 1.0;
-
-						if (!currentBiomes.isEmpty()) {
-							for (String biome : currentBiomes) {
-								List<Material> biomeMaterials = biomeMaterialsMap.computeIfAbsent(biome, k -> new ArrayList<>());
-								for (int i = 0; i < Math.ceil(percentage * chunksForDistribution); i++) {
-									biomeMaterials.add(material);
-								}
-							}
-						} else {
-							for (int i = 0; i < Math.ceil(percentage * chunksForDistribution); i++) {
-								materials.add(material);
-							}
-							remainingPercentage -= percentage;
-						}
-					}
-				}
-
-				if (currentBiomes.isEmpty() && !materials.isEmpty()) {
-					// Redistribute remaining percentage among materials without specified biome
-					redistributeRemainingPercentage(materials, remainingPercentage);
-				}
-
-				if (!materials.isEmpty()) {
-					String worldName = getWorldNameFromFileName(fileName);
-					plugin.getLogger().info("Materials loaded for world: " + worldName);
-					worldMaterials.put(worldName, materials);
-				}
-
-				for (String biome : currentBiomes) {
-					redistributeRemainingPercentage(biomeMaterialsMap.get(biome), 100.0); // Redistribute percentages for each biome list
-					// Store biome-specific materials
-					biomeMaterials.put(biome, calculateMaterialDistribution(biomeMaterialsMap.get(biome)));
-				}
-
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		} else {
-			plugin.getLogger().warning("Missing file: " + fileName);
-		}
-	}
-
-	private List<Material> redistributeRemainingPercentage(List<Material> materials, double remainingPercentage) {
-		List<Material> redistributedMaterials = new ArrayList<>();
-		int remainingItemCount = materials.size();
-		if (remainingItemCount > 0 && remainingPercentage > 0) {
-			double percentagePerItem = remainingPercentage / remainingItemCount;
-			for (Material material : materials) {
-				int repetitionCount = (int) Math.ceil(percentagePerItem * chunksForDistribution);
-				for (int i = 0; i < repetitionCount; i++) {
-					redistributedMaterials.add(material);
-				}
-			}
-		}
-		return redistributedMaterials;
-	}
-
-	private Map<Material, Integer> calculateMaterialDistribution(List<Material> materials) {
-		Map<Material, Integer> materialDistribution = new HashMap<>();
-		for (Material material : materials) {
-			materialDistribution.put(material, materialDistribution.getOrDefault(material, 0) + 1);
-		}
-		return materialDistribution;
-	}
-
-	private double parsePercentage(String percentageString) {
-		try {
-			return Double.parseDouble(percentageString);
-		} catch (NumberFormatException e) {
-			System.out.println("Invalid percentage format: " + percentageString);
-			return 1.0;
-		}
-	}
-
-	private String getWorldNameFromFileName(String fileName) {
-		return fileName.substring(0, fileName.lastIndexOf('.'));
 	}
 
 	@EventHandler(priority = EventPriority.HIGHEST)
@@ -259,52 +185,83 @@ public class Generator implements Listener {
 			processNextDimension(dimensionQueue);
 		}
 	}
-
-	private void processChunk(Chunk chunk) {
-		World world = chunk.getWorld();
-		String worldName = world.getName();
-		World.Environment dimension = world.getEnvironment();
-		int xStart = chunk.getX() << 4, zStart = chunk.getZ() << 4;
-		int minY, maxY;
-
-		switch (dimension) {
-		case NETHER: minY = 0; maxY = 128; break;
-		case THE_END: minY = 0; maxY = 128; break;
-		default: minY = -64; maxY = 64; break;
-		}
-
-		for (int x = xStart + 1; x <= xStart + 13; x += 4) {
-			for (int z = zStart + 2; z <= zStart + 14; z += 4) {
-				for (int y = minY; y <= maxY; y += 4) {
-					int chunkX = x & 0xF;
-					int chunkZ = z & 0xF;
-					int chunkY = Math.max(minY, Math.min(maxY, y));
-
-					Block block = chunk.getBlock(chunkX, chunkY, chunkZ);
-					String biomeName = block.getBiome().name();
-
-					Material material = getRandomMaterialForWorld(worldName, biomeName);
-					if (material != null) {
-						block.setType(material, false);
-						if (LEAVES.contains(material)) {
-							handleLeaves(block);
-						} else if (CROP_MATERIALS.contains(material)) {
-							handleCrop(block);
-						} else if (material == Material.CHORUS_FLOWER) {
-							handleChorusFlower(block);
-						} else if (material == Material.BAMBOO) {
-							handleBamboo(block);
-						} else if (material == Material.SPAWNER) {
-							spawner.BlockInfo(block);
-						} else if (material == Material.CHEST) {
-							chest.loadChest(block);
-						}
-					}
-				}
-			}
-		}
+	
+	@FunctionalInterface
+	interface MaterialSelector {
+	    Material selectMaterial(String worldName, String biomeName);
+	}
+	
+	private Material selectMaterialWithoutBiomes(String worldName, String biomeName) {
+	    return materialManager.getRandomMaterialForWorld(worldName, biomeName);
 	}
 
+	private Material selectMaterialWithBiomes(String worldName, String biomeName) {
+	    return materialManager.getRandomMaterialForWorldMultiBiome(worldName, biomeName);
+	}
+
+	private void processChunk(Chunk chunk) {
+	    World world = chunk.getWorld();
+	    String worldName = world.getName();
+	    World.Environment dimension = world.getEnvironment();
+	    int xStart = chunk.getX() << 4, zStart = chunk.getZ() << 4;
+	    int minY, maxY;
+
+	    switch (dimension) {
+	        case NETHER:
+	            minY = 0;
+	            maxY = 128;
+	            break;
+	        case THE_END:
+	            minY = 0;
+	            maxY = 128;
+	            break;
+	        default:
+	            minY = -64;
+	            maxY = 64;
+	            break;
+	    }
+
+	    MaterialSelector materialSelector;
+
+	    if (hasBiomeHeaders()) {
+	        materialSelector = this::selectMaterialWithBiomes;
+	    } else {
+	        materialSelector = this::selectMaterialWithoutBiomes;
+	    }
+
+	    for (int x = xStart + 1; x <= xStart + 13; x += 4) {
+	        for (int z = zStart + 2; z <= zStart + 14; z += 4) {
+	            for (int y = minY; y <= maxY; y += 4) {
+	                int chunkX = x & 0xF;
+	                int chunkZ = z & 0xF;
+	                int chunkY = Math.max(minY, Math.min(maxY, y));
+
+	                Block block = chunk.getBlock(chunkX, chunkY, chunkZ);
+	                String biomeName = block.getBiome().name();
+
+	                Material material = materialSelector.selectMaterial(worldName, biomeName);
+
+	                if (material != null) {
+	                    block.setType(material, false);
+	                    if (LEAVES.contains(material)) {
+	                        handleLeaves(block);
+	                    } else if (CROP_MATERIALS.contains(material)) {
+	                        handleCrop(block);
+	                    } else if (material == Material.CHORUS_FLOWER) {
+	                        handleChorusFlower(block);
+	                    } else if (material == Material.BAMBOO) {
+	                        handleBamboo(block);
+	                    } else if (material == Material.SPAWNER) {
+	                        spawner.BlockInfo(block);
+	                    } else if (material == Material.CHEST) {
+	                        chest.loadChest(block);
+	                    }
+	                }
+	            }
+	        }
+	    }
+	}
+	
 	public void handleLeaves(Block block) {
 		BlockData blockData = block.getBlockData();
 		if (blockData instanceof Leaves) {
@@ -353,34 +310,5 @@ public class Generator implements Listener {
 		Bamboo.Leaves[] values = Bamboo.Leaves.values();
 		int randomIndex = random.nextInt(values.length);
 		return values[randomIndex];
-	}
-
-	private Material getRandomMaterialForWorld(String worldName, String biomeName) {
-		List<Material> materials = worldMaterials.get(worldName);
-		Map<Material, Integer> biomeMaterialsMap = new HashMap<>();
-
-		if (biomeMaterials.containsKey(biomeName)) {
-			biomeMaterialsMap.putAll(biomeMaterials.get(biomeName));
-		}
-		if (!biomeMaterialsMap.isEmpty()) {
-			List<Material> possibleMaterials = new ArrayList<>();
-
-			for (Map.Entry<Material, Integer> entry : biomeMaterialsMap.entrySet()) {
-				Material material = entry.getKey();
-				int count = entry.getValue();
-				for (int i = 0; i < count; i++) {
-					possibleMaterials.add(material);
-				}
-			}
-			if (!possibleMaterials.isEmpty()) {
-				int randomIndex = random.nextInt(possibleMaterials.size());
-				return possibleMaterials.get(randomIndex);
-			}
-		}
-		if (materials != null && !materials.isEmpty()) {
-			int randomIndex = random.nextInt(materials.size());
-			return materials.get(randomIndex);
-		}
-		return null;
 	}
 }
