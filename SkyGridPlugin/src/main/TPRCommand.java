@@ -1,42 +1,51 @@
 package main;
 
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
+import java.util.UUID;
+
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
+import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 
-import java.util.*;
-
 public class TPRCommand implements CommandExecutor {
-	private final Map<Player, Long> lastTeleportTimes = new HashMap<>();
+	private final Map<UUID, Long> lastTeleportTimes = new HashMap<>();
 	private final Set<Material> dangerousBlocks = new HashSet<>(Arrays.asList(
 			Material.LAVA, Material.CACTUS, Material.FIRE, Material.WATER, Material.LAVA_CAULDRON,
 			Material.MAGMA_BLOCK, Material.SWEET_BERRY_BUSH, Material.CAMPFIRE, Material.WITHER_ROSE,
 			Material.SUGAR_CANE, Material.VINE, Material.WEEPING_VINES, Material.TWISTING_VINES,
-			Material.POINTED_DRIPSTONE
+			Material.POINTED_DRIPSTONE, Material.AIR
 			));
 
 	@Override
 	public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-		if (sender instanceof Player) {
-			Player player = (Player) sender;
-			if (canTeleport(player)) {
-				World world = getWorldByName("world");
-				if (args.length > 0) {
-					world = getWorldByName(args[0]);
-				}
-				teleportPlayer(player, world);
-			} else {
-				long secondsLeft = (lastTeleportTimes.get(player) + 30 * 1000 - System.currentTimeMillis()) / 1000;
-				player.sendMessage(ChatColor.RED + "You must wait " + secondsLeft + " seconds before using this command again.");
-			}
-		} else {
+		if (!(sender instanceof Player)) {
 			sender.sendMessage(ChatColor.RED + "Only players can use this command.");
+			return true;
+		}
+
+		Player player = (Player) sender;
+		if (canTeleport(player)) {
+			World world = Bukkit.getWorld("world");
+			if (args.length > 0) {
+				world = getWorldByName(args[0]);
+			}
+			teleportPlayer(player, world);
+		} else {
+			long secondsLeft = (lastTeleportTimes.get(player.getUniqueId()) + 30 * 1000 - System.currentTimeMillis()) / 1000;
+			player.sendMessage(ChatColor.RED + "You must wait " + secondsLeft + " seconds before using this command again.");
 		}
 		return true;
 	}
@@ -63,10 +72,11 @@ public class TPRCommand implements CommandExecutor {
 	}
 
 	private boolean canTeleport(Player player) {
-		if (!lastTeleportTimes.containsKey(player)) {
+		UUID playerId = player.getUniqueId();
+		if (!lastTeleportTimes.containsKey(playerId)) {
 			return true;
 		}
-		long lastTeleportTime = lastTeleportTimes.get(player);
+		long lastTeleportTime = lastTeleportTimes.get(playerId);
 		return (System.currentTimeMillis() - lastTeleportTime) >= 30 * 1000;
 	}
 
@@ -94,6 +104,7 @@ public class TPRCommand implements CommandExecutor {
 		new BukkitRunnable() {
 
 			private int tickCount = 0;
+
 			@Override
 			public void run() {
 				if (tickCount >= 10) {
@@ -105,13 +116,13 @@ public class TPRCommand implements CommandExecutor {
 								int z = destinationZ + dz;
 
 								// Teleport the player to the location
-								player.teleport(new org.bukkit.Location(world, x + 0.5, y + 1, z + 0.5));
+								player.teleport(new Location(world, x + 0.5, y + 1, z + 0.5));
 
 								// Check if the block is safe
-								org.bukkit.block.Block block = world.getBlockAt(x, y, z);
+								Block block = world.getBlockAt(x, y, z);
 								if (!block.getType().isAir() && !isDangerousBlock(block.getType())) {
 									// Update the last teleport time for the player
-									lastTeleportTimes.put(player, System.currentTimeMillis());
+									lastTeleportTimes.put(player.getUniqueId(), System.currentTimeMillis());
 									cancel();
 									return;
 								}
@@ -121,7 +132,7 @@ public class TPRCommand implements CommandExecutor {
 				}
 				tickCount++;
 			}
-		}.runTaskTimer(SkyGridPlugin.getPlugin(SkyGridPlugin.class), 0L, 1L); // Check every tick
+		}.runTaskTimer(SkyGridPlugin.getPlugin(SkyGridPlugin.class), 0L, 0L); // Check every tick
 	}
 
 	private boolean isDangerousBlock(Material blockType) {
