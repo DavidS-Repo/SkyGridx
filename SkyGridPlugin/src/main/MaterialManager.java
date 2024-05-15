@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
+import java.util.Map.Entry;
 import java.util.concurrent.ThreadLocalRandom;
 
 import org.bukkit.Material;
@@ -13,7 +14,7 @@ public class MaterialManager {
 	private final SkyGridPlugin plugin;
 	private final ThreadLocalRandom random;
 	private final Map<String, List<Material>> worldMaterials;
-	private final Map<String, Map<Material, Integer>> biomeMaterials;
+	private final Map<String, Map<Material, Double>> biomeMaterials;
 	private final double chunksForDistribution = 64;
 
 	public MaterialManager(SkyGridPlugin plugin) {
@@ -97,10 +98,10 @@ public class MaterialManager {
 		return redistributedMaterials;
 	}
 
-	private Map<Material, Integer> calculateMaterialDistribution(List<Material> materials) {
-		Map<Material, Integer> materialDistribution = new HashMap<>();
+	private Map<Material, Double> calculateMaterialDistribution(List<Material> materials) {
+		Map<Material, Double> materialDistribution = new HashMap<>();
 		for (Material material : materials) {
-			materialDistribution.put(material, materialDistribution.getOrDefault(material, 0) + 1);
+			materialDistribution.put(material, materialDistribution.getOrDefault(material, (double) 0) + 1);
 		}
 		return materialDistribution;
 	}
@@ -120,14 +121,14 @@ public class MaterialManager {
 
 	public Material getRandomMaterialForWorld(String worldName, String biomeName) {
 		List<Material> materials = worldMaterials.get(worldName);
-		Map<Material, Integer> biomeMaterialsMap = biomeMaterials.get(biomeName);
+		Map<Material, Double> biomeMaterialsMap = biomeMaterials.get(biomeName);
 
 		if (biomeMaterialsMap != null && !biomeMaterialsMap.isEmpty()) {
 			List<Material> possibleMaterials = new ArrayList<>();
 
-			for (Map.Entry<Material, Integer> entry : biomeMaterialsMap.entrySet()) {
+			for (Entry<Material, Double> entry : biomeMaterialsMap.entrySet()) {
 				Material material = entry.getKey();
-				int count = entry.getValue();
+				Double count = entry.getValue();
 				for (int i = 0; i < count; i++) {
 					possibleMaterials.add(material);
 				}
@@ -153,7 +154,7 @@ public class MaterialManager {
 			try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
 				String line;
 				Set<String> currentBiomes = new HashSet<>();
-				Map<Material, Integer> materialsMap = new HashMap<>();
+				Map<Material, Double> materialsMap = new HashMap<>();
 
 				while ((line = reader.readLine()) != null) {
 					if (line.trim().startsWith("#")) {
@@ -178,8 +179,7 @@ public class MaterialManager {
 
 							if (material != null) {
 								double percentage = parts.length > 1 ? parsePercentage(parts[1]) : 1.0;
-								int itemCount = (int) Math.ceil(percentage * chunksForDistribution);
-								materialsMap.put(material, itemCount);
+								materialsMap.put(material, percentage);
 							}
 						}
 					}
@@ -197,28 +197,29 @@ public class MaterialManager {
 	}
 
 	public Material getRandomMaterialForWorldMultiBiome(String worldName, String biomeName) {
-		List<Material> materials = worldMaterials.get(worldName);
-		Map<Material, Integer> biomeMaterialsMap = biomeMaterials.get(biomeName);
+		Map<Material, Double> biomeMaterialsMap = biomeMaterials.get(biomeName);
 
 		if (biomeMaterialsMap != null && !biomeMaterialsMap.isEmpty()) {
-			List<Material> possibleMaterials = new ArrayList<>();
-
-			for (Map.Entry<Material, Integer> entry : biomeMaterialsMap.entrySet()) {
-				Material material = entry.getKey();
-				int count = entry.getValue();
-				for (int i = 0; i < count; i++) {
-					possibleMaterials.add(material);
-				}
-			}
-			if (!possibleMaterials.isEmpty()) {
-				int randomIndex = random.nextInt(possibleMaterials.size());
-				return possibleMaterials.get(randomIndex);
-			}
+			return selectMaterialWithWeight(biomeMaterialsMap);
 		}
+		List<Material> materials = worldMaterials.get(worldName);
 		if (materials != null && !materials.isEmpty()) {
-			int randomIndex = random.nextInt(materials.size());
-			return materials.get(randomIndex);
+			return materials.get(random.nextInt(materials.size()));
 		}
 		return null;
+	}
+
+	private Material selectMaterialWithWeight(Map<Material, Double> materialsMap) {
+		double totalWeight = materialsMap.values().stream().mapToDouble(Double::doubleValue).sum();
+		double randomWeight = random.nextDouble() * totalWeight;
+
+		for (Map.Entry<Material, Double> entry : materialsMap.entrySet()) {
+			randomWeight -= entry.getValue();
+			if (randomWeight <= 0) {
+				return entry.getKey();
+			}
+		}
+		// This should never happen unless there's a problem with the weights
+		throw new IllegalStateException("Failed to select material based on weight");
 	}
 }
