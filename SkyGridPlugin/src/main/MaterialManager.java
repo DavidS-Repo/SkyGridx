@@ -1,12 +1,13 @@
 package main;
 
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
-import java.util.Map.Entry;
 import java.util.concurrent.ThreadLocalRandom;
+import java.nio.file.Files;
+
 
 import org.bukkit.Material;
 
@@ -15,7 +16,7 @@ public class MaterialManager {
 	private final ThreadLocalRandom random;
 	private final Map<String, List<Material>> worldMaterials;
 	private final Map<String, Map<Material, Double>> biomeMaterials;
-	private final double chunksForDistribution = 64;
+	private static final double CHUNKS_FOR_DISTRIBUTION = 64.0;
 
 	public MaterialManager(SkyGridPlugin plugin) {
 		this.plugin = plugin;
@@ -25,83 +26,75 @@ public class MaterialManager {
 	}
 
 	public void loadMaterialsForWorld(String fileName) {
-		plugin.getLogger().info("Enabling simple material loader.");
-		plugin.getLogger().info("Loading materials for world from file: " + fileName);
-		File file = new File(plugin.getDataFolder(), "SkygridBlocks/" + fileName);
-
-		if (file.exists()) {
+		Path filePath = Paths.get(plugin.getDataFolder().toString(), "SkygridBlocks", fileName);
+		try (BufferedReader reader = Files.newBufferedReader(filePath)) {
 			List<Material> materials = new ArrayList<>();
 			Map<String, List<Material>> biomeMaterialsMap = new HashMap<>();
 			double remainingPercentage = 100.0;
 
-			try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-				String line;
-				Set<String> currentBiomes = new HashSet<>();
+			String line;
+			while ((line = reader.readLine()) != null) {
+				if (line.trim().startsWith("#")) {
+					continue;
+				}
+				String[] parts = line.split(":");
+				Material material = Material.getMaterial(parts[0]);
 
-				while ((line = reader.readLine()) != null) {
-					if (line.trim().startsWith("#")) {
-						continue;
-					}
-					String[] parts = line.split(":");
-					Material material = Material.getMaterial(parts[0]);
+				if (material != null) {
+					double percentage = parts.length > 1 ? parsePercentage(parts[1]) : 1.0;
+					int chunkCount = (int) Math.ceil(percentage * CHUNKS_FOR_DISTRIBUTION);
 
-					if (material != null) {
-						double percentage = parts.length > 1 ? parsePercentage(parts[1]) : 1.0;
-
-						if (!currentBiomes.isEmpty()) {
-							for (String biome : currentBiomes) {
-								List<Material> biomeMaterials = biomeMaterialsMap.computeIfAbsent(biome, k -> new ArrayList<>());
-								for (int i = 0; i < Math.ceil(percentage * chunksForDistribution); i++) {
-									biomeMaterials.add(material);
-								}
+					if (biomeMaterialsMap.isEmpty()) {
+						for (int i = 0; i < chunkCount; i++) {
+							materials.add(material);
+						}
+						remainingPercentage -= percentage;
+					} else {
+						for (List<Material> biomeMaterials : biomeMaterialsMap.values()) {
+							for (int i = 0; i < chunkCount; i++) {
+								biomeMaterials.add(material);
 							}
-						} else {
-							for (int i = 0; i < Math.ceil(percentage * chunksForDistribution); i++) {
-								materials.add(material);
-							}
-							remainingPercentage -= percentage;
 						}
 					}
 				}
-				if (currentBiomes.isEmpty() && !materials.isEmpty()) {
-					redistributeRemainingPercentage(materials, remainingPercentage);
-				}
-				if (!materials.isEmpty()) {
-					String worldName = getWorldNameFromFileName(fileName);
-					plugin.getLogger().info("Materials loaded for world: " + worldName);
-					worldMaterials.put(worldName, materials);
-				}
-				for (String biome : currentBiomes) {
-					redistributeRemainingPercentage(biomeMaterialsMap.get(biome), 100.0);
-					biomeMaterials.put(biome, calculateMaterialDistribution(biomeMaterialsMap.get(biome)));
-				}
-			} catch (IOException e) {
-				e.printStackTrace();
 			}
-		} else {
-			plugin.getLogger().warning("Missing file: " + fileName);
+
+			if (!materials.isEmpty()) {
+				redistributeRemainingPercentage(materials, remainingPercentage);
+				String worldName = getWorldNameFromFileName(fileName);
+				worldMaterials.put(worldName, materials);
+			}
+
+			for (List<Material> biomeMaterials : biomeMaterialsMap.values()) {
+				redistributeRemainingPercentage(biomeMaterials, 100.0);
+			}
+
+			biomeMaterialsMap.forEach((biome, materialsList) ->
+			biomeMaterials.put(biome, calculateMaterialDistribution(materialsList))
+					);
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 	}
 
-	private List<Material> redistributeRemainingPercentage(List<Material> materials, double remainingPercentage) {
-		List<Material> redistributedMaterials = new ArrayList<>();
-		int remainingItemCount = materials.size();
-		if (remainingItemCount > 0 && remainingPercentage > 0) {
-			double percentagePerItem = remainingPercentage / remainingItemCount;
-			for (Material material : materials) {
-				int repetitionCount = (int) Math.ceil(percentagePerItem * chunksForDistribution);
-				for (int i = 0; i < repetitionCount; i++) {
-					redistributedMaterials.add(material);
+	private void redistributeRemainingPercentage(List<Material> materials, double remainingPercentage) {
+		if (remainingPercentage > 0.0) {
+			int itemCount = materials.size();
+			double percentagePerItem = remainingPercentage / itemCount;
+			int chunkCount = (int) Math.ceil(percentagePerItem * CHUNKS_FOR_DISTRIBUTION);
+
+			for (int i = 0; i < itemCount; i++) {
+				for (int j = 0; j < chunkCount; j++) {
+					materials.add(materials.get(i));
 				}
 			}
 		}
-		return redistributedMaterials;
 	}
 
 	private Map<Material, Double> calculateMaterialDistribution(List<Material> materials) {
 		Map<Material, Double> materialDistribution = new HashMap<>();
 		for (Material material : materials) {
-			materialDistribution.put(material, materialDistribution.getOrDefault(material, (double) 0) + 1);
+			materialDistribution.put(material, materialDistribution.getOrDefault(material, 0.0) + 1.0);
 		}
 		return materialDistribution;
 	}
@@ -125,80 +118,62 @@ public class MaterialManager {
 
 		if (biomeMaterialsMap != null && !biomeMaterialsMap.isEmpty()) {
 			List<Material> possibleMaterials = new ArrayList<>();
-
-			for (Entry<Material, Double> entry : biomeMaterialsMap.entrySet()) {
-				Material material = entry.getKey();
-				Double count = entry.getValue();
+			biomeMaterialsMap.forEach((material, count) -> {
 				for (int i = 0; i < count; i++) {
 					possibleMaterials.add(material);
 				}
-			}
+			});
+
 			if (!possibleMaterials.isEmpty()) {
-				int randomIndex = random.nextInt(possibleMaterials.size());
-				return possibleMaterials.get(randomIndex);
+				return possibleMaterials.get(random.nextInt(possibleMaterials.size()));
 			}
 		}
-		if (materials != null && !materials.isEmpty()) {
-			int randomIndex = random.nextInt(materials.size());
-			return materials.get(randomIndex);
-		}
-		return null;
+
+		return materials != null && !materials.isEmpty() ? materials.get(random.nextInt(materials.size())) : null;
 	}
 
 	public void loadMaterialsForWorldMultiBiome(String fileName) {
-		plugin.getLogger().info("Enabling Advanced material loader.");
-		plugin.getLogger().info("Loading materials for world from file: " + fileName);
-		File file = new File(plugin.getDataFolder(), "SkygridBlocks/" + fileName);
+		Path filePath = Paths.get(plugin.getDataFolder().toString(), "SkygridBlocks", fileName);
+		try (BufferedReader reader = Files.newBufferedReader(filePath)) {
+			String currentLine;
+			Set<String> currentBiomes = new HashSet<>();
+			Map<Material, Double> materialsMap = new HashMap<>();
 
-		if (file.exists()) {
-			try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-				String line;
-				Set<String> currentBiomes = new HashSet<>();
-				Map<Material, Double> materialsMap = new HashMap<>();
+			while ((currentLine = reader.readLine()) != null) {
+				final String line = currentLine;
 
-				while ((line = reader.readLine()) != null) {
-					if (line.trim().startsWith("#")) {
-						continue;
-					}
-					if (line.trim().startsWith("-")) {
-						if (!currentBiomes.isEmpty() && !materialsMap.isEmpty()) {
-							for (String biome : currentBiomes) {
-								biomeMaterials.put(biome, new HashMap<>(materialsMap));
-							}
-							currentBiomes.clear();
-							materialsMap = new HashMap<>();
-						}
-						String[] biomes = line.trim().replace("-", "").split(",");
-						currentBiomes.addAll(Arrays.asList(biomes));
-						continue;
-					}
-					for (String biome : currentBiomes) {
-						if (biome != null) {
-							String[] parts = line.split(":");
-							Material material = Material.getMaterial(parts[0]);
-
-							if (material != null) {
-								double percentage = parts.length > 1 ? parsePercentage(parts[1]) : 1.0;
-								materialsMap.put(material, percentage);
-							}
-						}
-					}
+				if (line.trim().startsWith("#")) {
+					continue;
 				}
-				if (!materialsMap.isEmpty() && !currentBiomes.isEmpty()) {
-					for (String biome : currentBiomes) {
-						biomeMaterials.put(biome, new HashMap<>(materialsMap));
+				if (line.trim().startsWith("-")) {
+					if (!currentBiomes.isEmpty() && !materialsMap.isEmpty()) {
+						currentBiomes.forEach(biome -> biomeMaterials.put(biome, new HashMap<>(materialsMap)));
+						currentBiomes.clear();
+						materialsMap.clear();
 					}
+					String[] biomes = line.trim().replace("-", "").split(",");
+					currentBiomes.addAll(Arrays.asList(biomes));
+					continue;
 				}
-
-			} catch (IOException e) {
-				e.printStackTrace();
+				currentBiomes.stream()
+				.filter(Objects::nonNull)
+				.map(biome -> line.split(":"))
+				.forEach(parts -> {
+					Material material = Material.getMaterial(parts[0]);
+					if (material != null) {
+						double percentage = parts.length > 1 ? parsePercentage(parts[1]) : 1.0;
+						materialsMap.put(material, percentage);
+					}
+				});
 			}
+			currentBiomes.forEach(biome -> biomeMaterials.put(biome, new HashMap<>(materialsMap)));
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 	}
 
 	public Material getRandomMaterialForWorldMultiBiome(String worldName, String biomeName) {
 		Map<Material, Double> biomeMaterialsMap = biomeMaterials.get(biomeName);
-
 		if (biomeMaterialsMap != null && !biomeMaterialsMap.isEmpty()) {
 			return selectMaterialWithWeight(biomeMaterialsMap);
 		}
@@ -210,7 +185,10 @@ public class MaterialManager {
 	}
 
 	private Material selectMaterialWithWeight(Map<Material, Double> materialsMap) {
-		double totalWeight = materialsMap.values().stream().mapToDouble(Double::doubleValue).sum();
+		double totalWeight = 0;
+		for (Map.Entry<Material, Double> entry : materialsMap.entrySet()) {
+			totalWeight += entry.getValue();
+		}
 		double randomWeight = random.nextDouble() * totalWeight;
 
 		for (Map.Entry<Material, Double> entry : materialsMap.entrySet()) {
@@ -219,7 +197,6 @@ public class MaterialManager {
 				return entry.getKey();
 			}
 		}
-		// This should never happen unless there's a problem with the weights
 		throw new IllegalStateException("Failed to select material based on weight");
 	}
 }
