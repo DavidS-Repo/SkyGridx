@@ -2,7 +2,7 @@
 
 # Each line in the materials file corresponds to a block and its chance of appearing.
 # Format: BlockID:Percentage (use block names or IDs).
-# Example: "STONE:50" means a 50% chance of Stone appearing within the 32-chunk distribution.
+# Example: "STONE:50" means a 50% chance of Stone appearing.
 # You can include as many blocks as you want, and their percentages can be anything.
 # The total percentage doesn't need to add up to 100%.
 # You can use any of the materials in the Bukkit Material page here: [https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Material.html]
@@ -10,72 +10,84 @@
 # Block Distribution Rules:
 
 # 1. No Percentage Specified for a Block:
-#    - If a percentage is not specified for a block, the code assigns it a default percentage of 1.0. This ensures that all blocks are accounted for in the distribution process.
-#    - For example:
-#      STONE:50
-#      DIRT:49
-#      SAND:
-#      Explanation:
-#      The code will interpret SAND as having a default percentage of 1.0 since no percentage is specified. After allocating 50% for STONE and 49% for DIRT, the remaining 1% will be distributed to SAND.
+#	- If a percentage is not specified for a block, the code assigns it a default percentage of 1.0. This ensures that all blocks are accounted for in the distribution process.
+#	- For example:
+#		STONE:50
+#		DIRT:49
+#		SAND:
+#	Explanation:
+#	-The code will interpret SAND as having a default percentage of 1.0 since no percentage is specified. After allocating 50% for STONE and 49% for DIRT, the remaining 1% will be distributed to SAND.
 
 # 2. Total Percentage Exceeds 100%:
-#    - When the total percentage exceeds 100%, the code scales down the percentages proportionally to ensure they sum up to 100%. This prevents over-allocation of blocks.
-#    - For example:
-#      STONE:80
-#      DIRT:60
-#      SAND:
-#      -RIVER-
-#      AIR:120
-#      WATER:
-#      Explanation:
-#      The initial total percentage for each list is calculated. To scale down the percentages, the scaling factor is calculated by dividing 100 by the sum of the initial percentages. Each percentage is multiplied by its respective scaling factor to adjust it accordingly.
+#	- When the total percentage exceeds 100%, the code scales down the percentages proportionally to ensure they sum up to 100%. This prevents over-allocation of blocks.
+#	- For example:
+#		STONE:80
+#		DIRT:60
+#		SAND:
+#		-RIVER-
+#		AIR:120
+#		WATER:
+#	Explanation:
+#	- The initial total percentage for each list is calculated. To scale down the percentages, the scaling factor is calculated by dividing 100 by the sum of the initial percentages. Each percentage is multiplied by its respective scaling factor to adjust it accordingly.
 
 # 3. Biome-Dependent Allocation:
-#    - Blocks can be listed under specific biome headers, allowing for biome-dependent allocation.
-#    - If the percentages within a biome list do not add up to 100%, the remaining percentage is redistributed among the blocks within that specific biome's list.
-#    - For example:
-#      STONE:50
-#      DIRT:30
-#      SAND:
-#      AIR:
-#      -OCEAN-
-#      WATER:30
-#      SAND:20
-#      SANDSTONE:
-#      Explanation:
-#      Each biome header gets its own redistribution percentage. For each biome list, percentages are calculated separately. Here, the remaining percentage is redistributed evenly among the blocks within each biome list.
-#      When the block percentages in a biome's list don't add up to 100%, the leftover percentage is redistributed among the blocks within that specific biome's list. This ensures that the total percentage for that biome accurately represents the distribution of blocks in the world.
+#	- Blocks can be listed under specific biome headers, allowing for biome-dependent allocation.
+#	- If the percentages within a biome list do not add up to 100%, the remaining percentage is redistributed among the blocks within that specific biome's list.
+#	- For example:
+#		STONE:50
+#		DIRT:30
+#		SAND:
+#		AIR:
+#		-OCEAN-
+#		WATER:30
+#		SAND:20
+#		SANDSTONE:
+#	Explanation:
+#	- Each biome header gets its own redistribution percentage. For each biome list, percentages are calculated separately. Here, the remaining percentage is redistributed evenly among the blocks within each biome list.
+#	- When the block percentages in a biome's list don't add up to 100%, the leftover percentage is redistributed among the blocks within that specific biome's list. This ensures that the total percentage for that biome accurately represents the distribution of blocks in the world.
 
 # Biome-Specific Block Generation:
-# - Customize the block generation in your world based on different biomes.
-# - Specify unique block materials and percentages for each biome in the world.
-# - Biomes are signified by the -BIOME_NAME- header, and everything under the biome header will generate only in that biome unless another biome is specified.
-# - Multiple biomes in the header of the material files are supported. You can now specify multiple biomes separated by commas.
-# - Supported biomes can be found here: [https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/block/Biome.html]
+#	- Customize the block generation in your world based on different biomes.
+#	- Specify unique block materials and percentages for each biome in the world.
+#	- Biomes are signified by the -BIOME_NAME- header, and everything under the biome header will generate only in that biome unless another biome is specified.
+#	- Multiple biomes in the header of the material files are supported. You can now specify multiple biomes separated by commas.
+#	- Supported biomes can be found here: [https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/block/Biome.html]
 
 # How to Use/Configure Biome-Specific Blocks:
-#    - Specify block materials and their respective percentages for each biome in your world.
-#    - Example:
-#      DIRT:20
-#      STONE:20
-#      GRASS_BLOCK:20
-#      -OCEAN,COLD_OCEAN,DEEP_COLD_OCEAN,DEEP_FROZEN_OCEAN,DEEP_LUKEWARM_OCEAN,DEEP_OCEAN,FROZEN_OCEAN,LUKEWARM_OCEAN-
-#      SAND:80
-#      SANDSTONE:9.0
-#      SEA_PICKLE:1.0
-#      TUBE_CORAL:1.0
-#      TUBE_CORAL_FAN:1.0
-#      HORN_CORAL:1.0
-#      HORN_CORAL_FAN:1.0
-#      FIRE_CORAL:1.0
-#      FIRE_CORAL_FAN:1.0
-#      BUBBLE_CORAL:1.0
-#      BUBBLE_CORAL_FAN:1.0
-#      BRAIN_CORAL:1.0
-#      BRAIN_CORAL_FAN:1.0
-#      -WARM_OCEAN-
-#      SAND:80
-#      SANDSTONE:20
+#	- Specify block materials and their respective percentages for each biome in your world.
+#	- Example:
+#		DIRT:20
+#		STONE:20
+#		GRASS_BLOCK:20
+#		-OCEAN,COLD_OCEAN,DEEP_COLD_OCEAN,DEEP_FROZEN_OCEAN,DEEP_LUKEWARM_OCEAN,DEEP_OCEAN,FROZEN_OCEAN,LUKEWARM_OCEAN-
+#		SAND:80
+#		SANDSTONE:9.0
+#		SEA_PICKLE:1.0
+#		TUBE_CORAL:1.0
+#		TUBE_CORAL_FAN:1.0
+#		HORN_CORAL:1.0
+#		HORN_CORAL_FAN:1.0
+#		FIRE_CORAL:1.0
+#		FIRE_CORAL_FAN:1.0
+#		BUBBLE_CORAL:1.0
+#		BUBBLE_CORAL_FAN:1.0
+#		BRAIN_CORAL:1.0
+#		BRAIN_CORAL_FAN:1.0
+#		-WARM_OCEAN-
+#		SAND:80
+#		SANDSTONE:20
+#
+# Material loader version differences:
+#	Basic Material Loader:
+#		- Optimized for loading materials with no biome headers i.e. -BIOME_NAME-
+#		- Materials distribution is enforced much more accurately, with the trade in performance reduction.
+#		- Since there is no biome headers used the materials will be applied to all biomes equally.
+#	Advanced material loader:
+#		- Optimized for loading materials with biome headers, only enables when biomes headers are detected in any of the files.
+#		- Materials distribution is enforced loosely through a weigh percentage system.
+#		- All biomes must be included in the text file, omitting any biomes will result in blank chunks where the biomes are located
+#		- Here are all the current biomes for the End:
+#		-THE_END,END_BARRENS,END_HIGHLANDS,END_MIDLANDS,SMALL_END_ISLANDS-
 
 CHEST:0.00001
 CHORUS_FLOWER:4
