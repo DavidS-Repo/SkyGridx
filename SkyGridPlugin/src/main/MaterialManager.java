@@ -186,8 +186,8 @@ public class MaterialManager {
 
 	private Material selectMaterialWithWeight(Map<Material, Double> materialsMap) {
 		double totalWeight = 0;
-		for (Map.Entry<Material, Double> entry : materialsMap.entrySet()) {
-			totalWeight += entry.getValue();
+		for (Double weight : materialsMap.values()) {
+			totalWeight += weight;
 		}
 		double randomWeight = random.nextDouble() * totalWeight;
 

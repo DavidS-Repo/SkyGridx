@@ -65,10 +65,12 @@ public class Generator implements Listener {
 
 	private void loadWorldMaterials() {
 		if (hasBiomeHeaders()) {
+			plugin.getLogger().info("Enabling Advanced material loader.");
 			materialManager.loadMaterialsForWorldMultiBiome("world.txt");
 			materialManager.loadMaterialsForWorldMultiBiome("world_nether.txt");
 			materialManager.loadMaterialsForWorldMultiBiome("world_the_end.txt");
 		} else {
+			plugin.getLogger().info("Enabling Basic material loader.");
 			materialManager.loadMaterialsForWorld("world.txt");
 			materialManager.loadMaterialsForWorld("world_nether.txt");
 			materialManager.loadMaterialsForWorld("world_the_end.txt");
@@ -185,83 +187,83 @@ public class Generator implements Listener {
 			processNextDimension(dimensionQueue);
 		}
 	}
-	
+
 	@FunctionalInterface
 	interface MaterialSelector {
-	    Material selectMaterial(String worldName, String biomeName);
+		Material selectMaterial(String worldName, String biomeName);
 	}
-	
+
 	private Material selectMaterialWithoutBiomes(String worldName, String biomeName) {
-	    return materialManager.getRandomMaterialForWorld(worldName, biomeName);
+		return materialManager.getRandomMaterialForWorld(worldName, biomeName);
 	}
 
 	private Material selectMaterialWithBiomes(String worldName, String biomeName) {
-	    return materialManager.getRandomMaterialForWorldMultiBiome(worldName, biomeName);
+		return materialManager.getRandomMaterialForWorldMultiBiome(worldName, biomeName);
 	}
 
 	private void processChunk(Chunk chunk) {
-	    World world = chunk.getWorld();
-	    String worldName = world.getName();
-	    World.Environment dimension = world.getEnvironment();
-	    int xStart = chunk.getX() << 4, zStart = chunk.getZ() << 4;
-	    int minY, maxY;
+		World world = chunk.getWorld();
+		String worldName = world.getName();
+		World.Environment dimension = world.getEnvironment();
+		int xStart = chunk.getX() << 4, zStart = chunk.getZ() << 4;
+		int minY, maxY;
 
-	    switch (dimension) {
-	        case NETHER:
-	            minY = 0;
-	            maxY = 128;
-	            break;
-	        case THE_END:
-	            minY = 0;
-	            maxY = 128;
-	            break;
-	        default:
-	            minY = -64;
-	            maxY = 64;
-	            break;
-	    }
+		switch (dimension) {
+		case NETHER:
+			minY = 0;
+			maxY = 128;
+			break;
+		case THE_END:
+			minY = 0;
+			maxY = 128;
+			break;
+		default:
+			minY = -64;
+			maxY = 64;
+			break;
+		}
 
-	    MaterialSelector materialSelector;
+		MaterialSelector materialSelector;
 
-	    if (hasBiomeHeaders()) {
-	        materialSelector = this::selectMaterialWithBiomes;
-	    } else {
-	        materialSelector = this::selectMaterialWithoutBiomes;
-	    }
+		if (hasBiomeHeaders()) {
+			materialSelector = this::selectMaterialWithBiomes;
+		} else {
+			materialSelector = this::selectMaterialWithoutBiomes;
+		}
 
-	    for (int x = xStart + 1; x <= xStart + 13; x += 4) {
-	        for (int z = zStart + 2; z <= zStart + 14; z += 4) {
-	            for (int y = minY; y <= maxY; y += 4) {
-	                int chunkX = x & 0xF;
-	                int chunkZ = z & 0xF;
-	                int chunkY = Math.max(minY, Math.min(maxY, y));
+		for (int x = xStart + 1; x <= xStart + 13; x += 4) {
+			for (int z = zStart + 2; z <= zStart + 14; z += 4) {
+				for (int y = minY; y <= maxY; y += 4) {
+					int chunkX = x & 0xF;
+					int chunkZ = z & 0xF;
+					int chunkY = Math.max(minY, Math.min(maxY, y));
 
-	                Block block = chunk.getBlock(chunkX, chunkY, chunkZ);
-	                String biomeName = block.getBiome().name();
+					Block block = chunk.getBlock(chunkX, chunkY, chunkZ);
+					String biomeName = block.getBiome().name();
 
-	                Material material = materialSelector.selectMaterial(worldName, biomeName);
+					Material material = materialSelector.selectMaterial(worldName, biomeName);
 
-	                if (material != null) {
-	                    block.setType(material, false);
-	                    if (LEAVES.contains(material)) {
-	                        handleLeaves(block);
-	                    } else if (CROP_MATERIALS.contains(material)) {
-	                        handleCrop(block);
-	                    } else if (material == Material.CHORUS_FLOWER) {
-	                        handleChorusFlower(block);
-	                    } else if (material == Material.BAMBOO) {
-	                        handleBamboo(block);
-	                    } else if (material == Material.SPAWNER) {
-	                        spawner.BlockInfo(block);
-	                    } else if (material == Material.CHEST) {
-	                        chest.loadChest(block);
-	                    }
-	                }
-	            }
-	        }
-	    }
+					if (material != null) {
+						block.setType(material, false);
+						if (LEAVES.contains(material)) {
+							handleLeaves(block);
+						} else if (CROP_MATERIALS.contains(material)) {
+							handleCrop(block);
+						} else if (material == Material.CHORUS_FLOWER) {
+							handleChorusFlower(block);
+						} else if (material == Material.BAMBOO) {
+							handleBamboo(block);
+						} else if (material == Material.SPAWNER) {
+							spawner.BlockInfo(block);
+						} else if (material == Material.CHEST) {
+							chest.loadChest(block);
+						}
+					}
+				}
+			}
+		}
 	}
-	
+
 	public void handleLeaves(Block block) {
 		BlockData blockData = block.getBlockData();
 		if (blockData instanceof Leaves) {
@@ -310,5 +312,13 @@ public class Generator implements Listener {
 		Bamboo.Leaves[] values = Bamboo.Leaves.values();
 		int randomIndex = random.nextInt(values.length);
 		return values[randomIndex];
+	}
+	
+	public void regenerateAllLoadedChunks() {
+	    for (World world : Bukkit.getWorlds()) {
+	        for (Chunk loadedChunk : world.getLoadedChunks()) {
+	            processChunk(loadedChunk);
+	        }
+	    }
 	}
 }
