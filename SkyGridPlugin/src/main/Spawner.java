@@ -2,7 +2,6 @@ package main;
 
 import org.bukkit.Material;
 import org.bukkit.World;
-import org.bukkit.block.Biome;
 import org.bukkit.block.Block;
 import org.bukkit.block.CreatureSpawner;
 import org.bukkit.configuration.ConfigurationSection;
@@ -14,23 +13,30 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.nio.file.Files;
-import java.util.List;
-import java.util.Random;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
+import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class Spawner {
 	private static Spawner instance;
 	private FileConfiguration spawnerSettings;
-	private Random random;
 	private static JavaPlugin plugin;
+
+	private static final int DEFAULT_DELAY = -1;
+	private static final int DEFAULT_MAX_NEARBY_ENTITIES = 16;
+	private static final int DEFAULT_MAX_SPAWN_DELAY = 800;
+	private static final int DEFAULT_MIN_SPAWN_DELAY = 200;
+	private static final int DEFAULT_PLAYER_RANGE = 16;
+	private static final int DEFAULT_SPAWN_COUNT = 4;
+	private static final int DEFAULT_SPAWN_RANGE = 4;
+
+	private final Map<String, Set<String>> biomeCache = new HashMap<>();
+	private final Map<String, List<EntityType>> defaultEntitiesCache = new HashMap<>();
+
 	private Spawner(JavaPlugin plugin) {
 		Spawner.plugin = plugin;
-		this.random = new Random();
 		loadSpawnerSettings();
+		cacheDefaultEntities();
 	}
 
 	public static Spawner getInstance(JavaPlugin plugin) {
@@ -41,108 +47,76 @@ public class Spawner {
 	}
 
 	public void BlockInfo(Block block) {
-		if (block != null && block.getType() == Material.SPAWNER) {
-			String biomeName = getBiomeNameFromBlock(block);
-			if (spawnerSettings != null && spawnerSettings.isConfigurationSection("SpawnerSettings")) {
-				ConfigurationSection spawnerSettingsSection = spawnerSettings.getConfigurationSection("SpawnerSettings");
+		if (block == null || block.getType() != Material.SPAWNER) {
+			return;
+		}
 
-				for (String spawnerKey : spawnerSettingsSection.getKeys(false)) {
-					ConfigurationSection spawnerSection = spawnerSettingsSection.getConfigurationSection(spawnerKey);
-					List<String> biomes = spawnerSection.getStringList("Biomes");
-					if (biomes.contains(biomeName)) {
-						String entityName = getEntityForBiome(spawnerSection);
-						if (entityName != null) {
-							int delay = spawnerSection.getInt("Delay", -1);
-							int maxNearbyEntities = spawnerSection.getInt("MaxNearbyEntities", 16);
-							int maxSpawnDelay = spawnerSection.getInt("MaxSpawnDelay", 800);
-							int minSpawnDelay = spawnerSection.getInt("MinSpawnDelay", 200);
-							int playerRange = spawnerSection.getInt("PlayerRange", 16);
-							int spawnCount = spawnerSection.getInt("SpawnCount", 4);
-							int spawnRange = spawnerSection.getInt("SpawnRange", 4);
+		String biomeName = getBiomeNameFromBlock(block);
+		if (spawnerSettings != null && spawnerSettings.isConfigurationSection("SpawnerSettings")) {
+			ConfigurationSection spawnerSettingsSection = spawnerSettings.getConfigurationSection("SpawnerSettings");
 
-							CreatureSpawner spawner = (CreatureSpawner) block.getState();
-							spawner.setDelay(delay);
-							spawner.setMaxNearbyEntities(maxNearbyEntities);
-							spawner.setMaxSpawnDelay(maxSpawnDelay);
-							spawner.setMinSpawnDelay(minSpawnDelay);
-							spawner.setRequiredPlayerRange(playerRange);
-							spawner.setSpawnCount(spawnCount);
-							spawner.setSpawnRange(spawnRange);
-							spawner.setSpawnedType(EntityType.valueOf(entityName));
-							spawner.update();
-							return;
-						}
+			for (String spawnerKey : spawnerSettingsSection.getKeys(false)) {
+				ConfigurationSection spawnerSection = spawnerSettingsSection.getConfigurationSection(spawnerKey);
+				Set<String> biomes = biomeCache.computeIfAbsent(spawnerKey, key -> new HashSet<>(spawnerSection.getStringList("Biomes")));
+				if (biomes.contains(biomeName)) {
+					String entityName = getEntityForBiome(spawnerSection);
+					if (entityName != null) {
+						setSpawnerSettings(block, spawnerSection, entityName);
+						return;
 					}
 				}
 			}
-			setDefaultSpawnerSettings(block);
 		}
+		setDefaultSpawnerSettings(block);
 	}
 
-	private void setDefaultSpawnerSettings(Block block) {
-		int defaultDelay = -1;
-		int defaultMaxNearbyEntities = 16;
-		int defaultMaxSpawnDelay = 800;
-		int defaultMinSpawnDelay = 200;
-		int defaultPlayerRange = 16;
-		int defaultSpawnCount = 4;
-		int defaultSpawnRange = 4;
-
+	private void setSpawnerSettings(Block block, ConfigurationSection spawnerSection, String entityName) {
 		CreatureSpawner spawner = (CreatureSpawner) block.getState();
-		spawner.setDelay(defaultDelay);
-		spawner.setMaxNearbyEntities(defaultMaxNearbyEntities);
-		spawner.setMaxSpawnDelay(defaultMaxSpawnDelay);
-		spawner.setMinSpawnDelay(defaultMinSpawnDelay);
-		spawner.setRequiredPlayerRange(defaultPlayerRange);
-		spawner.setSpawnCount(defaultSpawnCount);
-		spawner.setSpawnRange(defaultSpawnRange);
-
-		EntityType defaultEntityType = getDefaultEntityTypeForWorld(block.getWorld());
-		spawner.setSpawnedType(defaultEntityType);
-
+		spawner.setDelay(spawnerSection.getInt("Delay", DEFAULT_DELAY));
+		spawner.setMaxNearbyEntities(spawnerSection.getInt("MaxNearbyEntities", DEFAULT_MAX_NEARBY_ENTITIES));
+		spawner.setMaxSpawnDelay(spawnerSection.getInt("MaxSpawnDelay", DEFAULT_MAX_SPAWN_DELAY));
+		spawner.setMinSpawnDelay(spawnerSection.getInt("MinSpawnDelay", DEFAULT_MIN_SPAWN_DELAY));
+		spawner.setRequiredPlayerRange(spawnerSection.getInt("PlayerRange", DEFAULT_PLAYER_RANGE));
+		spawner.setSpawnCount(spawnerSection.getInt("SpawnCount", DEFAULT_SPAWN_COUNT));
+		spawner.setSpawnRange(spawnerSection.getInt("SpawnRange", DEFAULT_SPAWN_RANGE));
+		spawner.setSpawnedType(EntityType.valueOf(entityName));
 		spawner.update();
 	}
 
+	private void setDefaultSpawnerSettings(Block block) {
+		CreatureSpawner spawner = (CreatureSpawner) block.getState();
+		applyDefaultSpawnerSettings(spawner);
+		spawner.setSpawnedType(getDefaultEntityTypeForWorld(block.getWorld()));
+		spawner.update();
+	}
+
+	private void applyDefaultSpawnerSettings(CreatureSpawner spawner) {
+		spawner.setDelay(DEFAULT_DELAY);
+		spawner.setMaxNearbyEntities(DEFAULT_MAX_NEARBY_ENTITIES);
+		spawner.setMaxSpawnDelay(DEFAULT_MAX_SPAWN_DELAY);
+		spawner.setMinSpawnDelay(DEFAULT_MIN_SPAWN_DELAY);
+		spawner.setRequiredPlayerRange(DEFAULT_PLAYER_RANGE);
+		spawner.setSpawnCount(DEFAULT_SPAWN_COUNT);
+		spawner.setSpawnRange(DEFAULT_SPAWN_RANGE);
+	}
+
 	private EntityType getDefaultEntityTypeForWorld(World world) {
-		String worldName = world.getName();
-		List<EntityType> entities;
-
-		switch (worldName) {
-		case "world":
-			entities = Arrays.asList(EntityType.SKELETON, EntityType.ZOMBIE, EntityType.SPIDER, EntityType.CAVE_SPIDER);
-			break;
-		case "world_nether":
-			entities = Arrays.asList(EntityType.BLAZE, EntityType.WITHER_SKELETON);
-			break;
-		case "world_the_end":
-			entities = Arrays.asList(EntityType.ENDERMAN, EntityType.SHULKER);
-			break;
-		default:
-			entities = Collections.emptyList();
-		}
-
-		if (!entities.isEmpty()) {
-			int randomIndex = new Random().nextInt(entities.size());
-			return entities.get(randomIndex);
-		} else {
+		List<EntityType> entities = defaultEntitiesCache.get(world.getName());
+		if (entities == null || entities.isEmpty()) {
 			return EntityType.SKELETON;
 		}
+		int randomIndex = ThreadLocalRandom.current().nextInt(entities.size());
+		return entities.get(randomIndex);
 	}
 
 	private String getBiomeNameFromBlock(Block block) {
-		if (block != null) {
-			Biome biome = block.getBiome();
-			String biomeName = biome.name();
-			return biomeName;
-		}
-		return null;
+		return block != null ? block.getBiome().name() : null;
 	}
 
 	private String getEntityForBiome(ConfigurationSection spawnerSection) {
 		if (spawnerSection.isList("Entities")) {
 			List<String> entityList = spawnerSection.getStringList("Entities");
-			String chosenEntity = chooseRandomEntityWithWeights(entityList);
-			return chosenEntity;
+			return chooseRandomEntityWithWeights(entityList);
 		}
 		return null;
 	}
@@ -151,6 +125,7 @@ public class Spawner {
 		if (entityList.isEmpty()) {
 			return null;
 		}
+
 		List<EntityWeight> weightedEntities = new ArrayList<>();
 		double totalWeight = 0.0;
 		for (String entity : entityList) {
@@ -162,7 +137,8 @@ public class Spawner {
 				weightedEntities.add(new EntityWeight(entityName, totalWeight));
 			}
 		}
-		double randomValue = random.nextDouble() * totalWeight;
+
+		double randomValue = ThreadLocalRandom.current().nextDouble(totalWeight);
 		for (EntityWeight entityWeight : weightedEntities) {
 			if (randomValue <= entityWeight.weight) {
 				return entityWeight.entityName;
@@ -170,6 +146,7 @@ public class Spawner {
 		}
 		return null;
 	}
+
 	private static class EntityWeight {
 		String entityName;
 		double weight;
@@ -183,29 +160,24 @@ public class Spawner {
 	private void loadSpawnerSettings() {
 		File spawnerSettingsFile = new File(plugin.getDataFolder(), "SkygridBlocks/SpawnerSettings.yml");
 		if (!spawnerSettingsFile.exists()) {
-			InputStream inputStream = plugin.getResource("SpawnerSettings.yml");
-			if (inputStream != null) {
-				try {
-					InputStreamReader reader = new InputStreamReader(inputStream);
-					char[] buffer = new char[1024];
-					StringBuilder builder = new StringBuilder();
-					int bytesRead;
-					while ((bytesRead = reader.read(buffer)) != -1) {
-						builder.append(buffer, 0, bytesRead);
-					}
-					reader.close();
-					String yamlContent = builder.toString();
-					Files.write(spawnerSettingsFile.toPath(), yamlContent.getBytes());
-
-				} catch (IOException e) {
-					e.printStackTrace();
+			try (InputStream inputStream = plugin.getResource("SpawnerSettings.yml")) {
+				if (inputStream != null) {
+					Files.copy(inputStream, spawnerSettingsFile.toPath());
+				} else {
+					plugin.getLogger().warning("SpawnerSettings.yml not found in the JAR.");
 				}
-			} else {
-				plugin.getLogger().warning("SpawnerSettings.yml not found in the JAR.");
+			} catch (IOException e) {
+				e.printStackTrace();
 			}
 		}
 		spawnerSettings = YamlConfiguration.loadConfiguration(spawnerSettingsFile);
 		plugin.getLogger().info("Custom Skygrid generation started.");
 		plugin.getLogger().info("SpawnerSettings Loaded");
+	}
+
+	private void cacheDefaultEntities() {
+		defaultEntitiesCache.put("world", Arrays.asList(EntityType.SKELETON, EntityType.ZOMBIE, EntityType.SPIDER, EntityType.CAVE_SPIDER));
+		defaultEntitiesCache.put("world_nether", Arrays.asList(EntityType.BLAZE, EntityType.WITHER_SKELETON));
+		defaultEntitiesCache.put("world_the_end", Arrays.asList(EntityType.ENDERMAN, EntityType.SHULKER));
 	}
 }

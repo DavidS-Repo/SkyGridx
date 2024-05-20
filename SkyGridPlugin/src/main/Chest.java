@@ -3,7 +3,6 @@ package main;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
-import org.bukkit.block.Biome;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -40,15 +39,15 @@ public class Chest {
 	public void loadChest(Block block) {
 		if (block != null) {
 			Inventory chestInventory = ((org.bukkit.block.Chest) block.getState()).getInventory();
+			String biomeName = block.getBiome().name().toUpperCase();
+			String worldName = block.getWorld().getName();
 
 			if (chestSettings != null && chestSettings.isConfigurationSection("ChestSettings")) {
 				ConfigurationSection chestSettingsSection = chestSettings.getConfigurationSection("ChestSettings");
 
-				String biomeName = getBiomeNameFromBlock(block);
-
 				for (String chestKey : chestSettingsSection.getKeys(false)) {
 					ConfigurationSection chestSection = chestSettingsSection.getConfigurationSection(chestKey);
-					List<String> biomes = chestSection.getStringList("Biomes");
+					Set<String> biomes = new HashSet<>(chestSection.getStringList("Biomes"));
 
 					if (biomes.contains(biomeName)) {
 						List<ItemSettings> itemSettingsList = getItemSettingsList(chestKey);
@@ -58,140 +57,114 @@ public class Chest {
 				}
 			}
 
-			String worldName = block.getWorld().getName();
-			loadDefaultChestContents(chestInventory, worldName, getBiomeNameFromBlock(block));
+			loadDefaultChestContents(chestInventory, worldName, biomeName);
 		}
 	}
 
 	private void loadChestWithItems(List<ItemSettings> itemSettingsList, Inventory chestInventory) {
-	    Set<String> uniqueItems = new HashSet<>();
-	    List<Integer> undistributedSlots = new ArrayList<>();
+		Set<String> uniqueItems = new HashSet<>();
+		int inventorySize = chestInventory.getSize();
+		List<Integer> emptySlots = getEmptySlots(chestInventory);
 
-	    for (int i = 0; i < chestInventory.getSize(); i++) {
-	        undistributedSlots.add(i);
-	    }
+		Collections.shuffle(emptySlots, random);
 
-	    for (int i = 0; i < chestInventory.getSize(); i++) {
-	        ItemSettings itemSettings = chooseRandomItemSettingsWithWeights(itemSettingsList);
+		for (int i = 0; i < inventorySize && !emptySlots.isEmpty(); i++) {
+			ItemSettings itemSettings = chooseRandomItemSettingsWithWeights(itemSettingsList);
 
-	        if (itemSettings != null) {
-	            String itemName = itemSettings.itemName;
+			if (itemSettings != null) {
+				String itemName = itemSettings.itemName;
 
-	            if (!uniqueItems.contains(itemName)) {
-	                int amount = getRandomAmount(itemSettings);
-	                Material material = Material.matchMaterial(itemName);
+				if (uniqueItems.add(itemName)) {
+					int amount = getRandomAmount(itemSettings);
+					Material material = Material.matchMaterial(itemName);
 
-	                if (material != null) {
-	                    // Check if there are undistributed slots
-	                    if (!undistributedSlots.isEmpty()) {
-	                        // Distribute in random quantities if the amount in the chest slot is greater than 2
-	                        if (amount > 2) {
-	                            int undistributedAmount = getRandomUndistributedAmount(amount, undistributedSlots.size());
-	                            distributeRandomly(chestInventory, material, undistributedAmount, undistributedSlots);
-	                        } else {
-	                            // Place the item in the first undistributed slot
-	                            int undistributedSlot = undistributedSlots.get(0);
-	                            chestInventory.setItem(undistributedSlot, new ItemStack(material, amount));
-	                            undistributedSlots.remove(Integer.valueOf(undistributedSlot));
-	                        }
-	                        uniqueItems.add(itemName);
-	                    }
-	                } else {
-	                    Bukkit.getLogger().warning("Invalid material name: " + itemName);
-	                }
-	            }
-	        }
-	    }
+					if (material != null) {
+						if (amount > 2) {
+							int splitAmount = getRandomSplitAmount(amount);
+							distributeRandomly(chestInventory, material, splitAmount, emptySlots);
+						} else {
+							int slot = emptySlots.remove(0);
+							chestInventory.setItem(slot, new ItemStack(material, amount));
+						}
+					} else {
+						Bukkit.getLogger().warning("Invalid material name: " + itemName);
+					}
+				}
+			}
+		}
 	}
 
-	private int getRandomUndistributedAmount(int totalAmount, int numUndistributedSlots) {
-	    return Math.min(totalAmount, random.nextInt(numUndistributedSlots) + 1);
+	private List<Integer> getEmptySlots(Inventory inventory) {
+		List<Integer> emptySlots = new ArrayList<>();
+		for (int i = 0; i < inventory.getSize(); i++) {
+			if (inventory.getItem(i) == null) {
+				emptySlots.add(i);
+			}
+		}
+		return emptySlots;
 	}
 
-	private void distributeRandomly(Inventory chestInventory, Material material, int totalAmount, List<Integer> undistributedSlots) {
-	    // Shuffle the undistributed slots for random distribution
-	    Collections.shuffle(undistributedSlots);
+	private int getRandomSplitAmount(int totalAmount) {
+		return Math.max(1, totalAmount / 2 + random.nextInt(totalAmount / 2));
+	}
 
-	    while (totalAmount > 0 && !undistributedSlots.isEmpty()) {
-	        int undistributedSlot = undistributedSlots.remove(0);
-	        int amount = Math.min(totalAmount, random.nextInt(totalAmount) + 1);
-	        chestInventory.setItem(undistributedSlot, new ItemStack(material, amount));
-	        totalAmount -= amount;
-	    }
+	private void distributeRandomly(Inventory chestInventory, Material material, int totalAmount, List<Integer> emptySlots) {
+		while (totalAmount > 0 && !emptySlots.isEmpty()) {
+			int slot = emptySlots.remove(0);
+			int amount = Math.min(totalAmount, random.nextInt(totalAmount) + 1);
+			chestInventory.setItem(slot, new ItemStack(material, amount));
+			totalAmount -= amount;
+		}
 	}
 
 	private int getRandomAmount(ItemSettings itemSettings) {
-		int minAmount = 0;
-		int maxAmount = itemSettings.maxAmount;
-		return random.nextInt(maxAmount - minAmount + 1) + minAmount;
+		return random.nextInt(itemSettings.maxAmount + 1);
 	}
 
 	private boolean loadDefaultChestContents(Inventory chestInventory, String worldName, String biomeName) {
-	    List<Material> tier1Items = Arrays.asList(Material.WOODEN_AXE, Material.WOODEN_PICKAXE, Material.CROSSBOW, Material.NAME_TAG, Material.GOLDEN_APPLE, Material.ENCHANTED_GOLDEN_APPLE, Material.GOLD_BLOCK, Material.GOLDEN_AXE, Material.IRON_BLOCK, Material.SNOUT_ARMOR_TRIM_SMITHING_TEMPLATE, Material.NETHERITE_UPGRADE_SMITHING_TEMPLATE, Material.IRON_SWORD, Material.GOLDEN_HELMET, Material.MUSIC_DISC_PIGSTEP, Material.ELYTRA, Material.DRAGON_HEAD, Material.DRAGON_EGG, Material.END_CRYSTAL, Material.ENDER_CHEST);
+		List<Material> tier1Items = Arrays.asList(Material.WOODEN_AXE, Material.WOODEN_PICKAXE, Material.CROSSBOW, Material.NAME_TAG, Material.GOLDEN_APPLE, Material.ENCHANTED_GOLDEN_APPLE, Material.GOLD_BLOCK, Material.GOLDEN_AXE, Material.IRON_BLOCK, Material.SNOUT_ARMOR_TRIM_SMITHING_TEMPLATE, Material.NETHERITE_UPGRADE_SMITHING_TEMPLATE, Material.IRON_SWORD, Material.GOLDEN_HELMET, Material.MUSIC_DISC_PIGSTEP, Material.ELYTRA, Material.DRAGON_HEAD, Material.DRAGON_EGG, Material.END_CRYSTAL, Material.ENDER_CHEST);
+		List<Material> tier2Items = Arrays.asList(Material.APPLE, Material.OAK_LOG, Material.DARK_OAK_LOG, Material.RAIL, Material.DIAMOND, Material.IRON_INGOT, Material.GILDED_BLACKSTONE, Material.ANCIENT_DEBRIS, Material.BONE_BLOCK, Material.GOLDEN_CARROT, Material.OBSIDIAN, Material.CRYING_OBSIDIAN, Material.SHULKER_SHELL);
+		List<Material> tier3Items = Arrays.asList(Material.CHAIN, Material.GOLD_INGOT, Material.MAGMA_CREAM, Material.GOLD_NUGGET, Material.SPECTRAL_ARROW, Material.STRING, Material.IRON_NUGGET, Material.ARROW, Material.COOKED_PORKCHOP, Material.STICK, Material.WHEAT, Material.END_STONE, Material.END_ROD, Material.PURPUR_BLOCK, Material.MAGENTA_STAINED_GLASS);
 
-	    List<Material> tier2Items = Arrays.asList(Material.APPLE, Material.OAK_LOG, Material.DARK_OAK_LOG, Material.RAIL, Material.DIAMOND, Material.IRON_INGOT, Material.GILDED_BLACKSTONE, Material.ANCIENT_DEBRIS, Material.BONE_BLOCK, Material.GOLDEN_CARROT, Material.OBSIDIAN, Material.CRYING_OBSIDIAN, Material.SHULKER_SHELL);
+		List<Material> items = getItemsForWorld(worldName);
 
-	    List<Material> tier3Items = Arrays.asList(Material.CHAIN, Material.GOLD_INGOT, Material.MAGMA_CREAM, Material.GOLD_NUGGET, Material.SPECTRAL_ARROW, Material.STRING, Material.IRON_NUGGET, Material.ARROW, Material.COOKED_PORKCHOP, Material.STICK, Material.WHEAT, Material.END_STONE, Material.END_ROD, Material.PURPUR_BLOCK, Material.MAGENTA_STAINED_GLASS);
+		if (biomeName != null && !biomeName.isEmpty() && items.isEmpty()) {
+			return false;
+		}
 
-	    List<Material> items = getItemsForWorld(worldName);
+		Collections.shuffle(items, random);
 
-	    if (biomeName != null && !biomeName.isEmpty() && items.isEmpty()) {
-	        return false;
-	    }
+		for (Material item : items) {
+			int baseAmount = random.nextInt(3) + 1;
+			int num = random.nextInt(10) + 1;
 
-	    // Shuffle the list of items to distribute randomly
-	    Collections.shuffle(items, random);
+			if (tier1Items.contains(item) && num <= 2) {
+				baseAmount = 1;
+			} else if (tier2Items.contains(item) && num <= 4) {
+				baseAmount = random.nextInt(2) + 1;
+			} else if (tier3Items.contains(item) && num <= 9) {
+				baseAmount = random.nextInt(5) + 1;
+			} else {
+				baseAmount = 0;
+			}
 
-	    for (Material item : items) {
-	        int baseAmount = random.nextInt(3) + 1;
-	        int num = random.nextInt(10) + 1; // For tier selection probability
+			int totalAmount = (baseAmount > 1) ? random.nextInt(baseAmount) + 1 : baseAmount;
 
-	        // Determine tier and adjust baseAmount accordingly
-	        if (tier1Items.contains(item) && num <= 2) {
-	            baseAmount = 1;
-	        } else if (tier2Items.contains(item) && num <= 4) {
-	            baseAmount = random.nextInt(2) + 1;
-	        } else if (tier3Items.contains(item) && num <= 9) {
-	            baseAmount = random.nextInt(5) + 1;
-	        } else {
-	            baseAmount = 0; // Not in any tier
-	        }
-
-	        // Split the base amount into multiple random amounts
-	        int totalAmount = (baseAmount > 1) ? random.nextInt(baseAmount) + 1 : baseAmount;
-
-	        // Distribute the total amount randomly
-	        while (totalAmount > 0) {
-	            int amount = Math.min(totalAmount, random.nextInt(totalAmount) + 1);
-
-	            // Find a random empty slot to place the item
-	            int slot = getRandomEmptySlot(chestInventory);
-	            if (slot != -1) {
-	                chestInventory.setItem(slot, new ItemStack(item, amount));
-	                totalAmount -= amount;
-	            }
-	        }
-	    }
-	    return true;
+			while (totalAmount > 0) {
+				int amount = Math.min(totalAmount, random.nextInt(totalAmount) + 1);
+				int slot = getRandomEmptySlot(chestInventory);
+				if (slot != -1) {
+					chestInventory.setItem(slot, new ItemStack(item, amount));
+					totalAmount -= amount;
+				}
+			}
+		}
+		return true;
 	}
 
-	// Helper method to get a random empty slot in the inventory
 	private int getRandomEmptySlot(Inventory inventory) {
-	    int size = inventory.getSize();
-	    List<Integer> emptySlots = new ArrayList<>();
-
-	    for (int i = 0; i < size; i++) {
-	        if (inventory.getItem(i) == null) {
-	            emptySlots.add(i);
-	        }
-	    }
-
-	    if (emptySlots.isEmpty()) {
-	        return -1; // No empty slots available
-	    }
-
-	    // Choose a random empty slot
-	    return emptySlots.get(random.nextInt(emptySlots.size()));
+		List<Integer> emptySlots = getEmptySlots(inventory);
+		return emptySlots.isEmpty() ? -1 : emptySlots.get(random.nextInt(emptySlots.size()));
 	}
 
 	private List<Material> getItemsForWorld(String worldName) {
@@ -215,8 +188,8 @@ public class Chest {
 					);
 		case "world_the_end":
 			return Arrays.asList(
-					Material.SHULKER_SHELL, Material.END_STONE, Material.ELYTRA, Material.DRAGON_HEAD, 
-					Material.DRAGON_EGG, Material.END_CRYSTAL, Material.END_ROD, Material.ENDER_CHEST, 
+					Material.SHULKER_SHELL, Material.END_STONE, Material.ELYTRA, Material.DRAGON_HEAD,
+					Material.DRAGON_EGG, Material.END_CRYSTAL, Material.END_ROD, Material.ENDER_CHEST,
 					Material.OBSIDIAN, Material.PURPUR_BLOCK, Material.MAGENTA_STAINED_GLASS
 					);
 		default:
@@ -224,30 +197,17 @@ public class Chest {
 		}
 	}
 
-	private String getBiomeNameFromBlock(Block block) {
-		if (block != null) {
-			Biome biome = block.getBiome();
-			return biome.name().toUpperCase();
-		}
-		return null;
-	}
-
 	private ItemSettings chooseRandomItemSettingsWithWeights(List<ItemSettings> itemSettingsList) {
 		if (itemSettingsList.isEmpty()) {
 			return null;
 		}
 
-		List<ItemSettings> weightedItemSettings = new ArrayList<>();
-		double totalWeight = 0.0;
+		double totalWeight = itemSettingsList.stream().mapToDouble(item -> item.weight).sum();
+		double randomValue = random.nextDouble() * totalWeight;
 
 		for (ItemSettings itemSettings : itemSettingsList) {
-			totalWeight += itemSettings.weight;
-			weightedItemSettings.add(new ItemSettings(itemSettings.itemName, totalWeight, itemSettings.maxAmount));
-		}
-
-		double randomValue = random.nextDouble() * totalWeight;
-		for (ItemSettings itemSettings : weightedItemSettings) {
-			if (randomValue < itemSettings.weight) {
+			randomValue -= itemSettings.weight;
+			if (randomValue <= 0.0) {
 				return itemSettings;
 			}
 		}

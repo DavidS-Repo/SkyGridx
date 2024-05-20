@@ -26,7 +26,7 @@ import java.util.concurrent.ThreadLocalRandom;
 public class Generator implements Listener {
 	private final SkyGridPlugin plugin;
 	private final ThreadLocalRandom random;
-	private final Map<String, Set<String>> generatedChunksByWorld;
+	private final Map<String, Set<Pair<Integer, Integer>>> generatedChunksByWorld;
 	private final MaterialManager materialManager;
 	private final Spawner spawner;
 	private final Chest chest;
@@ -39,8 +39,8 @@ public class Generator implements Listener {
 			);
 
 	private static final List<Material> LEAVES = Arrays.asList(
-			Material.ACACIA_LEAVES, Material.AZALEA_LEAVES, Material.BIRCH_LEAVES, Material.CHERRY_LEAVES, 
-			Material.DARK_OAK_LEAVES, Material.FLOWERING_AZALEA_LEAVES, Material.JUNGLE_LEAVES, 
+			Material.ACACIA_LEAVES, Material.AZALEA_LEAVES, Material.BIRCH_LEAVES, Material.CHERRY_LEAVES,
+			Material.DARK_OAK_LEAVES, Material.FLOWERING_AZALEA_LEAVES, Material.JUNGLE_LEAVES,
 			Material.MANGROVE_LEAVES, Material.OAK_LEAVES, Material.SPRUCE_LEAVES
 			);
 
@@ -117,9 +117,9 @@ public class Generator implements Listener {
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onChunkLoad(ChunkLoadEvent event) {
 		Chunk chunk = event.getChunk();
-		String chunkCoords = chunk.getX() + "," + chunk.getZ();
+		Pair<Integer, Integer> chunkCoords = new Pair<>(chunk.getX(), chunk.getZ());
 		String worldName = chunk.getWorld().getName();
-		Set<String> generatedChunks = generatedChunksByWorld.getOrDefault(worldName, new HashSet<>());
+		Set<Pair<Integer, Integer>> generatedChunks = generatedChunksByWorld.computeIfAbsent(worldName, k -> new HashSet<>());
 
 		if (event.isNewChunk() && !generatedChunks.contains(chunkCoords)) {
 			Bukkit.getScheduler().runTaskLater(plugin, () -> processChunk(chunk), PROCESS_DELAY);
@@ -131,9 +131,9 @@ public class Generator implements Listener {
 	private void processAllLoadedChunks() {
 		for (World world : Bukkit.getWorlds()) {
 			for (Chunk loadedChunk : world.getLoadedChunks()) {
-				String chunkCoords = loadedChunk.getX() + "," + loadedChunk.getZ();
+				Pair<Integer, Integer> chunkCoords = new Pair<>(loadedChunk.getX(), loadedChunk.getZ());
 				String worldName = loadedChunk.getWorld().getName();
-				Set<String> generatedChunks = generatedChunksByWorld.getOrDefault(worldName, new HashSet<>());
+				Set<Pair<Integer, Integer>> generatedChunks = generatedChunksByWorld.computeIfAbsent(worldName, k -> new HashSet<>());
 
 				if (!generatedChunks.contains(chunkCoords)) {
 					processChunk(loadedChunk);
@@ -157,9 +157,9 @@ public class Generator implements Listener {
 		for (World world : Bukkit.getWorlds()) {
 			if (world.getEnvironment() == dimension) {
 				for (Chunk loadedChunk : world.getLoadedChunks()) {
-					String chunkCoords = loadedChunk.getX() + "," + loadedChunk.getZ();
+					Pair<Integer, Integer> chunkCoords = new Pair<>(loadedChunk.getX(), loadedChunk.getZ());
 					String worldName = loadedChunk.getWorld().getName();
-					Set<String> generatedChunks = generatedChunksByWorld.getOrDefault(worldName, new HashSet<>());
+					Set<Pair<Integer, Integer>> generatedChunks = generatedChunksByWorld.computeIfAbsent(worldName, k -> new HashSet<>());
 
 					if (!generatedChunks.contains(chunkCoords)) {
 						chunksToProcess.add(loadedChunk);
@@ -223,13 +223,7 @@ public class Generator implements Listener {
 			break;
 		}
 
-		MaterialSelector materialSelector;
-
-		if (hasBiomeHeaders()) {
-			materialSelector = this::selectMaterialWithBiomes;
-		} else {
-			materialSelector = this::selectMaterialWithoutBiomes;
-		}
+		MaterialSelector materialSelector = hasBiomeHeaders() ? this::selectMaterialWithBiomes : this::selectMaterialWithoutBiomes;
 
 		for (int x = xStart + 1; x <= xStart + 13; x += 4) {
 			for (int z = zStart + 2; z <= zStart + 14; z += 4) {
@@ -262,6 +256,8 @@ public class Generator implements Listener {
 				}
 			}
 		}
+		generatedChunksByWorld.putIfAbsent(worldName, Collections.newSetFromMap(new HashMap<>()));
+		generatedChunksByWorld.get(worldName).add(new Pair<>(chunk.getX(), chunk.getZ()));
 	}
 
 	public void handleLeaves(Block block) {
@@ -280,8 +276,7 @@ public class Generator implements Listener {
 			int maxAge = ageable.getMaximumAge();
 			ageable.setAge(maxAge);
 			block.setBlockData(ageable, false);
-		}
-		else if (block.getType() == Material.CAVE_VINES || block.getType() == Material.CAVE_VINES_PLANT) {
+		} else if (block.getType() == Material.CAVE_VINES || block.getType() == Material.CAVE_VINES_PLANT) {
 			CaveVines caveVines = (CaveVines) block.getBlockData();
 			caveVines.setBerries(true);
 			block.setBlockData(caveVines, true);
@@ -313,12 +308,44 @@ public class Generator implements Listener {
 		int randomIndex = random.nextInt(values.length);
 		return values[randomIndex];
 	}
-	
+
 	public void regenerateAllLoadedChunks() {
-	    for (World world : Bukkit.getWorlds()) {
-	        for (Chunk loadedChunk : world.getLoadedChunks()) {
-	            processChunk(loadedChunk);
-	        }
-	    }
+		for (World world : Bukkit.getWorlds()) {
+			for (Chunk loadedChunk : world.getLoadedChunks()) {
+				processChunk(loadedChunk);
+			}
+		}
+	}
+
+	// Utility class to store pair of integers for chunk coordinates
+	public static class Pair<K, V> {
+		private final K key;
+		private final V value;
+
+		public Pair(K key, V value) {
+			this.key = key;
+			this.value = value;
+		}
+
+		public K getKey() {
+			return key;
+		}
+
+		public V getValue() {
+			return value;
+		}
+
+		@Override
+		public boolean equals(Object o) {
+			if (this == o) return true;
+			if (o == null || getClass() != o.getClass()) return false;
+			Pair<?, ?> pair = (Pair<?, ?>) o;
+			return Objects.equals(key, pair.key) && Objects.equals(value, pair.value);
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(key, value);
+		}
 	}
 }

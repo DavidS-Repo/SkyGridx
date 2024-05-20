@@ -4,11 +4,10 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.Files;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
-import java.nio.file.Files;
-
-
+import java.util.stream.Collectors;
 import org.bukkit.Material;
 
 public class MaterialManager {
@@ -62,16 +61,13 @@ public class MaterialManager {
 			if (!materials.isEmpty()) {
 				redistributeRemainingPercentage(materials, remainingPercentage);
 				String worldName = getWorldNameFromFileName(fileName);
-				worldMaterials.put(worldName, materials);
+				worldMaterials.put(worldName, Collections.unmodifiableList(materials));
 			}
 
-			for (List<Material> biomeMaterials : biomeMaterialsMap.values()) {
-				redistributeRemainingPercentage(biomeMaterials, 100.0);
-			}
-
-			biomeMaterialsMap.forEach((biome, materialsList) ->
-			biomeMaterials.put(biome, calculateMaterialDistribution(materialsList))
-					);
+			biomeMaterialsMap.forEach((biome, materialsList) -> {
+				redistributeRemainingPercentage(materialsList, 100.0);
+				biomeMaterials.put(biome, Collections.unmodifiableMap(calculateMaterialDistribution(materialsList)));
+			});
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -92,11 +88,7 @@ public class MaterialManager {
 	}
 
 	private Map<Material, Double> calculateMaterialDistribution(List<Material> materials) {
-		Map<Material, Double> materialDistribution = new HashMap<>();
-		for (Material material : materials) {
-			materialDistribution.put(material, materialDistribution.getOrDefault(material, 0.0) + 1.0);
-		}
-		return materialDistribution;
+		return materials.stream().collect(Collectors.groupingBy(material -> material, Collectors.summingDouble(material -> 1.0)));
 	}
 
 	private double parsePercentage(String percentageString) {
@@ -117,16 +109,7 @@ public class MaterialManager {
 		Map<Material, Double> biomeMaterialsMap = biomeMaterials.get(biomeName);
 
 		if (biomeMaterialsMap != null && !biomeMaterialsMap.isEmpty()) {
-			List<Material> possibleMaterials = new ArrayList<>();
-			biomeMaterialsMap.forEach((material, count) -> {
-				for (int i = 0; i < count; i++) {
-					possibleMaterials.add(material);
-				}
-			});
-
-			if (!possibleMaterials.isEmpty()) {
-				return possibleMaterials.get(random.nextInt(possibleMaterials.size()));
-			}
+			return selectMaterialWithWeight(biomeMaterialsMap);
 		}
 
 		return materials != null && !materials.isEmpty() ? materials.get(random.nextInt(materials.size())) : null;
@@ -147,7 +130,7 @@ public class MaterialManager {
 				}
 				if (line.trim().startsWith("-")) {
 					if (!currentBiomes.isEmpty() && !materialsMap.isEmpty()) {
-						currentBiomes.forEach(biome -> biomeMaterials.put(biome, new HashMap<>(materialsMap)));
+						currentBiomes.forEach(biome -> biomeMaterials.put(biome, Collections.unmodifiableMap(new HashMap<>(materialsMap))));
 						currentBiomes.clear();
 						materialsMap.clear();
 					}
@@ -166,7 +149,7 @@ public class MaterialManager {
 					}
 				});
 			}
-			currentBiomes.forEach(biome -> biomeMaterials.put(biome, new HashMap<>(materialsMap)));
+			currentBiomes.forEach(biome -> biomeMaterials.put(biome, Collections.unmodifiableMap(new HashMap<>(materialsMap))));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -185,10 +168,7 @@ public class MaterialManager {
 	}
 
 	private Material selectMaterialWithWeight(Map<Material, Double> materialsMap) {
-		double totalWeight = 0;
-		for (Double weight : materialsMap.values()) {
-			totalWeight += weight;
-		}
+		double totalWeight = materialsMap.values().stream().mapToDouble(Double::doubleValue).sum();
 		double randomWeight = random.nextDouble() * totalWeight;
 
 		for (Map.Entry<Material, Double> entry : materialsMap.entrySet()) {
