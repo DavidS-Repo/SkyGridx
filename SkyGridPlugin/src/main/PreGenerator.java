@@ -1,382 +1,230 @@
-// there is currently a lot of duplicate code, I tried different ways to 
-// simplify it but due to the way the end, nether and Overworld generate at 
-// different rates it always caused issues where chunks where skipped
-// because the end generates at about 2-3 times the rate
-// this is a more simple way to ensure everything just works, 
-// just gave all of them their own code for anything that would have lead to issues
-
-
 package main;
 
 import io.papermc.lib.PaperLib;
-
 import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
 import org.bukkit.World;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.*;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.CompletableFuture;
 
 public class PreGenerator {
-	private boolean enabled = false;
-	private Timer timer;
-	private final JavaPlugin plugin;
-	private int chunksPerRun, printTime;
-	private int chunksPerSec;
+    private boolean enabled = false;
+    private Timer timer;
+    private final JavaPlugin plugin;
+    private int chunksPerRun, printTime;
+    private int chunksPerSec;
 
-	//overworld
-	private static final String o = "overwrold_pregenerator_data.txt";
-	private final World overworld;
-	private int o_x = 0, o_z = 0, o_dx = 0, o_dz = -1, o_chunkPerMin = 0, o_chunksPerSec = 0;
-	private long o_totalChunksProcessed = 0L, o_totalWorldChunks = 14062361500009L;
+    private static final String[] worldNames = {"overworld", "nether", "end"};
+    private final Map<String, WorldData> worldDataMap = new HashMap<>();
 
-	//nether
-	private static final String n = "nether_pregenerator_data.txt";
-	private final World nether;
-	private int n_x = 0, n_z = 0, n_dx = 0, n_dz = -1, n_chunkPerMin = 0, n_chunksPerSec = 0;
-	private long n_totalChunksProcessed = 0L, n_totalWorldChunks = 14062361500009L;
+    private class WorldData {
+        final String dataFileName;
+        final World world;
+        int x = 0, z = 0, dx = 0, dz = -1, chunkPerMin = 0, chunksPerSec = 0;
+        long totalChunksProcessed = 0L, totalWorldChunks = 14062361500009L;
 
-	//end
-	private static final String e = "end_pregenerator_data.txt";
-	private final World end;
-	private int e_x = 0, e_z = 0, e_dx = 0, e_dz = -1, e_chunkPerMin = 0, e_chunksPerSec = 0;
-	private long e_totalChunksProcessed = 0L, e_totalWorldChunks = 14062361500009L;
+        WorldData(String dataFileName, World world) {
+            this.dataFileName = dataFileName;
+            this.world = world;
+        }
+    }
 
+    public PreGenerator(JavaPlugin plugin) {
+        this.plugin = plugin;
+        this.worldDataMap.put("overworld", new WorldData("overworld_pregenerator_data.txt", plugin.getServer().getWorlds().get(0)));
+        this.worldDataMap.put("nether", new WorldData("nether_pregenerator_data.txt", plugin.getServer().getWorlds().get(1)));
+        this.worldDataMap.put("end", new WorldData("end_pregenerator_data.txt", plugin.getServer().getWorlds().get(2)));
+    }
 
-	public PreGenerator(JavaPlugin plugin) {
-		this.plugin = plugin;
-		this.overworld = plugin.getServer().getWorlds().get(0);
-		this.nether = plugin.getServer().getWorlds().get(1);
-		this.end = plugin.getServer().getWorlds().get(2);
-	}
+    public void enable() {
+        if (enabled) {
+            Bukkit.broadcastMessage("Pre-Generator is already enabled.");
+            return;
+        }
+        enabled = true;
+        Bukkit.broadcastMessage("Pre-generation has been enabled.");
+        loadProcessedChunks();
+        startGeneration();
+        startPrintInfoTimer();
+    }
 
-	public void enable() {
-		if (enabled) {
-			Bukkit.broadcastMessage("Pre-Generator is already enabled.");
-			return;
-		}
-		enabled = true;
-		Bukkit.broadcastMessage("Pre-generation has been enabled.");
-		loadProcessedChunks();
-		startGeneration();
-		startPrintInfoTimer();
-	}
+    public void disable() {
+        if (!enabled) {
+            Bukkit.broadcastMessage("Pre-Generator is already disabled.");
+            return;
+        }
+        saveProcessedChunks();
+        stopPrintInfoTimer();
+        enabled = false;
+        Bukkit.broadcastMessage("Pre-generation disabled.");
+    }
 
-	public void disable() {
-		if (!enabled) {
-			Bukkit.broadcastMessage("Pre-Generator is already disabled.");
-			return;
-		}
-		saveProcessedChunks();
-		stopPrintInfoTimer();
-		enabled = false;
-		Bukkit.broadcastMessage("Pre-generation disabled.");
-	}
+    private void startPrintInfoTimer() {
+        if (timer == null) {
+            timer = new Timer(true);
+            timer.scheduleAtFixedRate(new TimerTask() {
+                @Override
+                public void run() {
+                    printInfo();
+                }
+            }, 0, (printTime * 60000)); // printTime * 60,000 milliseconds (60 seconds)
+        }
+    }
 
-	private void startPrintInfoTimer() {
-		if (timer == null) {
-			timer = new Timer(true);
-			timer.scheduleAtFixedRate(new TimerTask() {
-				@Override
-				public void run() {
-					printInfo();
-				}
-			}, 0, (printTime * 60000)); // printTime * 60,000 milliseconds (60 seconds)
-		}
-	}
+    private void stopPrintInfoTimer() {
+        if (timer != null) {
+            timer.cancel();
+            timer.purge();
+            timer = null;
+        }
+    }
 
-	private void stopPrintInfoTimer() {
-		if (timer != null) {
-			timer.cancel();
-			timer.purge();
-			timer = null;
-		}
-	}
+    public void setValues(int chunksPerRun, int printTime) {
+        this.chunksPerRun = chunksPerRun;
+        this.printTime = printTime;
+    }
 
-	public void setValues(int chunksPerRun, int printTime) {
-		this.chunksPerRun = chunksPerRun;
-		this.printTime = printTime;
-	}
+    private void startGeneration() {
+        for (String worldName : worldNames) {
+            generateChunkBatch(worldName);
+        }
+    }
 
-	// start generation
-	private void startGeneration() {o_startGeneration();n_startGeneration();e_startGeneration();}
-	private void o_startGeneration() {o_generateChunkBatch();}
-	private void n_startGeneration() {n_generateChunkBatch();}
-	private void e_startGeneration() {e_generateChunkBatch();}
+    private void generateChunkBatch(String worldName) {
+        WorldData data = worldDataMap.get(worldName);
+        if (!enabled || data == null) {
+            return;
+        }
 
-	private void o_generateChunkBatch() {
-		if (!enabled) {
-			return; // Stop generating if pre-generation is disabled
-		}
+        CompletableFuture<Void> allChunksLoaded = CompletableFuture.completedFuture(null);
 
-		CompletableFuture<Void> o_allChunksLoaded = CompletableFuture.completedFuture(null);
+        for (int i = 0; i < chunksPerRun; i++) {
+            if (!enabled) {
+                break;
+            }
 
-		// Process chunksPerRun number of chunks in each iteration
-		for (int i = 0; i < chunksPerRun; i++) {
-			if (!enabled) {
-				// If pre-generation is disabled, break out of the loop
-				break;
-			}
+            allChunksLoaded = allChunksLoaded.thenComposeAsync(ignored ->
+                PaperLib.getChunkAtAsync(data.world, data.x, data.z, true)
+                    .thenAcceptAsync(chunk -> unloadChunkAsync(chunk, data.world))
+            ).thenComposeAsync(ignored -> CompletableFuture.runAsync(() -> {
+                data.totalChunksProcessed++;
+                data.chunkPerMin++;
 
-			o_allChunksLoaded = o_allChunksLoaded.thenComposeAsync(ignored ->
-			PaperLib.getChunkAtAsync(overworld, o_x, o_z, true)
-			.thenAcceptAsync(chunk -> unloadChunkAsync(chunk, overworld))
-					).thenComposeAsync(ignored -> CompletableFuture.runAsync(() -> {
-						o_totalChunksProcessed++;
-						o_chunkPerMin++;
+                if (data.x == data.z || (data.x < 0 && data.x == -data.z) || (data.x > 0 && data.x == 1 - data.z)) {
+                    int temp = data.dx;
+                    data.dx = -data.dz;
+                    data.dz = temp;
+                }
+                data.x += data.dx;
+                data.z += data.dz;
+            }));
 
-						if (o_x == o_z || (o_x < 0 && o_x == -o_z) || (o_x > 0 && o_x == 1 - o_z)) {
-							int o_temp = o_dx;
-							o_dx = -o_dz;
-							o_dz = o_temp;
-						}
-						o_x += o_dx;
-						o_z += o_dz;
+            if (data.totalChunksProcessed >= data.totalWorldChunks) {
+                disable();
+                break;
+            }
+        }
 
-					}));
+        allChunksLoaded.thenRun(() -> {
+            if (enabled) {
+                saveProcessedChunks(worldName);
+                generateChunkBatch(worldName);
+            }
+        });
+    }
 
-			// Check if pre-generation is complete
-			if (o_totalChunksProcessed >= o_totalWorldChunks) {
-				disable(); // Disable pre-generation when completed
-				break; // Break out of the loop to stop further processing
-			}
-		}
+    private void unloadChunkAsync(Chunk chunk, World world) {
+        Bukkit.getScheduler().runTask(plugin, () -> unloadChunk(chunk, world));
+    }
 
-		// Continue with unloading and other tasks after all chunks are loaded
-		o_allChunksLoaded.thenRun(() -> {
-			if (enabled) {
-				// Only save processed chunks and print info if pre-generation is still enabled
-				o_saveProcessedChunks();
-				// Start the next batch recursively
-				o_generateChunkBatch();
-			}
-		});
-	}
+    private void unloadChunk(Chunk chunk, World world) {
+        if (world.isChunkLoaded(chunk.getX(), chunk.getZ())) {
+            world.unloadChunk(chunk.getX(), chunk.getZ(), true);
+        }
+    }
 
-	private void n_generateChunkBatch() {
-		if (!enabled) {
-			return;
-		}
-		CompletableFuture<Void> n_allChunksLoaded = CompletableFuture.completedFuture(null);
-		for (int i = 0; i < chunksPerRun; i++) {
-			if (!enabled) {
-				break;
-			}
-			n_allChunksLoaded = n_allChunksLoaded.thenComposeAsync(ignored ->
-			PaperLib.getChunkAtAsync(nether, n_x, n_z, true)
-			.thenAcceptAsync(chunk -> unloadChunkAsync(chunk, nether))
-					).thenComposeAsync(ignored -> CompletableFuture.runAsync(() -> {
-						n_totalChunksProcessed++;
-						n_chunkPerMin++;
+    private void printInfo() {
+        chunksPerSec = 0;
 
-						if (n_x == n_z || (n_x < 0 && n_x == -n_z) || (n_x > 0 && n_x == 1 - n_z)) {
-							int n_temp = n_dx;
-							n_dx = -n_dz;
-							n_dz = n_temp;
-						}
-						n_x += n_dx;
-						n_z += n_dz;
-					}));
-			if (n_totalChunksProcessed >= n_totalWorldChunks) {
-				disable();
-				break;
-			}
-		}
-		n_allChunksLoaded.thenRun(() -> {
-			if (enabled) {
-				n_saveProcessedChunks();
-				n_generateChunkBatch();
-			}
-		});
-	}
+        for (String worldName : worldNames) {
+            WorldData data = worldDataMap.get(worldName);
+            if (data != null) {
+                data.chunksPerSec = (data.chunkPerMin / (60 * printTime));
+                chunksPerSec += data.chunksPerSec;
 
-	private void e_generateChunkBatch() {
-		if (!enabled) {
-			return;
-		}
-		CompletableFuture<Void> e_allChunksLoaded = CompletableFuture.completedFuture(null);
-		for (int i = 0; i < chunksPerRun; i++) {
-			if (!enabled) {
-				break;
-			}
-			e_allChunksLoaded = e_allChunksLoaded.thenComposeAsync(ignored ->
-			PaperLib.getChunkAtAsync(end, e_x, e_z, true)
-			.thenAcceptAsync(chunk -> unloadChunkAsync(chunk, end))
-					).thenComposeAsync(ignored -> CompletableFuture.runAsync(() -> {
-						e_totalChunksProcessed++;
-						e_chunkPerMin++;
+                data.chunksPerSec = 0;
+                data.chunkPerMin = 0;
+            }
+        }
 
-						if (e_x == e_z || (e_x < 0 && e_x == -e_z) || (e_x > 0 && e_x == 1 - e_z)) {
-							int e_temp = e_dx;
-							e_dx = -e_dz;
-							e_dz = e_temp;
-						}
-						e_x += e_dx;
-						e_z += e_dz;
-					}));
-			if (e_totalChunksProcessed >= e_totalWorldChunks) {
-				disable();
-				break;
-			}
-		}
-		e_allChunksLoaded.thenRun(() -> {
-			if (enabled) {
-				e_saveProcessedChunks();
-				e_generateChunkBatch();
-			}
-		});
-	}
+        Bukkit.broadcastMessage("Pregen Chunks/Sec: " + chunksPerSec);
+    }
 
-	// Unload chunk synchronously on the main thread
-	private void unloadChunkAsync(Chunk chunk, World world) {
-		Bukkit.getScheduler().runTask(plugin, () -> unloadChunk(chunk, world));
-	}
+    private void saveProcessedChunks() {
+        for (String worldName : worldNames) {
+            saveProcessedChunks(worldName);
+        }
+    }
 
-	private void unloadChunk(Chunk chunk, World world) {
-		// Ensure the chunk is loaded before unloading
-		if (world.isChunkLoaded(chunk.getX(), chunk.getZ())) {
-			world.unloadChunk(chunk.getX(), chunk.getZ(), true);
-		}
-	}
+    private void saveProcessedChunks(String worldName) {
+        WorldData data = worldDataMap.get(worldName);
+        if (data == null) {
+            return;
+        }
 
-	private void printInfo() {
-		o_chunksPerSec = ((o_chunkPerMin) / (60 * printTime));
-		n_chunksPerSec = ((n_chunkPerMin) / (60 * printTime));
-		e_chunksPerSec = ((e_chunkPerMin) / (60 * printTime));
+        File dataFile = new File(plugin.getDataFolder(), data.dataFileName);
 
-		chunksPerSec = o_chunksPerSec + n_chunksPerSec + e_chunksPerSec;
-		Bukkit.broadcastMessage("Pregen Chunks/Sec: " + chunksPerSec);
+        try (PrintWriter writer = new PrintWriter(new FileWriter(dataFile, false))) {
+            writer.println(data.x + "_" + data.z + "_" + data.dx + "_" + data.dz);
+            writer.println(data.totalChunksProcessed);
+        } catch (IOException e) {
+            e.printStackTrace();
+            Bukkit.broadcastMessage("Total Processed " + worldName + " Chunks " + data.totalChunksProcessed + ".");
+        }
+    }
 
-		// reset
-		o_chunksPerSec = 0;
-		o_chunkPerMin  = 0;
-		n_chunksPerSec = 0;
-		n_chunkPerMin  = 0;
-		e_chunksPerSec = 0;
-		e_chunkPerMin  = 0;
-	}
+    private void loadProcessedChunks() {
+        for (String worldName : worldNames) {
+            loadProcessedChunks(worldName);
+        }
+    }
 
+    private void loadProcessedChunks(String worldName) {
+        WorldData data = worldDataMap.get(worldName);
+        if (data == null) {
+            return;
+        }
 
-	private void saveProcessedChunks() {
-		o_saveProcessedChunks();
-		n_saveProcessedChunks();
-		e_saveProcessedChunks();
-	}
+        File dataFile = new File(plugin.getDataFolder(), data.dataFileName);
 
-	private void o_saveProcessedChunks() {
-		File dataFile = new File(plugin.getDataFolder(), o);
+        if (dataFile.exists()) {
+            try (BufferedReader reader = new BufferedReader(new FileReader(dataFile))) {
+                String lastLine = reader.readLine();
 
-		try (PrintWriter writer = new PrintWriter(new FileWriter(dataFile, false))) {
-			writer.println(o_x + "_" + o_z + "_" + o_dx + "_" + o_dz);
-			writer.println(o_totalChunksProcessed);
-		} catch (IOException e) {
-			e.printStackTrace();
-			Bukkit.broadcastMessage("Total Processed Overworld Chunks " + o_totalChunksProcessed + ".");
-		}
-	}
+                while (lastLine != null) {
+                    String[] coords = lastLine.split("_");
+                    data.x = Integer.parseInt(coords[0]);
+                    data.z = Integer.parseInt(coords[1]);
+                    data.dx = Integer.parseInt(coords[2]);
+                    data.dz = Integer.parseInt(coords[3]);
 
-	private void n_saveProcessedChunks() {
-		File dataFile = new File(plugin.getDataFolder(), n);
+                    String totalChunksLine = reader.readLine();
 
-		try (PrintWriter writer = new PrintWriter(new FileWriter(dataFile, false))) {
-			writer.println(n_x + "_" + n_z + "_" + n_dx + "_" + n_dz);
-			writer.println(n_totalChunksProcessed);
-		} catch (IOException e) {
-			e.printStackTrace();
-			Bukkit.broadcastMessage("Total Processed Nether Chunks " + n_totalChunksProcessed + ".");
-		}
-	}
-
-	private void e_saveProcessedChunks() {
-		File dataFile = new File(plugin.getDataFolder(), e);
-
-		try (PrintWriter writer = new PrintWriter(new FileWriter(dataFile, false))) {
-			writer.println(e_x + "_" + e_z + "_" + e_dx + "_" + e_dz);
-			writer.println(e_totalChunksProcessed);
-		} catch (IOException e) {
-			e.printStackTrace();
-			Bukkit.broadcastMessage("Total Processed End Chunks " + e_totalChunksProcessed + ".");
-		}
-	}
-
-	private void loadProcessedChunks() {
-		File o_dataFile = new File(plugin.getDataFolder(), o);
-		File n_dataFile = new File(plugin.getDataFolder(), n);
-		File e_dataFile = new File(plugin.getDataFolder(), e);
-
-		if (o_dataFile.exists()) {
-			try (BufferedReader reader = new BufferedReader(new FileReader(o_dataFile))) {
-				String lastLine = reader.readLine();
-
-				while (lastLine != null) {
-					String[] coords = lastLine.split("_");
-					o_x = Integer.parseInt(coords[0]);
-					o_z = Integer.parseInt(coords[1]);
-					o_dx = Integer.parseInt(coords[2]);
-					o_dz = Integer.parseInt(coords[3]);
-
-					String totalChunksLine = reader.readLine();
-
-					if (totalChunksLine != null) {
-						o_totalChunksProcessed = Long.parseLong(totalChunksLine);
-					}
-					lastLine = reader.readLine();
-				}
-				Bukkit.broadcastMessage("Loaded " + o_totalChunksProcessed + " processed chunks from: " + o_dataFile.getPath());
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
-
-		if (n_dataFile.exists()) {
-			try (BufferedReader reader = new BufferedReader(new FileReader(n_dataFile))) {
-				String lastLine = reader.readLine();
-
-				while (lastLine != null) {
-					String[] coords = lastLine.split("_");
-					n_x = Integer.parseInt(coords[0]);
-					n_z = Integer.parseInt(coords[1]);
-					n_dx = Integer.parseInt(coords[2]);
-					n_dz = Integer.parseInt(coords[3]);
-
-					String totalChunksLine = reader.readLine();
-
-					if (totalChunksLine != null) {
-						n_totalChunksProcessed = Long.parseLong(totalChunksLine);
-					}
-					lastLine = reader.readLine();
-				}
-				Bukkit.broadcastMessage("Loaded " + n_totalChunksProcessed + " processed chunks from: " + n_dataFile.getPath());
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
-
-		if (e_dataFile.exists()) {
-			try (BufferedReader reader = new BufferedReader(new FileReader(e_dataFile))) {
-				String lastLine = reader.readLine();
-
-				while (lastLine != null) {
-					String[] coords = lastLine.split("_");
-					e_x = Integer.parseInt(coords[0]);
-					e_z = Integer.parseInt(coords[1]);
-					e_dx = Integer.parseInt(coords[2]);
-					e_dz = Integer.parseInt(coords[3]);
-
-					String totalChunksLine = reader.readLine();
-
-					if (totalChunksLine != null) {
-						e_totalChunksProcessed = Long.parseLong(totalChunksLine);
-					}
-					lastLine = reader.readLine();
-				}
-				Bukkit.broadcastMessage("Loaded " + e_totalChunksProcessed + " processed chunks from: " + e_dataFile.getPath());
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
-	}
+                    if (totalChunksLine != null) {
+                        data.totalChunksProcessed = Long.parseLong(totalChunksLine);
+                    }
+                    lastLine = reader.readLine();
+                }
+                Bukkit.broadcastMessage("Loaded " + data.totalChunksProcessed + " processed chunks from: " + dataFile.getPath());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
 }
