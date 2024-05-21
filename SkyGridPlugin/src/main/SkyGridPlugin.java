@@ -2,41 +2,56 @@ package main;
 
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitRunnable;
 import java.util.logging.Filter;
 
 public class SkyGridPlugin extends JavaPlugin implements Listener {
 
 	private boolean firstBoot = false;
 	private FirstBootChecker bootChecker;
+	private PluginSettings settings;
 	private Generator generator;
 
 	@Override
 	public void onEnable() {
-		// Register listeners
+		// Register this class as a listener if there are any immediate events to handle
 		getServer().getPluginManager().registerEvents(this, this);
 
+		// Schedule a sync task with a delay of 0 ticks to run the initialization logic
+		new BukkitRunnable() {
+			@Override
+			public void run() {
+				initializePlugin();
+			}
+		}.runTask(this);
+	}
+
+	private void initializePlugin() {
 		// Create an instance of ResourcePackManager
 		ResourcePackManager manager = new ResourcePackManager();
 
 		// Register the instance as a listener without immediately activating it
 		getServer().getPluginManager().registerEvents(manager, this);
 
+		// Ensure plugin folders exist
+		bootChecker = new FirstBootChecker(this);
+		bootChecker.createFoldersIfNotExist("SkygridBlocks");
+		bootChecker.createFoldersIfNotExist("OreGenBlock");
+
+		// Initialize PluginSettings
+		settings = new PluginSettings(this);
+
 		// Create an instance of Fog and pass the ResourcePackManager instance
-		Fog fogCommandExecutor = new Fog(manager);
+		Fog fogCommandExecutor = new Fog(manager, settings);
 
 		// Set the command executor for your fog commands
 		getCommand("fogon").setExecutor(fogCommandExecutor);
 		getCommand("fogoff").setExecutor(fogCommandExecutor);
 
-		//  Register command and Set the TPRAutoCompleter for the "/tpr" command
-		getCommand("tpr").setExecutor(new TPRCommand());
+		// Register command and Set the TPRAutoCompleter for the "/tpr" command
+		getCommand("tpr").setExecutor(new TPRCommand(settings));
 		TPRAutoCompleter tprAutoCompleter = new TPRAutoCompleter();
 		getCommand("tpr").setTabCompleter(tprAutoCompleter);
-
-		// Ensure plugin folders exist
-		bootChecker = new FirstBootChecker(this);
-		bootChecker.createFoldersIfNotExist("SkygridBlocks");
-		bootChecker.createFoldersIfNotExist("OreGenBlock");
 
 		// Check for first boot
 		firstBoot = bootChecker.checkForFirstBoot();
@@ -72,7 +87,7 @@ public class SkyGridPlugin extends JavaPlugin implements Listener {
 		getCommand("patch").setExecutor(new PatchCommand(this));
 
 		// Register the RegenCommand with the Generator instance
-		getCommand("sgregen").setExecutor(new RegenerateCommand(this, generator));
+		getCommand("regen").setExecutor(new RegenerateCommand(this, generator));
 	}
 
 	public boolean isFirstBoot() {
@@ -84,6 +99,10 @@ public class SkyGridPlugin extends JavaPlugin implements Listener {
 		if (generator == null) {
 			generator = new Generator(this);
 			generator.initialize();
+
+			if (firstBoot) {
+				generator.processAllLoadedChunks();
+			}
 		}
 	}
 

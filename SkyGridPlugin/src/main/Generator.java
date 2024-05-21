@@ -13,7 +13,6 @@ import org.bukkit.block.data.type.Leaves;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.server.ServerLoadEvent;
 import org.bukkit.event.world.ChunkLoadEvent;
 
 import java.io.BufferedReader;
@@ -25,12 +24,13 @@ import java.util.concurrent.ThreadLocalRandom;
 
 public class Generator implements Listener {
 	private final SkyGridPlugin plugin;
+	private final PluginSettings settings;
 	private final ThreadLocalRandom random;
 	private final Map<String, Set<Pair<Integer, Integer>>> generatedChunksByWorld;
 	private final MaterialManager materialManager;
 	private final Spawner spawner;
 	private final Chest chest;
-	private final int PROCESS_DELAY = 10;
+
 
 	private static final List<Material> CROP_MATERIALS = Arrays.asList(
 			Material.CACTUS, Material.SUGAR_CANE, Material.KELP, Material.WHEAT,
@@ -46,6 +46,7 @@ public class Generator implements Listener {
 
 	public Generator(SkyGridPlugin plugin) {
 		this.plugin = plugin;
+		this.settings = new PluginSettings(plugin);
 		this.random = ThreadLocalRandom.current();
 		this.materialManager = new MaterialManager(plugin);
 		this.generatedChunksByWorld = new HashMap<>();
@@ -107,14 +108,6 @@ public class Generator implements Listener {
 	}
 
 	@EventHandler(priority = EventPriority.HIGHEST)
-	public void onServerLoad(ServerLoadEvent event) {
-		if (plugin.isFirstBoot()) {
-			processAllLoadedChunks();
-			plugin.getServer().getConsoleSender().sendMessage("\u001B[32mFirst boot generation complete.\u001B[0m");
-		}
-	}
-
-	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onChunkLoad(ChunkLoadEvent event) {
 		Chunk chunk = event.getChunk();
 		Pair<Integer, Integer> chunkCoords = new Pair<>(chunk.getX(), chunk.getZ());
@@ -122,13 +115,13 @@ public class Generator implements Listener {
 		Set<Pair<Integer, Integer>> generatedChunks = generatedChunksByWorld.computeIfAbsent(worldName, k -> new HashSet<>());
 
 		if (event.isNewChunk() && !generatedChunks.contains(chunkCoords)) {
-			Bukkit.getScheduler().runTaskLater(plugin, () -> processChunk(chunk), PROCESS_DELAY);
+			Bukkit.getScheduler().runTaskLater(plugin, () -> processChunk(chunk), settings.getProcessDelay());
 		} else {
 			generatedChunks.add(chunkCoords);
 		}
 	}
 
-	private void processAllLoadedChunks() {
+	public void processAllLoadedChunks() {
 		for (World world : Bukkit.getWorlds()) {
 			for (Chunk loadedChunk : world.getLoadedChunks()) {
 				Pair<Integer, Integer> chunkCoords = new Pair<>(loadedChunk.getX(), loadedChunk.getZ());
@@ -169,7 +162,7 @@ public class Generator implements Listener {
 		}
 		int totalChunks = chunksToProcess.size();
 		int batchSize = Math.max(1, (totalChunks + 1) / 2);
-		Bukkit.getScheduler().runTaskLater(plugin, () -> processChunksBatch(dimension, chunksToProcess, batchSize, 0, dimensionQueue), PROCESS_DELAY);
+		Bukkit.getScheduler().runTaskLater(plugin, () -> processChunksBatch(dimension, chunksToProcess, batchSize, 0, dimensionQueue), settings.getProcessDelay());
 	}
 
 	private void processChunksBatch(World.Environment dimension, List<Chunk> chunksToProcess, int batchSize, int batchIndex, Queue<World.Environment> dimensionQueue) {
@@ -182,7 +175,7 @@ public class Generator implements Listener {
 			processChunk(chunk);
 		}
 		if (endIdx < totalChunks) {
-			Bukkit.getScheduler().runTaskLater(plugin, () -> processChunksBatch(dimension, chunksToProcess, batchSize, batchIndex + 1, dimensionQueue), PROCESS_DELAY);
+			Bukkit.getScheduler().runTaskLater(plugin, () -> processChunksBatch(dimension, chunksToProcess, batchSize, batchIndex + 1, dimensionQueue), settings.getProcessDelay());
 		} else {
 			processNextDimension(dimensionQueue);
 		}
@@ -210,16 +203,20 @@ public class Generator implements Listener {
 
 		switch (dimension) {
 		case NETHER:
-			minY = 0;
-			maxY = 128;
+			minY = settings.netherMinY();
+			maxY = settings.netherMaxY();
 			break;
 		case THE_END:
-			minY = 0;
-			maxY = 128;
+			minY = settings.endMinY();
+			maxY = settings.endMaxY();
+			break;
+		case NORMAL:
+			minY = settings.normalMinY();
+			maxY = settings.normalMaxY();
 			break;
 		default:
-			minY = -64;
-			maxY = 64;
+			minY = settings.defaultMinY();
+			maxY = settings.defaultMaxY();
 			break;
 		}
 

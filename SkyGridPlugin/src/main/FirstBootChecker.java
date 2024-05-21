@@ -1,12 +1,9 @@
 package main;
 
 import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
 
 public class FirstBootChecker {
-
     private SkyGridPlugin plugin;
 
     public FirstBootChecker(SkyGridPlugin plugin) {
@@ -22,6 +19,8 @@ public class FirstBootChecker {
         copyFileIfNotPresent("world_nether.txt", "SkygridBlocks");
         copyFileIfNotPresent("world_the_end.txt", "SkygridBlocks");
         copyFileIfNotPresent("ores.yml", "OreGenBlock");
+        copyFileIfNotPresent("settings.yml", "");
+
         return isFirstBoot;
     }
 
@@ -30,7 +29,8 @@ public class FirstBootChecker {
         if (!Files.exists(destinationPath)) {
             try (InputStream inputStream = plugin.getResource(fileName)) {
                 if (inputStream != null) {
-                    Files.copy(inputStream, destinationPath);
+                    Files.createDirectories(destinationPath.getParent());
+                    Files.copy(inputStream, destinationPath, StandardCopyOption.REPLACE_EXISTING);
                     return true;
                 } else {
                     plugin.getLogger().warning("Could not find " + fileName + " in the plugin resources.");

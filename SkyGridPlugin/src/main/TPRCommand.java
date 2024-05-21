@@ -1,18 +1,7 @@
 package main;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
-import java.util.UUID;
-
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.World;
+import java.util.*;
+import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -26,8 +15,23 @@ public class TPRCommand implements CommandExecutor {
 			Material.LAVA, Material.CACTUS, Material.FIRE, Material.WATER, Material.LAVA_CAULDRON,
 			Material.MAGMA_BLOCK, Material.SWEET_BERRY_BUSH, Material.CAMPFIRE, Material.WITHER_ROSE,
 			Material.SUGAR_CANE, Material.VINE, Material.WEEPING_VINES, Material.TWISTING_VINES,
-			Material.POINTED_DRIPSTONE, Material.AIR
+			Material.POINTED_DRIPSTONE, Material.AIR, Material.SNOW, Material.GRASS, Material.CORNFLOWER, 
+			Material.SUNFLOWER, Material.TORCHFLOWER, Material.FERN, Material.DANDELION, Material.POPPY,
+			Material.SPORE_BLOSSOM, Material.HANGING_ROOTS, Material.BIG_DRIPLEAF, Material.SMALL_DRIPLEAF,
+			Material.CAVE_VINES_PLANT, Material.TALL_GRASS, Material.SEAGRASS, Material.BROWN_MUSHROOM,
+			Material.RED_MUSHROOM, Material.WHEAT, Material.POTATOES, Material.CARROTS, Material.BEETROOTS,
+			Material.KELP, Material.MELON_STEM, Material.NETHER_WART, Material.PUMPKIN_STEM, Material.TORCHFLOWER_CROP,
+			Material.TWISTING_VINES, Material.WEEPING_VINES, Material.ROSE_BUSH, Material.PITCHER_PLANT, Material.PEONY,
+			Material.LILAC, Material.LARGE_FERN, Material.TALL_SEAGRASS,Material.ALLIUM, Material.AZURE_BLUET, 
+			Material.BLUE_ORCHID, Material.LILY_OF_THE_VALLEY,Material.OXEYE_DAISY, Material.RED_TULIP, Material.ORANGE_TULIP, 
+			Material.WHITE_TULIP, Material.PINK_TULIP, Material.WITHER_ROSE, Material.DEAD_BUSH
 			));
+
+	private final PluginSettings settings;
+
+	public TPRCommand(PluginSettings settings) {
+		this.settings = settings;
+	}
 
 	@Override
 	public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
@@ -44,7 +48,7 @@ public class TPRCommand implements CommandExecutor {
 			}
 			teleportPlayer(player, world);
 		} else {
-			long secondsLeft = (lastTeleportTimes.get(player.getUniqueId()) + 30 * 1000 - System.currentTimeMillis()) / 1000;
+			long secondsLeft = (lastTeleportTimes.get(player.getUniqueId()) + settings.getTprDelay() * 1000 - System.currentTimeMillis()) / 1000;
 			player.sendMessage(ChatColor.RED + "You must wait " + secondsLeft + " seconds before using this command again.");
 		}
 		return true;
@@ -64,9 +68,8 @@ public class TPRCommand implements CommandExecutor {
 			break;
 		}
 		if (world == null) {
-			// Handle the case when the world does not exist
 			Bukkit.getLogger().warning("World '" + worldName + "' does not exist.");
-			return Bukkit.getWorld("world"); // Default to the Overworld
+			return Bukkit.getWorld("world");
 		}
 		return world;
 	}
@@ -77,32 +80,22 @@ public class TPRCommand implements CommandExecutor {
 			return true;
 		}
 		long lastTeleportTime = lastTeleportTimes.get(playerId);
-		return (System.currentTimeMillis() - lastTeleportTime) >= 30 * 1000;
+		return (System.currentTimeMillis() - lastTeleportTime) >= settings.getTprDelay() * 1000;
 	}
 
 	private void teleportPlayer(Player player, World world) {
 		Random random = new Random();
-		int maxX = 29999884;
-		int maxZ = 29999884;
-		int minX = -29999884;
-		int minZ = -29999884;
-		int randomX = random.nextInt(maxX - minX) + minX;
-		int randomZ = random.nextInt(maxZ - minZ) + minZ;
-		int destinationX = randomX;
-		int destinationZ = randomZ;
-		int destinationY = 64;
-		findNonAirBlock(player, world, destinationX, destinationY, destinationZ);
+		int randomX = random.nextInt(settings.getMaxX() - settings.getMinX()) + settings.getMinX();
+		int randomZ = random.nextInt(settings.getMaxZ() - settings.getMinZ()) + settings.getMinZ();
+		findNonAirBlock(player, world, randomX, settings.getDestinationY(), randomZ);
 	}
 
 	private void findNonAirBlock(Player player, World world, int destinationX, int destinationY, int destinationZ) {
-		int chunkX = destinationX >> 4; // Calculate chunk X coordinate
-		int chunkZ = destinationZ >> 4; // Calculate chunk Z coordinate
-
-		// Preload the chunk
+		int chunkX = destinationX >> 4;
+		int chunkZ = destinationZ >> 4;
 		world.loadChunk(chunkX, chunkZ, true);
 
 		new BukkitRunnable() {
-
 			private int tickCount = 0;
 
 			@Override
@@ -115,13 +108,10 @@ public class TPRCommand implements CommandExecutor {
 								int y = destinationY + dy;
 								int z = destinationZ + dz;
 
-								// Teleport the player to the location
 								player.teleport(new Location(world, x + 0.5, y + 1, z + 0.5));
 
-								// Check if the block is safe
 								Block block = world.getBlockAt(x, y, z);
 								if (!block.getType().isAir() && !isDangerousBlock(block.getType())) {
-									// Update the last teleport time for the player
 									lastTeleportTimes.put(player.getUniqueId(), System.currentTimeMillis());
 									cancel();
 									return;
@@ -132,7 +122,7 @@ public class TPRCommand implements CommandExecutor {
 				}
 				tickCount++;
 			}
-		}.runTaskTimer(SkyGridPlugin.getPlugin(SkyGridPlugin.class), 0L, 0L); // Check every tick
+		}.runTaskTimer(SkyGridPlugin.getPlugin(SkyGridPlugin.class), 0L, 0L);
 	}
 
 	private boolean isDangerousBlock(Material blockType) {

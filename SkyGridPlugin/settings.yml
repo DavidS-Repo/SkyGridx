@@ -1,0 +1,58 @@
+# Configuration
+
+# Generator settings
+generator:
+  # Delay in ticks before processing chunks after chunk load event.
+  # A shorter delay increases server load, while a longer delay may affect player immersion.
+  processDelay: 10
+  
+  # Max and Min height for blocks placed in the Grids for all Environments. 
+  # Keep within increments of 4 starting from the current min or max.
+  # i.e. 0, 4, 8, 12, 16 ... or 128, 124, 120, 116, 112 ...
+  # Exceeding max heights for worlds will result in errors.
+  
+  # Nether settings (min 0, max 128)
+  nether:
+    minY: 0
+    maxY: 128
+  
+  # End settings (min 0, max 128)
+  end:
+    minY: 0
+    maxY: 128
+  
+  # Normal world settings (min -64, max 256)
+  normal:
+    minY: -64
+    maxY: 64
+  
+  # Default settings for unspecified environments (min and max depend on your custom environment)
+  default:
+    minY: 0
+    maxY: 128
+
+# TPR Command settings
+tprCommand:
+  # Delay in seconds before teleporting
+  tprDelay: 30
+  
+  # Maximum X coordinate for random teleport (max 29999983)
+  maxX: 29999983
+  
+  # Maximum Z coordinate for random teleport (max 29999983)
+  maxZ: 29999983
+  
+  # Minimum X coordinate for random teleport (max -29999983)
+  minX: -29999983
+  
+  # Minimum Z coordinate for random teleport (max -29999983)
+  minZ: -29999983
+  
+  # Default Y coordinate for teleport destination (min -64, max 256, try to get it somewhere in between all your environments)
+  destinationY: 64
+
+# Fog settings
+fog:
+  # Auto-enable fog setting
+  # Set to true to automatically enable fog when the plugin starts.
+  autoEnable: false

@@ -23,6 +23,7 @@ public class Patch {
                 copyFilesFromJar("ores.yml", "OreGenBlock", plugin) &&
                 copyFilesFromJar("ChestSettings.yml", "SkygridBlocks", plugin) &&
                 copyFilesFromJar("SpawnerSettings.yml", "SkygridBlocks", plugin);
+        		copyFilesFromJar("config.yml", "", plugin);
 
         if (filesPatched) {
             sender.sendMessage(SUCCESS_MESSAGE);
