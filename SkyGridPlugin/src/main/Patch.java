@@ -16,7 +16,6 @@ public class Patch {
     private static final String FAILED_MESSAGE = ChatColor.RED + "Failed to patch files. Please check server logs for details.";
 
     public static void patchFiles(CommandSender sender, SkyGridPlugin plugin) {
-        // Replace existing files with updated ones
         boolean filesPatched = copyFilesFromJar("world.txt", "SkygridBlocks", plugin) &&
                 copyFilesFromJar("world_nether.txt", "SkygridBlocks", plugin) &&
                 copyFilesFromJar("world_the_end.txt", "SkygridBlocks", plugin) &&
@@ -24,7 +23,6 @@ public class Patch {
                 copyFilesFromJar("ChestSettings.yml", "SkygridBlocks", plugin) &&
                 copyFilesFromJar("SpawnerSettings.yml", "SkygridBlocks", plugin);
         		copyFilesFromJar("config.yml", "", plugin);
-
         if (filesPatched) {
             sender.sendMessage(SUCCESS_MESSAGE);
             sender.sendMessage(INSTRUCTIONS_MESSAGE);
@@ -37,10 +35,7 @@ public class Patch {
         Path destinationPath = Paths.get(plugin.getDataFolder().getPath(), destinationFolder, fileName);
         try (InputStream inputStream = plugin.getResource(fileName)) {
             if (inputStream != null) {
-                // Delete existing file if present
                 Files.deleteIfExists(destinationPath);
-
-                // Copy the new file
                 Files.copy(inputStream, destinationPath);
                 return true;
             } else {

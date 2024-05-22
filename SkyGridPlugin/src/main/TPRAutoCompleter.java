@@ -12,6 +12,7 @@ public class TPRAutoCompleter implements TabCompleter {
     private List<String> options = new ArrayList<>();
 
     public TPRAutoCompleter() {
+    	options.add("overworld");
         options.add("nether");
         options.add("end");
     }

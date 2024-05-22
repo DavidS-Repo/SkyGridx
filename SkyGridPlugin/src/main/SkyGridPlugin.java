@@ -1,6 +1,11 @@
 package main;
 
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 import java.util.logging.Filter;
@@ -8,13 +13,16 @@ import java.util.logging.Filter;
 public class SkyGridPlugin extends JavaPlugin implements Listener {
 
 	private boolean firstBoot = false;
+	private boolean firstPlayerConnected = false;
+	private static final String FIRST_BOOT_MESSAGE = ChatColor.GREEN + "First boot generation complete.";
+	private static final String THANKS_MESSAGE = ChatColor.BOLD + "Thank you for installing SkyGridx!";
 	private FirstBootChecker bootChecker;
 	private PluginSettings settings;
 	private Generator generator;
 
 	@Override
 	public void onEnable() {
-		// Register this class as a listener if there are any immediate events to handle
+		// Register this class as a listener
 		getServer().getPluginManager().registerEvents(this, this);
 
 		// Schedule a sync task with a delay of 0 ticks to run the initialization logic
@@ -30,52 +38,21 @@ public class SkyGridPlugin extends JavaPlugin implements Listener {
 		// Create an instance of ResourcePackManager
 		ResourcePackManager manager = new ResourcePackManager();
 
-		// Register the instance as a listener without immediately activating it
+		// Register the instance as a listener
 		getServer().getPluginManager().registerEvents(manager, this);
-
-		// Ensure plugin folders exist
-		bootChecker = new FirstBootChecker(this);
-		bootChecker.createFoldersIfNotExist("SkygridBlocks");
-		bootChecker.createFoldersIfNotExist("OreGenBlock");
 
 		// Initialize PluginSettings
 		settings = new PluginSettings(this);
 
-		// Create an instance of Fog and pass the ResourcePackManager instance
+		// Register the PreGenerator
+		PreGenerator preGenerator = new PreGenerator(this);
+
+		// Create an instance of Fog and pass the ResourcePackManager instance and settings
 		Fog fogCommandExecutor = new Fog(manager, settings);
-
-		// Set the command executor for your fog commands
-		getCommand("fogon").setExecutor(fogCommandExecutor);
-		getCommand("fogoff").setExecutor(fogCommandExecutor);
-
-		// Register command and Set the TPRAutoCompleter for the "/tpr" command
-		getCommand("tpr").setExecutor(new TPRCommand(settings));
-		TPRAutoCompleter tprAutoCompleter = new TPRAutoCompleter();
-		getCommand("tpr").setTabCompleter(tprAutoCompleter);
-
-		// Check for first boot
-		firstBoot = bootChecker.checkForFirstBoot();
-		if (firstBoot) {
-			getLogger().info("Thank you for installing our plugin!");
-			handleGeneration();
-		} else {
-			handleGeneration();
-		}
 
 		// Register GrowthControl as a listener
 		GrowthControl growthControl = new GrowthControl(this);
 		growthControl.initialize();
-
-		// Set the executor for GrowthControlOn and GrowthControlOff commands
-		GrowthControlCommands commands = new GrowthControlCommands(this, growthControl);
-		getCommand("gclogson").setExecutor(commands);
-		getCommand("gclogsoff").setExecutor(commands);
-
-		// Register the PreGeneratorCommands as the executor and tab completer for the /pregen command
-		PreGenerator preGenerator = new PreGenerator(this);
-		PreGeneratorCommands preGeneratorCommands = new PreGeneratorCommands(preGenerator);
-		getCommand("pregen").setExecutor(preGeneratorCommands);
-		getCommand("pregenoff").setExecutor(preGeneratorCommands);
 
 		// Create a custom filter to suppress specific warnings
 		Filter logFilter = new LogFilter();
@@ -83,11 +60,46 @@ public class SkyGridPlugin extends JavaPlugin implements Listener {
 		// Get the logger for your plugin and set the custom filter
 		getLogger().setFilter(logFilter);
 
+		// Set the command executor for your fog commands
+		getCommand("fogon").setExecutor(fogCommandExecutor);
+		getCommand("fogoff").setExecutor(fogCommandExecutor);
+
+		// Register the "/tpr" command
+		TPRCommand tprCommand = new TPRCommand(settings);
+		getCommand("tpr").setTabCompleter(new TPRAutoCompleter());
+		getCommand("tpr").setExecutor(tprCommand);
+		getCommand("tpro").setExecutor(tprCommand);
+		getCommand("tprn").setExecutor(tprCommand);
+		getCommand("tpre").setExecutor(tprCommand);
+
+		// Set the executor for GrowthControlOn and GrowthControlOff commands
+		GrowthControlCommands commands = new GrowthControlCommands(this, growthControl);
+		getCommand("gclogson").setExecutor(commands);
+		getCommand("gclogsoff").setExecutor(commands);
+
+		// PreGeneratorCommands as the executor and tab completer for the /pregen command
+		PreGeneratorCommands preGeneratorCommands = new PreGeneratorCommands(preGenerator);
+		getCommand("pregen").setExecutor(preGeneratorCommands);
+		getCommand("pregenoff").setExecutor(preGeneratorCommands);
+
 		// Register PatchCommand as command executor for /patch
 		getCommand("patch").setExecutor(new PatchCommand(this));
 
 		// Register the RegenCommand with the Generator instance
 		getCommand("regen").setExecutor(new RegenerateCommand(this, generator));
+
+		// Ensure plugin folders exist
+		bootChecker = new FirstBootChecker(this);
+		bootChecker.createFoldersIfNotExist("SkygridBlocks");
+		bootChecker.createFoldersIfNotExist("OreGenBlock");
+
+		// Check for first boot
+		firstBoot = bootChecker.checkForFirstBoot();
+		if (firstBoot) {
+			handleGeneration();
+		} else {
+			handleGeneration();
+		}
 	}
 
 	public boolean isFirstBoot() {
@@ -102,6 +114,10 @@ public class SkyGridPlugin extends JavaPlugin implements Listener {
 
 			if (firstBoot) {
 				generator.processAllLoadedChunks();
+				Bukkit.broadcastMessage(FIRST_BOOT_MESSAGE);
+				Bukkit.broadcastMessage(THANKS_MESSAGE);
+				new ChunkLoader(this).loadSpawnChunksAndRun(() -> {
+				});
 			}
 		}
 	}
@@ -109,5 +125,21 @@ public class SkyGridPlugin extends JavaPlugin implements Listener {
 	// Method to access the Generator instance if needed
 	public Generator getGenerator() {
 		return generator;
+	}
+
+	// Event listener for player connections
+	@EventHandler(priority = EventPriority.HIGHEST)
+	public void onPlayerJoin(PlayerJoinEvent event) {
+		if (!firstPlayerConnected && firstBoot) {
+			firstPlayerConnected = true;
+
+			// Schedule a sync task to re-process all loaded chunks when the first player joins
+			new BukkitRunnable() {
+				@Override
+				public void run() {
+					generator.processAllLoadedChunks();
+				}
+			}.runTask(this);
+		}
 	}
 }

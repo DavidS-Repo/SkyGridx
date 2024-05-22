@@ -24,10 +24,10 @@ public class Fog implements CommandExecutor {
 	private final PluginSettings settings;
 	private BukkitRunnable fogTask;
 
-	private static final String onMessage = ChatColor.GREEN + "Fog Enabled";
-	private static final String offMessage = ChatColor.RED + "Fog Disabled";
-	private static final String opWarning = ChatColor.RED + "Only OPs can use this command in the console.";
-	private static final String permWarning = ChatColor.RED + "You do not have permission to use this command.";
+	private static final String ON_MESSAGE = ChatColor.GREEN + "Fog Enabled";
+	private static final String ON_WARNING_MESSAGE = ChatColor.YELLOW + "Fog is already enabled!";
+	private static final String OFF_MESSAGE = ChatColor.RED + "Fog Disabled";
+	private static final String OFF_WARNING_MESSAGE = ChatColor.YELLOW + "Fog is already disabled!";
 
 	public Fog(ResourcePackManager manager, PluginSettings settings) {
 		this.manager = manager;
@@ -45,26 +45,25 @@ public class Fog implements CommandExecutor {
 
 	@Override
 	public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-		if (!(sender instanceof Player) && !sender.isOp()) {
-			sender.sendMessage(opWarning);
-			return true;
-		}
 		Player player = (sender instanceof Player) ? (Player) sender : null;
-
-		if (player != null && !player.isOp()) {
-			player.sendMessage(permWarning);
-			return true;
-		}
 		switch (label.toLowerCase()) {
 		case "fogon":
-			applyFog(player);
-			startFogTask();
-			manager.setEnabled(true);
+			if (fogTask == null) {
+				applyFog(player);
+				startFogTask();
+				manager.setEnabled(true);
+			} else {
+				Bukkit.broadcastMessage(ON_WARNING_MESSAGE);
+			}
 			break;
 		case "fogoff":
-			clearFog(player);
-			stopFogTask();
-			manager.setEnabled(false);
+			if (fogTask != null) {
+				clearFog(player);
+				stopFogTask();
+				manager.setEnabled(false);
+			} else {
+				Bukkit.broadcastMessage(OFF_WARNING_MESSAGE);
+			}
 			break;
 		}
 		return true;
@@ -80,7 +79,7 @@ public class Fog implements CommandExecutor {
 	}
 
 	private void startFogTask() {
-		Bukkit.getServer().getConsoleSender().sendMessage(onMessage);
+		Bukkit.broadcastMessage(ON_MESSAGE);
 		fogTask = new BukkitRunnable() {
 			public void run() {
 				for (Player player : Bukkit.getOnlinePlayers()) {
@@ -93,7 +92,7 @@ public class Fog implements CommandExecutor {
 	}
 
 	private void stopFogTask() {
-		Bukkit.getServer().getConsoleSender().sendMessage(offMessage);
+		Bukkit.broadcastMessage(OFF_MESSAGE);
 		if (fogTask != null) {
 			fogTask.cancel();
 			fogTask = null;

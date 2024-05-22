@@ -2,6 +2,7 @@ package main;
 
 import io.papermc.lib.PaperLib;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.Chunk;
 import org.bukkit.World;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -22,6 +23,11 @@ public class PreGenerator {
 
     private static final String[] worldNames = {"overworld", "nether", "end"};
     private final Map<String, WorldData> worldDataMap = new HashMap<>();
+    
+    private static final String ENABLED_WARNING_MESSAGE = ChatColor.YELLOW + ("Pre-Generator is already enabled.");
+	private static final String ENABLED_MESSAGE = ChatColor.GREEN + ("Pre-generation has been enabled.");
+	private static final String DISABLED_WARNING_MESSAGE = ChatColor.YELLOW + ("Pre-Generator is already disabled.");
+	private static final String DISABLED_MESSAGE = ChatColor.RED + ("Pre-generation disabled.");
 
     private class WorldData {
         final String dataFileName;
@@ -44,11 +50,11 @@ public class PreGenerator {
 
     public void enable() {
         if (enabled) {
-            Bukkit.broadcastMessage("Pre-Generator is already enabled.");
+            Bukkit.broadcastMessage(ENABLED_WARNING_MESSAGE);
             return;
         }
         enabled = true;
-        Bukkit.broadcastMessage("Pre-generation has been enabled.");
+        Bukkit.broadcastMessage(ENABLED_MESSAGE);
         loadProcessedChunks();
         startGeneration();
         startPrintInfoTimer();
@@ -56,13 +62,13 @@ public class PreGenerator {
 
     public void disable() {
         if (!enabled) {
-            Bukkit.broadcastMessage("Pre-Generator is already disabled.");
+            Bukkit.broadcastMessage(DISABLED_WARNING_MESSAGE);
             return;
         }
         saveProcessedChunks();
         stopPrintInfoTimer();
         enabled = false;
-        Bukkit.broadcastMessage("Pre-generation disabled.");
+        Bukkit.broadcastMessage(DISABLED_MESSAGE);
     }
 
     private void startPrintInfoTimer() {
