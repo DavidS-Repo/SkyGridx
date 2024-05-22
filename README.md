@@ -319,10 +319,11 @@ Sample of 10 chest from the Overworld, Nether, and End with the included Pre-Con
  
  
 # Commands:
- 
-- **/tpr** (random teleport in the Overworld)
-- **/tpr nether** (random teleport in the Nether)
-- **/tpr end** (random teleport in the End)
+
+- **/tpr [world]** (random teleport in a specified environment; Overworld, Nether, or End)
+- **/tpro** (random teleport in the Overworld)
+- **/tprn** (random teleport in the Nether)
+- **/tpre** (random teleport in the End)
 - **/fogon** (turns fog on)
 - **/fogoff** (turns fog off)
 - **/gclogson** (turns on growth control logs)
@@ -330,6 +331,23 @@ Sample of 10 chest from the Overworld, Nether, and End with the included Pre-Con
 - **/pregen** (Pregenerates the overworld, nether and end)
 - **/pregenoff** (Turns of pregeneration process)
 - **/patch** (Patch files to update materials and entities to newest version, if you update the plugin from an old version)
+
+## Permissions:
+
+- `sg.tpr`: Allows teleportation to overworld, nether, and end using the `/tpr` command
+- `sg.tpr.overworld`: Grants permission to use the `/tpro` command for teleportation in the overworld
+- `sg.tpr.nether`: Grants permission to use the `/tprn` command for teleportation in the Nether
+- `sg.tpr.end`: Enables usage of the `/tpre` command for teleportation in the End
+- `sg.tpr.*`: Provides access to all teleportation commands
+- `sg.fogon`: Allows enabling fog using the `/fogon` command
+- `sg.fogoff`: Allows disabling fog with the `/fogoff` command
+- `sg.gclogson`: Grants permission to enable GrowthControl logging using `/gclogson`
+- `sg.gclogsoff`: Grants permission to disable GrowthControl logging using `/gclogsoff`
+- `sg.pregen`: Grants permission to use the pre-generation command with customizable parameters
+- `sg.pregenoff`: Grants permission to disable pre-generation using the `/pregenoff` command
+- `sg.patch`: Allows patching files to update materials and entities to another version
+- `sg.regen`: Grants permission to regenerate all loaded chunks using the `/regen` command
+- `sg.*`: Provides access to all SkyGrid commands
  
 # Config:
  
