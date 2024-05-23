@@ -1,11 +1,11 @@
 package main;
 
-import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 import java.util.logging.Filter;
@@ -14,8 +14,7 @@ public class SkyGridPlugin extends JavaPlugin implements Listener {
 
 	private boolean firstBoot = false;
 	private boolean firstPlayerConnected = false;
-	private static final String FIRST_BOOT_MESSAGE = ChatColor.GREEN + "First boot generation complete.";
-	private static final String THANKS_MESSAGE = ChatColor.BOLD + "Thank you for installing SkyGridx!";
+	private boolean chunksLoading = false;
 	private FirstBootChecker bootChecker;
 	private PluginSettings settings;
 	private Generator generator;
@@ -25,16 +24,6 @@ public class SkyGridPlugin extends JavaPlugin implements Listener {
 		// Register this class as a listener
 		getServer().getPluginManager().registerEvents(this, this);
 
-		// Schedule a sync task with a delay of 0 ticks to run the initialization logic
-		new BukkitRunnable() {
-			@Override
-			public void run() {
-				initializePlugin();
-			}
-		}.runTask(this);
-	}
-
-	private void initializePlugin() {
 		// Create an instance of ResourcePackManager
 		ResourcePackManager manager = new ResourcePackManager();
 
@@ -95,39 +84,44 @@ public class SkyGridPlugin extends JavaPlugin implements Listener {
 
 		// Check for first boot
 		firstBoot = bootChecker.checkForFirstBoot();
-		if (firstBoot) {
-			handleGeneration();
-		} else {
-			handleGeneration();
-		}
+		handleGeneration();
 	}
 
 	public boolean isFirstBoot() {
 		return firstBoot;
 	}
 
+	public void setChunksLoading(boolean chunksLoading) {
+		this.chunksLoading = chunksLoading;
+	}
+
+	public boolean areChunksLoading() {
+		return chunksLoading;
+	}
+
 	private void handleGeneration() {
-		// Use existing Generator instance if available, otherwise create a new one
 		if (generator == null) {
 			generator = new Generator(this);
 			generator.initialize();
 
 			if (firstBoot) {
-				generator.processAllLoadedChunks();
-				Bukkit.broadcastMessage(FIRST_BOOT_MESSAGE);
-				Bukkit.broadcastMessage(THANKS_MESSAGE);
-				new ChunkLoader(this).loadSpawnChunksAndRun(() -> {
+				new ChunkLoader(this).loadChunksAndRun(() -> {
 				});
 			}
 		}
 	}
 
-	// Method to access the Generator instance if needed
 	public Generator getGenerator() {
 		return generator;
 	}
 
-	// Event listener for player connections
+	@EventHandler(priority = EventPriority.HIGHEST)
+	public void onPlayerLogin(PlayerLoginEvent event) {
+		if (chunksLoading) {
+			event.disallow(PlayerLoginEvent.Result.KICK_OTHER, ChatColor.RED + "Chunks are still loading, please wait a moment and try again.");
+		}
+	}
+
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onPlayerJoin(PlayerJoinEvent event) {
 		if (!firstPlayerConnected && firstBoot) {
