@@ -88,7 +88,7 @@ pause
 ![instrunctions step 3](https://www.toolsnexus.com/mc/3.png)
 
 3.**Download Plugin and Datapack:**
- - Obtain the latest version of the plugin from [SkyGridX](https://cdn.modrinth.com/data/ihjAiP7L/versions/YoptZJ49/SkyGrid.jar) and place it into the auto-generated "plugins" folder.
+ - Obtain the latest version of the plugin from [SkyGridX](https://modrinth.com/plugin/skygridx/versions) and place it into the auto-generated "plugins" folder.
 
 ![instrunctions step 4](https://www.toolsnexus.com/mc/4.png)
 ![instrunctions step 5](https://www.toolsnexus.com/mc/5.png)
@@ -98,7 +98,7 @@ pause
 ![instrunctions step 6](https://www.toolsnexus.com/mc/6.png)
 ![instrunctions step 7](https://www.toolsnexus.com/mc/7.png)
 
- - Inside "world," create a folder named "datapacks" and add the datapack downloaded from [Skyblock Void Worldgen](https://cdn.modrinth.com/data/x7OPbYhr/versions/B1s7cIeC/skyvoid_worldgen_v1_0_4-MC_1_20.zip).
+ - Inside "world," create a folder named "datapacks" and add the datapack downloaded from [Skyblock Void Worldgen](https://modrinth.com/datapack/skyblock-void-worldgen).
 
 ![instrunctions step 8](https://www.toolsnexus.com/mc/8.png)
 ![instrunctions step 9](https://www.toolsnexus.com/mc/9.png)
@@ -108,12 +108,14 @@ pause
 
 4.**Server Launch & World Generation:**
  - Re-run the **.bat** file to start the server and allow all necessary files to generate.
- - Watch for console messages indicating completion:
+ - Watch for console messages indicating you to wait.
  
-![instrunctions step 11](https://www.toolsnexus.com/mc/new-11.png)
+![instrunctions step 11](https://www.toolsnexus.com/mc/pl.png)
  
 5.**Enjoy the SkyGrid World:**
- - Connect to the server to verify completion ([INFO]: First boot generation complete).
+ - Connect to the server to verify completion after ([INFO]: Chunks have been loaded. You can now connect!).
+
+![instrunctions step 12](https://www.toolsnexus.com/mc/comp.png)
   
  
 ## Biome-Specific Block Generation
@@ -319,11 +321,11 @@ Sample of 10 chest from the Overworld, Nether, and End with the included Pre-Con
  
  
 # Commands:
-
-- **/tpr [world]** (random teleport in a specified environment; Overworld, Nether, or End)
-- **/tpro** (random teleport in the Overworld)
-- **/tprn** (random teleport in the Nether)
-- **/tpre** (random teleport in the End)
+ 
+- **/tpr [world]**: Random teleport in the Overworld, Nether, or End. Using `/tpr` with no arguments still defaults to `overworld`.
+- **/tpro**: Random teleport in the Overworld.
+- **/tprn**: Random teleport in the Nether.
+- **/tpre**: Random teleport in the End.
 - **/fogon** (turns fog on)
 - **/fogoff** (turns fog off)
 - **/gclogson** (turns on growth control logs)
@@ -333,26 +335,95 @@ Sample of 10 chest from the Overworld, Nether, and End with the included Pre-Con
 - **/patch** (Patch files to update materials and entities to newest version, if you update the plugin from an old version)
 
 ## Permissions:
-
-- `sg.tpr`: Allows teleportation to overworld, nether, and end using the `/tpr` command
-- `sg.tpr.overworld`: Grants permission to use the `/tpro` command for teleportation in the overworld
-- `sg.tpr.nether`: Grants permission to use the `/tprn` command for teleportation in the Nether
-- `sg.tpr.end`: Enables usage of the `/tpre` command for teleportation in the End
-- `sg.tpr.*`: Provides access to all teleportation commands
-- `sg.fogon`: Allows enabling fog using the `/fogon` command
-- `sg.fogoff`: Allows disabling fog with the `/fogoff` command
-- `sg.gclogson`: Grants permission to enable GrowthControl logging using `/gclogson`
-- `sg.gclogsoff`: Grants permission to disable GrowthControl logging using `/gclogsoff`
-- `sg.pregen`: Grants permission to use the pre-generation command with customizable parameters
-- `sg.pregenoff`: Grants permission to disable pre-generation using the `/pregenoff` command
-- `sg.patch`: Allows patching files to update materials and entities to another version
-- `sg.regen`: Grants permission to regenerate all loaded chunks using the `/regen` command
-- `sg.*`: Provides access to all SkyGrid commands
+- `sg.tpr`: Allows teleportation to Overworld, Nether, and End using the `/tpr [world]` command. (Default all)
+- `sg.tpr.overworld`: Grants permission to use the `/tpro` command for teleportation in the Overworld. (Default all)
+- `sg.tpr.nether`: Grants permission to use the `/tprn` command for teleportation in the Nether. (Default all)
+- `sg.tpr.end`: Enables usage of the `/tpre` command for teleportation in the End. (Default all)
+- `sg.tpr.*`: Provides access to all teleportation commands. (Default OP)
+- `sg.fogon`: Allows enabling fog using the `/fogon` command. (Default OP)
+- `sg.fogoff`: Allows disabling fog with the `/fogoff` command. (Default OP)
+- `sg.gclogson`: Grants permission to enable GrowthControl logging using `/gclogson`. (Default OP)
+- `sg.gclogsoff`: Grants permission to disable GrowthControl logging using `/gclogsoff`. (Default OP)
+- `sg.pregen`: Grants permission to use the pre-generation command with customizable parameters. (Default OP)
+- `sg.pregenoff`: Grants permission to disable pre-generation using the `/pregenoff` command. (Default OP)
+- `sg.patch`: Allows patching files to update materials and entities to another version. (Default OP)
+- `sg.regen`: Grants permission to regenerate all loaded chunks using the `/regen` command. (Default OP)
+- `sg.*`: Provides access to all SkyGrid commands. (Default OP)
  
 # Config:
+
+## Plugin Settings
+(**settings.yml** found in the Skygrid folder)
  
+```YML
+# Configuration
+
+# Generator settings
+generator:
+  # Delay in ticks before processing chunks after chunk load event.
+  # A shorter delay increases server load, while a longer delay may affect player immersion.
+  processDelay: 10
+  
+  # Max and Min height for blocks placed in the Grids for all Environments. 
+  # Keep within increments of 4 starting from the current min or max.
+  # i.e. 0, 4, 8, 12, 16 ... or 128, 124, 120, 116, 112 ...
+  # Exceeding max heights for worlds will result in errors.
+
+    # Nether settings (min 0, max 128)
+  nether:
+    minY: 0
+    maxY: 128
+  
+  # End settings (min 0, max 128)
+  end:
+    minY: 0
+    maxY: 128
+  
+  # Normal world settings (min -64, max 256)
+  normal:
+    minY: -64
+    maxY: 64
+  
+  # Default settings for unspecified environments (min and max depend on your custom environment)
+  default:
+    minY: 0
+    maxY: 128
+
+# TPR Command settings
+tprCommand:
+  # Delay in seconds before teleporting in the overworld
+  tprDelay: 30
+  
+  # Delay in seconds before teleporting in the nether
+  tprNetherDelay: 30
+  
+  # Delay in seconds before teleporting in the end
+  tprEndDelay: 30
+  
+  # Maximum X coordinate for random teleport (max 29999983)
+  maxX: 29999983
+  
+  # Maximum Z coordinate for random teleport (max 29999983)
+  maxZ: 29999983
+  
+  # Minimum X coordinate for random teleport (max -29999983)
+  minX: -29999983
+  
+  # Minimum Z coordinate for random teleport (max -29999983)
+  minZ: -29999983
+  
+  # Default Y coordinate for teleport destination (min -64, max 256, try to get it somewhere in between all your environments)
+  destinationY: 64
+
+# Fog settings
+fog:
+  # Auto-enable fog setting
+  # Set to true to automatically enable fog when the plugin starts.
+  autoEnable: false
+```
+
 ## Ore Generator Settings
-(**ores.txt** found in the OreGenBlock folder)
+(**ores.yml** found in the OreGenBlock folder)
  
 ```YML
 # Ore Replacement Chances
@@ -416,11 +487,9 @@ COBBLESTONE:
   DEEPSLATE_LAPIS_ORE: 0.2
   DEEPSLATE_REDSTONE_ORE: 0.3
 ```
-
+ 
 ## SkyGrid World Block Selection
-(found in the SkygridBlocks folder):
-
-### Chest Settings: (**ChestSettings.yml**)
+(**ChestSettings.yml** found in the SkygridBlocks folder):
  
 ```YML
 # The available items for use can be found at https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Material.html
@@ -490,7 +559,8 @@ ChestSettings:
     Biomes: [END_BARRENS, END_HIGHLANDS, END_MIDLANDS, SMALL_END_ISLANDS]
 ```
 
-### Spawner Settings: (**SpawnerSettings.yml**)
+### Spawner Settings:
+(**SpawnerSettings.yml** found in the SkygridBlocks folder)
  
 ```YML
 # The available entities for use can be found at https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/entity/EntityType.html
@@ -609,16 +679,16 @@ SpawnerSettings:
     SpawnCount: 4
     SpawnRange: 4
 ```
-
-
-### Overworld (**world.txt**):
  
+### Overworld Grid Settings:
+(**world.txt** found in the SkygridBlocks folder):
+  
 ```
 # SkyGrid World Block Selection Guide:
 
 # Each line in the materials file corresponds to a block and its chance of appearing.
 # Format: BlockID:Percentage (use block names or IDs).
-# Example: "STONE:50" means a 50% chance of Stone appearing within the 32-chunk distribution.
+# Example: "STONE:50" means a 50% chance of Stone appearing.
 # You can include as many blocks as you want, and their percentages can be anything.
 # The total percentage doesn't need to add up to 100%.
 # You can use any of the materials in the Bukkit Material page here: [https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Material.html]
@@ -626,72 +696,85 @@ SpawnerSettings:
 # Block Distribution Rules:
 
 # 1. No Percentage Specified for a Block:
-#    - If a percentage is not specified for a block, the code assigns it a default percentage of 1.0. This ensures that all blocks are accounted for in the distribution process.
-#    - For example:
-#      STONE:50
-#      DIRT:49
-#      SAND:
-#      Explanation:
-#      The code will interpret SAND as having a default percentage of 1.0 since no percentage is specified. After allocating 50% for STONE and 49% for DIRT, the remaining 1% will be distributed to SAND.
+#	- If a percentage is not specified for a block, the code assigns it a default percentage of 1.0. This ensures that all blocks are accounted for in the distribution process.
+#	- For example:
+#		STONE:50
+#		DIRT:49
+#		SAND:
+#	Explanation:
+#	-The code will interpret SAND as having a default percentage of 1.0 since no percentage is specified. After allocating 50% for STONE and 49% for DIRT, the remaining 1% will be distributed to SAND.
 
 # 2. Total Percentage Exceeds 100%:
-#    - When the total percentage exceeds 100%, the code scales down the percentages proportionally to ensure they sum up to 100%. This prevents over-allocation of blocks.
-#    - For example:
-#      STONE:80
-#      DIRT:60
-#      SAND:
-#      -RIVER-
-#      AIR:120
-#      WATER:
-#      Explanation:
-#      The initial total percentage for each list is calculated. To scale down the percentages, the scaling factor is calculated by dividing 100 by the sum of the initial percentages. Each percentage is multiplied by its respective scaling factor to adjust it accordingly.
+#	- When the total percentage exceeds 100%, the code scales down the percentages proportionally to ensure they sum up to 100%. This prevents over-allocation of blocks.
+#	- For example:
+#		STONE:80
+#		DIRT:60
+#		SAND:
+#		-RIVER-
+#		AIR:120
+#		WATER:
+#	Explanation:
+#	- The initial total percentage for each list is calculated. To scale down the percentages, the scaling factor is calculated by dividing 100 by the sum of the initial percentages. Each percentage is multiplied by its respective scaling factor to adjust it accordingly.
 
 # 3. Biome-Dependent Allocation:
-#    - Blocks can be listed under specific biome headers, allowing for biome-dependent allocation.
-#    - If the percentages within a biome list do not add up to 100%, the remaining percentage is redistributed among the blocks within that specific biome's list.
-#    - For example:
-#      STONE:50
-#      DIRT:30
-#      SAND:
-#      AIR:
-#      -OCEAN-
-#      WATER:30
-#      SAND:20
-#      SANDSTONE:
-#      Explanation:
-#      Each biome header gets its own redistribution percentage. For each biome list, percentages are calculated separately. Here, the remaining percentage is redistributed evenly among the blocks within each biome list.
-#      When the block percentages in a biome's list don't add up to 100%, the leftover percentage is redistributed among the blocks within that specific biome's list. This ensures that the total percentage for that biome accurately represents the distribution of blocks in the world.
+#	- Blocks can be listed under specific biome headers, allowing for biome-dependent allocation.
+#	- If the percentages within a biome list do not add up to 100%, the remaining percentage is redistributed among the blocks within that specific biome's list.
+#	- For example:
+#		STONE:50
+#		DIRT:30
+#		SAND:
+#		AIR:
+#		-OCEAN-
+#		WATER:30
+#		SAND:20
+#		SANDSTONE:
+#	Explanation:
+#	- Each biome header gets its own redistribution percentage. For each biome list, percentages are calculated separately. Here, the remaining percentage is redistributed evenly among the blocks within each biome list.
+#	- When the block percentages in a biome's list don't add up to 100%, the leftover percentage is redistributed among the blocks within that specific biome's list. This ensures that the total percentage for that biome accurately represents the distribution of blocks in the world.
 
 # Biome-Specific Block Generation:
-# - Customize the block generation in your world based on different biomes.
-# - Specify unique block materials and percentages for each biome in the world.
-# - Biomes are signified by the -BIOME_NAME- header, and everything under the biome header will generate only in that biome unless another biome is specified.
-# - Multiple biomes in the header of the material files are supported. You can now specify multiple biomes separated by commas.
-# - Supported biomes can be found here: [https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/block/Biome.html]
+#	- Customize the block generation in your world based on different biomes.
+#	- Specify unique block materials and percentages for each biome in the world.
+#	- Biomes are signified by the -BIOME_NAME- header, and everything under the biome header will generate only in that biome unless another biome is specified.
+#	- Multiple biomes in the header of the material files are supported. You can now specify multiple biomes separated by commas.
+#	- Supported biomes can be found here: [https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/block/Biome.html]
 
 # How to Use/Configure Biome-Specific Blocks:
-#    - Specify block materials and their respective percentages for each biome in your world.
-#    - Example:
-#      DIRT:20
-#      STONE:20
-#      GRASS_BLOCK:20
-#      -OCEAN,COLD_OCEAN,DEEP_COLD_OCEAN,DEEP_FROZEN_OCEAN,DEEP_LUKEWARM_OCEAN,DEEP_OCEAN,FROZEN_OCEAN,LUKEWARM_OCEAN-
-#      SAND:80
-#      SANDSTONE:9.0
-#      SEA_PICKLE:1.0
-#      TUBE_CORAL:1.0
-#      TUBE_CORAL_FAN:1.0
-#      HORN_CORAL:1.0
-#      HORN_CORAL_FAN:1.0
-#      FIRE_CORAL:1.0
-#      FIRE_CORAL_FAN:1.0
-#      BUBBLE_CORAL:1.0
-#      BUBBLE_CORAL_FAN:1.0
-#      BRAIN_CORAL:1.0
-#      BRAIN_CORAL_FAN:1.0
-#      -WARM_OCEAN-
-#      SAND:80
-#      SANDSTONE:20
+#	- Specify block materials and their respective percentages for each biome in your world.
+#	- Example:
+#		DIRT:20
+#		STONE:20
+#		GRASS_BLOCK:20
+#		-OCEAN,COLD_OCEAN,DEEP_COLD_OCEAN,DEEP_FROZEN_OCEAN,DEEP_LUKEWARM_OCEAN,DEEP_OCEAN,FROZEN_OCEAN,LUKEWARM_OCEAN-
+#		SAND:80
+#		SANDSTONE:9.0
+#		SEA_PICKLE:1.0
+#		TUBE_CORAL:1.0
+#		TUBE_CORAL_FAN:1.0
+#		HORN_CORAL:1.0
+#		HORN_CORAL_FAN:1.0
+#		FIRE_CORAL:1.0
+#		FIRE_CORAL_FAN:1.0
+#		BUBBLE_CORAL:1.0
+#		BUBBLE_CORAL_FAN:1.0
+#		BRAIN_CORAL:1.0
+#		BRAIN_CORAL_FAN:1.0
+#		-WARM_OCEAN-
+#		SAND:80
+#		SANDSTONE:20
+#
+# Material loader version differences:
+#	Basic Material Loader:
+#		- Optimized for loading materials with no biome headers i.e. -BIOME_NAME-
+#		- Materials distribution is enforced much more accurately, with the trade in performance reduction.
+#		- Since there is no biome headers used the materials will be applied to all biomes equally.
+#	Advanced material loader:
+#		- Optimized for loading materials with biome headers, only enables when biomes headers are detected in any of the files.
+#		- Materials distribution is enforced loosely through a weigh percentage system.
+#		- All biomes must be included in the text file, omitting any biomes will result in blank chunks where the biomes are located
+#		- Here are all the current biomes for the Overworld:
+#
+#-FROZEN_RIVER,FROZEN_OCEAN,DEEP_FROZEN_OCEAN,DEEP_LUKEWARM_OCEAN,LUKEWARM_OCEAN,COLD_OCEAN,DEEP_COLD_OCEAN,OCEAN,DEEP_OCEAN,RIVER,WARM_OCEAN,SWAMP,MANGROVE_SWAMP,DESERT,DARK_FOREST,OLD_GROWTH_PINE_TAIGA,OLD_GROWTH_SPRUCE_TAIGA,BEACH,SNOWY_BEACH,STONY_SHORE,JUNGLE,SPARSE_JUNGLE,BAMBOO_JUNGLE,JAGGED_PEAKS,FROZEN_PEAKS,ICE_SPIKES,STONY_PEAKS,FOREST,FLOWER_FOREST,BIRCH_FOREST,OLD_GROWTH_BIRCH_FOREST,TAIGA,SNOWY_TAIGA,SNOWY_PLAINS,GROVE,SNOWY_SLOPES,PLAINS,SUNFLOWER_PLAINS,MEADOW,MUSHROOM_FIELDS,CHERRY_GROVE,SAVANNA,SAVANNA_PLATEAU,WINDSWEPT_SAVANNA,WINDSWEPT_FOREST,WINDSWEPT_HILLS,WINDSWEPT_GRAVELLY_HILLS,DEEP_DARK,LUSH_CAVES,DRIPSTONE_CAVES,BADLANDS,ERODED_BADLANDS,WOODED_BADLANDS-
 
 ACACIA_LEAVES:
 ACACIA_LOG:
@@ -784,7 +867,8 @@ TUFF:
 WET_SPONGE:
 ```
  
-### Nether (**world_nether.txt**):
+### Nether Grid Settings:
+(**world_nether.txt** found in the SkygridBlocks folder):
  
 ```
 ANCIENT_DEBRIS:0.001
@@ -815,7 +899,8 @@ WARPED_STEM:3
 WARPED_WART_BLOCK:3
 ```
  
-### End (**world_the_end.txt**):
+### End Grid Settings:
+(**world_the_end.txt** found in the SkygridBlocks folder):
  
 ```
 CHEST:0.00001
@@ -827,4 +912,3 @@ OBSIDIAN:24
 PURPUR_BLOCK:50
 SPAWNER:0.000001
 ```
- 
