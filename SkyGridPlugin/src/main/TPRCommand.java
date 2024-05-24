@@ -11,8 +11,9 @@ import org.bukkit.scheduler.BukkitRunnable;
 
 public class TPRCommand implements CommandExecutor {
 	private final Map<UUID, Map<World.Environment, Long>> lastTeleportTimes = new HashMap<>();
+	private final Map<UUID, Long> lastCommandTimes = new HashMap<>();
 	private final Set<Material> dangerousBlocks = EnumSet.noneOf(Material.class);
-	private static final String ERROR_MESSAGE = ChatColor.RED+ ("Only players can use this command.");
+	private static final String ERROR_MESSAGE = ChatColor.RED + ("Only players can use this command.");
 
 	private final PluginSettings settings;
 
@@ -46,8 +47,16 @@ public class TPRCommand implements CommandExecutor {
 		if (canTeleport(player, world)) {
 			teleportPlayer(player, world);
 		} else {
-			long secondsLeft = getRemainingCooldown(player, world);
-			player.sendMessage(ChatColor.RED + "You must wait " + secondsLeft + " seconds before using this command again.");
+			long regularCooldown = getRemainingCooldown(player, world);
+			long b2bCooldown = getRemainingB2BCooldown(player);
+			if (regularCooldown > 0 && b2bCooldown > 0) {
+				player.sendMessage(ChatColor.RED + "Wait " + regularCooldown + "s before this command.");
+				player.sendMessage(ChatColor.RED + "Or, " + b2bCooldown + "s before any other tpr commands.");
+			} else if (regularCooldown > 0) {
+				player.sendMessage(ChatColor.RED + "Wait " + regularCooldown + "s before this command.");
+			} else if (b2bCooldown > 0) {
+				player.sendMessage(ChatColor.RED + "Wait " + b2bCooldown + "s before any other tpr commands.");
+			}
 		}
 		return true;
 	}
@@ -87,13 +96,24 @@ public class TPRCommand implements CommandExecutor {
 
 	private boolean canTeleport(Player player, World world) {
 		UUID playerId = player.getUniqueId();
-		if (!lastTeleportTimes.containsKey(playerId)) {
+		long currentTime = System.currentTimeMillis();
+
+		if (!lastTeleportTimes.containsKey(playerId) && !lastCommandTimes.containsKey(playerId)) {
 			return true;
 		}
-		Map<World.Environment, Long> environmentTimes = lastTeleportTimes.get(playerId);
+
+		long lastCommandTime = lastCommandTimes.getOrDefault(playerId, 0L);
+		long b2bDelay = settings.getb2bDelay() * 1000;
+
+		if ((currentTime - lastCommandTime) < b2bDelay) {
+			return false;
+		}
+
+		Map<World.Environment, Long> environmentTimes = lastTeleportTimes.getOrDefault(playerId, new HashMap<>());
 		long lastTeleportTime = environmentTimes.getOrDefault(world.getEnvironment(), 0L);
 		int delay = getTeleportDelay(world);
-		return (System.currentTimeMillis() - lastTeleportTime) >= delay * 1000;
+
+		return (currentTime - lastTeleportTime) >= delay * 1000;
 	}
 
 	private int getTeleportDelay(World world) {
@@ -125,6 +145,13 @@ public class TPRCommand implements CommandExecutor {
 		return (lastTeleportTime + (delay * 1000) - System.currentTimeMillis()) / 1000;
 	}
 
+	private long getRemainingB2BCooldown(Player player) {
+		UUID playerId = player.getUniqueId();
+		long lastCommandTime = lastCommandTimes.getOrDefault(playerId, 0L);
+		long b2bDelay = settings.getb2bDelay() * 1000;
+		return (lastCommandTime + b2bDelay - System.currentTimeMillis()) / 1000;
+	}
+
 	private void findNonAirBlock(Player player, World world, int destinationX, int destinationY, int destinationZ) {
 		int chunkX = destinationX >> 4;
 		int chunkZ = destinationZ >> 4;
@@ -151,6 +178,7 @@ public class TPRCommand implements CommandExecutor {
 									Map<World.Environment, Long> environmentTimes = lastTeleportTimes.getOrDefault(playerId, new HashMap<>());
 									environmentTimes.put(world.getEnvironment(), System.currentTimeMillis());
 									lastTeleportTimes.put(playerId, environmentTimes);
+									lastCommandTimes.put(playerId, System.currentTimeMillis());
 									cancel();
 									return;
 								}
@@ -164,6 +192,6 @@ public class TPRCommand implements CommandExecutor {
 	}
 
 	private boolean isDangerousBlock(Material blockType) {
-        return dangerousBlocks.contains(blockType);
-    }
+		return dangerousBlocks.contains(blockType);
+	}
 }

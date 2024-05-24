@@ -4,13 +4,13 @@
 generator:
   # Delay in ticks before processing chunks after chunk load event.
   # A shorter delay increases server load, while a longer delay may affect player immersion.
-  processDelay: 10
+  processDelay: 1
   
   # Max and Min height for blocks placed in the Grids for all Environments. 
   # Keep within increments of 4 starting from the current min or max.
   # i.e. 0, 4, 8, 12, 16 ... or 128, 124, 120, 116, 112 ...
   # Exceeding max heights for worlds will result in errors.
-  
+
   # Nether settings (min 0, max 128)
   nether:
     minY: 0
@@ -33,8 +33,18 @@ generator:
 
 # TPR Command settings
 tprCommand:
-  # Delay in seconds before teleporting
+  # The delay in seconds to prevent players from using the /tpr command back-to-back.
+  # Players must wait for this duration before they can use the /tpr command again.
+  b2bDelay: 10
+  
+  # Delay in seconds before teleporting in the overworld
   tprDelay: 30
+  
+  # Delay in seconds before teleporting in the nether
+  tprNetherDelay: 30
+  
+  # Delay in seconds before teleporting in the end
+  tprEndDelay: 30
   
   # Maximum X coordinate for random teleport (max 29999983)
   maxX: 29999983
@@ -55,4 +65,4 @@ tprCommand:
 fog:
   # Auto-enable fog setting
   # Set to true to automatically enable fog when the plugin starts.
-  autoEnable: false
+  autoEnable: true

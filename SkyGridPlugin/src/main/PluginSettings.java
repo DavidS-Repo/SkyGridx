@@ -33,8 +33,11 @@ public class PluginSettings {
 		config.addDefault("generator.normal.maxY", 64);
 		config.addDefault("generator.default.minY", 0);
 		config.addDefault("generator.default.maxY", 128);
-
+		
+		config.addDefault("tprCommand.b2bDelay", 10);
 		config.addDefault("tprCommand.tprDelay", 30);
+		config.addDefault("tprCommand.tprNetherDelay", 30);
+		config.addDefault("tprCommand.tprEndDelay", 30);
 		config.addDefault("tprCommand.maxX", 29999983);
 		config.addDefault("tprCommand.maxZ", 29999983);
 		config.addDefault("tprCommand.minX", -29999983);
@@ -102,9 +105,21 @@ public class PluginSettings {
 	public int defaultMinY() {
 		return config.getInt("generator.default.minY");
 	}
+	
+	public int getb2bDelay() {
+		return config.getInt("tprCommand.b2bDelay");
+	}
 
 	public int getTprDelay() {
 		return config.getInt("tprCommand.tprDelay");
+	}
+	
+	public int getTprNetherDelay() {
+		return config.getInt("tprCommand.tprNetherDelay");
+	}
+	
+	public int getTprEndDelay() {
+		return config.getInt("tprCommand.tprEndDelay");
 	}
 
 	public int getMaxX() {
