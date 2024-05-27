@@ -328,8 +328,8 @@ Sample of 10 chest from the Overworld, Nether, and End with the included Pre-Con
 - **/tpre**: Random teleport in the End.
 - **/fogon** (turns fog on)
 - **/fogoff** (turns fog off)
-- **/gclogson** (turns on growth control logs)
-- **/gclogsoff** (turns off growth control logs)
+- **/eclogson** (Enable Event Control logging)
+- **/eclogsoff** (Disable Event Control logging)
 - **/pregen** (Pregenerates the overworld, nether and end)
 - **/pregenoff** (Turns of pregeneration process)
 - **/patch** (Patch files to update materials and entities to newest version, if you update the plugin from an old version)
@@ -342,8 +342,8 @@ Sample of 10 chest from the Overworld, Nether, and End with the included Pre-Con
 - `sg.tpr.*`: Provides access to all teleportation commands. (Default OP)
 - `sg.fogon`: Allows enabling fog using the `/fogon` command. (Default OP)
 - `sg.fogoff`: Allows disabling fog with the `/fogoff` command. (Default OP)
-- `sg.gclogson`: Grants permission to enable GrowthControl logging using `/gclogson`. (Default OP)
-- `sg.gclogsoff`: Grants permission to disable GrowthControl logging using `/gclogsoff`. (Default OP)
+- `sg.eclogson`: Grants permission to enable Event Control logging using `/eclogson`. (Default OP)
+- `sg.eclogsoff`: Grants permission to disable Event Control logging using `/eclogsoff`. (Default OP)
 - `sg.pregen`: Grants permission to use the pre-generation command with customizable parameters. (Default OP)
 - `sg.pregenoff`: Grants permission to disable pre-generation using the `/pregenoff` command. (Default OP)
 - `sg.patch`: Allows patching files to update materials and entities to another version. (Default OP)
@@ -364,26 +364,26 @@ generator:
   # A shorter delay increases server load, while a longer delay may affect player immersion.
   processDelay: 10
   
-  # Max and Min height for blocks placed in the Grids for all Environments. 
+  # Max and Min height for blocks placed in the Grids for all Environments.
   # Keep within increments of 4 starting from the current min or max.
   # i.e. 0, 4, 8, 12, 16 ... or 128, 124, 120, 116, 112 ...
   # Exceeding max heights for worlds will result in errors.
-
-    # Nether settings (min 0, max 128)
+  
+  # Nether settings (min 0, max 128)
   nether:
     minY: 0
     maxY: 128
-  
+
   # End settings (min 0, max 128)
   end:
     minY: 0
     maxY: 128
-  
+
   # Normal world settings (min -64, max 256)
   normal:
     minY: -64
     maxY: 64
-  
+
   # Default settings for unspecified environments (min and max depend on your custom environment)
   default:
     minY: 0
@@ -391,6 +391,14 @@ generator:
 
 # TPR Command settings
 tprCommand:
+  # Randomly teleports the player using /tpr when they first join.
+  # Set to true to enable.
+  onFirstJoin: false
+  
+  # The delay in seconds to prevent players from using the /tpr command back-to-back.
+  # Players must wait for this duration before they can use the /tpr command again.
+  b2bDelay: 10
+  
   # Delay in seconds before teleporting in the overworld
   tprDelay: 30
   
@@ -414,12 +422,142 @@ tprCommand:
   
   # Default Y coordinate for teleport destination (min -64, max 256, try to get it somewhere in between all your environments)
   destinationY: 64
+  
+  # These are materials that the tpr command considers dangerous and will prevent players from being placed on them when /tpr is used.
+  DANGEROUSBLOCKS:
+    Materials:
+      - AIR
+      - ALLIUM
+      - AZURE_BLUET
+      - BEETROOTS
+      - BIG_DRIPLEAF
+      - BLUE_ORCHID
+      - BROWN_MUSHROOM
+      - CACTUS
+      - CAMPFIRE
+      - CARROTS
+      - CAVE_VINES_PLANT
+      - COBWEB
+      - CORNFLOWER
+      - CRIMSON_FUNGUS
+      - CRIMSON_ROOTS
+      - DANDELION
+      - DEAD_BUSH
+      - FERN
+      - FIRE
+      - GLOW_LICHEN
+      - HANGING_ROOTS
+      - KELP
+      - KELP_PLANT
+      - LARGE_FERN
+      - LAVA
+      - LAVA_CAULDRON
+      - LILAC
+      - LILY_OF_THE_VALLEY
+      - MAGMA_BLOCK
+      - MELON_STEM
+      - NETHER_SPROUTS
+      - NETHER_WART
+      - ORANGE_TULIP
+      - OXEYE_DAISY
+      - PEONY
+      - PINK_TULIP
+      - PITCHER_PLANT
+      - POINTED_DRIPSTONE
+      - POPPY
+      - POTATOES
+      - POWDER_SNOW
+      - PUMPKIN_STEM
+      - RED_MUSHROOM
+      - RED_TULIP
+      - ROSE_BUSH
+      - SCULK_VEIN
+      - SEAGRASS
+      - SHORT_GRASS
+      - SMALL_DRIPLEAF
+      - SNOW
+      - SOUL_FIRE
+      - SPORE_BLOSSOM
+      - SUGAR_CANE
+      - SUNFLOWER
+      - SWEET_BERRY_BUSH
+      - TALL_GRASS
+      - TALL_SEAGRASS
+      - TORCHFLOWER
+      - TORCHFLOWER_CROP
+      - TWISTING_VINES
+      - VINE
+      - VOID_AIR
+      - WARPED_FUNGUS
+      - WARPED_ROOTS
+      - WATER
+      - WEEPING_VINES
+      - WHEAT
+      - WHITE_TULIP
+      - WITHER_ROSE
 
 # Fog settings
 fog:
   # Auto-enable fog setting
   # Set to true to automatically enable fog when the plugin starts.
   autoEnable: false
+  
+# Event Control settings
+# Other events not included here that we still monitor are ;
+# onBlockIgnite (Prevents lava from causing fires to near by flammable grid blocks)
+# BlockFadeEvent (Prevents ice from melting if it's in the grid and fire from burning out)
+# BlockFromToEvent (Prevents lava and water from flowing due to server overload)
+EventControl:
+  # Used for preventing BlockGrowEvents (blocks that grow from one block to another)
+  GROWTH_BLOCKS:
+    Materials:
+      - KELP_PLANT
+      - SUGAR_CANE
+      - CACTUS
+      - BAMBOO_SAPLING
+      - ACACIA_SAPLING
+      - CHERRY_SAPLING
+      - DARK_OAK_SAPLING
+      - JUNGLE_SAPLING
+      - OAK_SAPLING
+      - SPRUCE_SAPLING
+      - BIRCH_SAPLING
+      - JUNGLE_SAPLING
+      - MANGROVE_PROPAGULE
+      - TWISTING_VINES_PLANT
+
+  # This list is for blocks that you want to monitor the following events.
+  # BlockFormEvent is used to prevent block updates that mess up the grid in snow biomes(snow forming on top of blocks)
+  # EntityChangeBlockEvents prevent gravity-affected blocks from randomly falling due to overload
+  GRAVITY_AFFECTED_BLOCKS:
+    Materials:
+      - SAND
+      - RED_SAND
+      - GRAVEL
+      - KELP_PLANT
+      - ANVIL
+      - SUGAR_CANE
+      - CACTUS
+      - SUSPICIOUS_SAND
+      - SUSPICIOUS_GRAVEL
+      - DRAGON_EGG
+      - BLACK_CONCRETE_POWDER
+      - BLUE_CONCRETE_POWDER
+      - BROWN_CONCRETE_POWDER
+      - CYAN_CONCRETE_POWDER
+      - GRAY_CONCRETE_POWDER
+      - GREEN_CONCRETE_POWDER
+      - LIGHT_BLUE_CONCRETE_POWDER
+      - LIGHT_GRAY_CONCRETE_POWDER
+      - LIME_CONCRETE_POWDER
+      - MAGENTA_CONCRETE_POWDER
+      - ORANGE_CONCRETE_POWDER
+      - PINK_CONCRETE_POWDER
+      - PURPLE_CONCRETE_POWDER
+      - RED_CONCRETE_POWDER
+      - WHITE_CONCRETE_POWDER
+      - YELLOW_CONCRETE_POWDER
+
 ```
 
 ## Ore Generator Settings
@@ -556,7 +694,7 @@ ChestSettings:
 
   Chest4:
     Items: [ELYTRA:20:1, DRAGON_HEAD:20:1, DRAGON_EGG:20:1, END_CRYSTAL:20:1, ENDER_CHEST:20:1, SHULKER_SHELL:40:2, DIAMOND:40:2, END_ROD:90:5, PURPUR_BLOCK:90:5, MAGENTA_STAINED_GLASS:90:5, GOLD_INGOT:90:5, IRON_INGOT:90:5, OBSIDIAN:90:5]
-    Biomes: [END_BARRENS, END_HIGHLANDS, END_MIDLANDS, SMALL_END_ISLANDS]
+    Biomes: [THE_END, END_BARRENS, END_HIGHLANDS, END_MIDLANDS, SMALL_END_ISLANDS]
 ```
 
 ### Spawner Settings:
@@ -776,139 +914,223 @@ SpawnerSettings:
 #
 #-FROZEN_RIVER,FROZEN_OCEAN,DEEP_FROZEN_OCEAN,DEEP_LUKEWARM_OCEAN,LUKEWARM_OCEAN,COLD_OCEAN,DEEP_COLD_OCEAN,OCEAN,DEEP_OCEAN,RIVER,WARM_OCEAN,SWAMP,MANGROVE_SWAMP,DESERT,DARK_FOREST,OLD_GROWTH_PINE_TAIGA,OLD_GROWTH_SPRUCE_TAIGA,BEACH,SNOWY_BEACH,STONY_SHORE,JUNGLE,SPARSE_JUNGLE,BAMBOO_JUNGLE,JAGGED_PEAKS,FROZEN_PEAKS,ICE_SPIKES,STONY_PEAKS,FOREST,FLOWER_FOREST,BIRCH_FOREST,OLD_GROWTH_BIRCH_FOREST,TAIGA,SNOWY_TAIGA,SNOWY_PLAINS,GROVE,SNOWY_SLOPES,PLAINS,SUNFLOWER_PLAINS,MEADOW,MUSHROOM_FIELDS,CHERRY_GROVE,SAVANNA,SAVANNA_PLATEAU,WINDSWEPT_SAVANNA,WINDSWEPT_FOREST,WINDSWEPT_HILLS,WINDSWEPT_GRAVELLY_HILLS,DEEP_DARK,LUSH_CAVES,DRIPSTONE_CAVES,BADLANDS,ERODED_BADLANDS,WOODED_BADLANDS-
 
-ACACIA_LEAVES:
-ACACIA_LOG:
-AMETHYST_BLOCK:
-ANDESITE:
-AZALEA:
-AZALEA_LEAVES:
-BAMBOO:
-BEE_NEST:
-BIRCH_LEAVES:
-BIRCH_LOG:
-BLUE_ICE:
-BONE_BLOCK:
-BOOKSHELF:
-BRAIN_CORAL_BLOCK:
-BROWN_MUSHROOM_BLOCK:
-BUBBLE_CORAL_BLOCK:
-BUDDING_AMETHYST:
-CACTUS:
-CALCITE:
-CHERRY_LEAVES:
-CHERRY_LOG:
-CHEST:0.005
-CLAY:
-COAL_ORE:
-COARSE_DIRT:
-COBBLED_DEEPSLATE:
-COBBLESTONE:
-COPPER_ORE:
-CRYING_OBSIDIAN:
-CUT_SANDSTONE:
-DARK_OAK_LEAVES:
-DARK_OAK_LOG:
-DARK_PRISMARINE:
-DEEPSLATE:10
-DIAMOND_ORE:0.001
-DIORITE:
-DIRT:
-DRIPSTONE_BLOCK:
-EMERALD_ORE:0.001
-FIRE_CORAL_BLOCK:
-GLASS:
-GOLD_ORE:
-GRANITE:
-GRASS_BLOCK:10
-GRAVEL:
-HAY_BLOCK:
-HORN_CORAL_BLOCK:
-IRON_ORE:3
-JUNGLE_LEAVES:
-JUNGLE_LOG:
-LAPIS_ORE:
-LARGE_AMETHYST_BUD:
-LAVA_CAULDRON:
-MANGROVE_LEAVES:
-MANGROVE_LOG:
-MELON:
-MOSS_BLOCK:
-MOSSY_COBBLESTONE:
-MUD:
-MUDDY_MANGROVE_ROOTS:
-MYCELIUM:
-OAK_LEAVES:
-OAK_LOG:
-OBSIDIAN:
-PACKED_ICE:
-PACKED_MUD:
-PODZOL:
-POINTED_DRIPSTONE:
-PRISMARINE:
-PUMPKIN:
-RAW_IRON_BLOCK:2
-RED_MUSHROOM_BLOCK:
-RED_SAND:
-REDSTONE_ORE:2
-ROOTED_DIRT:
-SAND:10
-SANDSTONE:
-SEA_LANTERN:
-SEA_PICKLE:
-SNOW_BLOCK:
+ACACIA_LEAVES:10
+ACACIA_LOG:20
+ALLIUM:2
+AMETHYST_BLOCK:2
+AMETHYST_CLUSTER:1.5
+ANDESITE:10
+AZALEA:1.5
+AZALEA_LEAVES:1.5
+AZURE_BLUET:2
+BAMBOO:2
+BEE_NEST:2
+BEETROOTS:3
+BELL:1.5
+BIRCH_LEAVES:10
+BIRCH_LOG:20
+BLUE_ORCHID:2
+BONE_BLOCK:3
+BOOKSHELF:3
+BRAIN_CORAL_BLOCK:1.5
+BROWN_MUSHROOM:2
+BUBBLE_CORAL_BLOCK:1.5
+BUDDING_AMETHYST:1.5
+CACTUS:4
+CALCITE:2
+CARROTS:3
+CAVE_VINES:2
+CHERRY_LEAVES:2
+CHEST:0.0001
+CHISELED_STONE_BRICKS:2
+CLAY:20
+COAL_ORE:15
+COARSE_DIRT:5
+COBBLESTONE:12
+COBWEB:10
+COPPER_ORE:10
+CORNFLOWER:2
+CRYING_OBSIDIAN:3
+DANDELION:2
+DARK_OAK_LEAVES:10
+DARK_OAK_LOG:20
+DARK_PRISMARINE:2
+DEAD_BUSH:2
+DEEPSLATE:70
+DEEPSLATE_COAL_ORE:10
+DEEPSLATE_COPPER_ORE:5
+DEEPSLATE_DIAMOND_ORE:1
+DEEPSLATE_GOLD_ORE:2.5
+DEEPSLATE_IRON_ORE:10
+DEEPSLATE_LAPIS_ORE:2.5
+DEEPSLATE_REDSTONE_ORE:4
+DIAMOND_ORE:1
+DIORITE:10
+DIRT:40
+DRIPSTONE_BLOCK:3
+FERN:2
+FIRE_CORAL_BLOCK:1.5
+FLOWERING_AZALEA:1.5
+FLOWERING_AZALEA_LEAVES:1.5
+GLASS:2
+GLOW_LICHEN:2
+GOLD_BLOCK:1.1
+GOLD_ORE:5
+GRANITE:10
+GRASS:30
+GRASS_BLOCK:90
+GRAVEL:10
+HANGING_ROOT:1.5
+HORN_CORAL_BLOCK:1.5
+ICE:1
+INFESTED_DEEPSLATE:13
+IRON_ORE:20
+JUNGLE_LEAVES:10
+JUNGLE_LOG:20
+KELP_PLANT:1
+LAPIS_ORE:5
+LARGE_FERN:2
+LAVA:10
+LILAC:2
+LILY_OF_THE_VALLEY:1.5
+LILY_PAD:2
+MANGROVE_LEAVES:10
+MANGROVE_LOG:20
+MANGROVE_ROOTS:1
+MANGROVE_WOOD:1
+MELON:5
+MOSS_BLOCK:3
+MOSSY_COBBLESTONE:5
+MOSSY_STONE_BRICKS:2
+MUD:5
+MUDDY_MANGROVE_ROOTS:4
+MYCELIUM:15
+OAK_LEAVES:10
+OAK_LOG:20
+OBSIDIAN:5
+ORANGE_TULIP:2
+OXEYE_DAISY:2
+PACKED_ICE:2
+PEONY:2
+PINK_PETALS:2
+PINK_TULIP:2
+PISTON:1.7
+PODZOL:5
+POINTED_DRIPSTONE:2
+POPPY:2
+POTATOES:2
+PRISMARINE:2
+PUMPKIN:5
+RAW_COPPER_BLOCK:1.2
+RAW_IRON_BLOCK:1.2
+RED_MUSHROOM:2
+RED_SAND:5
+RED_SANDSTONE:3
+RED_TULIP:2
+REDSTONE_ORE:8
+ROOTED_DIRT:4
+ROSE_BUSH:2
+SAND:20
+SANDSTONE:10
+SCULK:5
+SCULK_CATALYST:2
+SCULK_SENSOR:2
+SCULK_SHRIKER:0.8
+SCULK_VEIN:3
+SEA_LANTERN:3
+SEA_PICKLE:2
+SEAGRASS:2
+SMALL_DRIPLEAF:2
+SMOOTH_BASALT:2
+SNOW_BLOCK:8
 SPAWNER:0.00001
-STONE:10
-SUGAR_CANE:
-SUSPICIOUS_GRAVEL:
-SUSPICIOUS_SAND:
-TERRACOTTA:
-TUBE_CORAL_BLOCK:
-TUFF:
-WET_SPONGE:
+SPONGE:2
+SPORE_BLOSSOM:2
+SPRUCE_LEAVES:10
+SPRUCE_LOG:20
+STICKY_PISTON:2
+STONE:140
+STONE_BRICKS:5
+SUGAR_CANE:5
+SUNFLOWER:2
+SUSPICIOUS:SAND:3
+SUSPICIOUS_GRAVEL:2
+SWEET_BERRY_BUSH:2
+TALL_GRASS:2
+TARGET:2
+TNT:2
+TUBE_CORAL_BLOCK:1.5
+TUFF:5
+WATER:10
+WHEAT:2
+WHITE_CONCRETE_POWDER:5
+WHITE_TULIP:2
+WHITE_WOOL:25
+WITHER_ROSE:1.5
 ```
  
 ### Nether Grid Settings:
 (**world_nether.txt** found in the SkygridBlocks folder):
  
 ```
-ANCIENT_DEBRIS:0.001
-BASALT:13
-BLACKSTONE:13
-BONE_BLOCK:2
-CHEST:0.0001
-CRIMSON_NYLIUM:3
-CRIMSON_STEM:3
-GLOWSTONE:5
-GRAVEL:2
-LAVA_CAULDRON:3
-MAGMA_BLOCK:2
-NETHER_BRICKS:2
-NETHER_GOLD_ORE:2
-NETHER_QUARTZ_ORE:3
-NETHER_WART_BLOCK:3
-NETHERRACK:13
-OCHRE_FROGLIGHT:2
-PEARLESCENT_FROGLIGHT:2
-SHROOMLIGHT:2
-SOUL_SAND:3
-SOUL_SOIL:2
-SPAWNER:0.00001
-VERDANT_FROGLIGHT:1
-WARPED_NYLIUM:3
-WARPED_STEM:3
-WARPED_WART_BLOCK:3
+ANCIENT_DEBRIS:1
+BASALT:20
+BLACKSTONE:60
+BONE_BLOCK:5
+CHEST:.01
+CRIMSON_FUNGUS:6
+CRIMSON_HYPHAE:6
+CRIMSON_NYLIUM:60
+CRIMSON_ROOTS:6
+CRIMSON_STEM:10
+CRYING_OBSIDIAN:2
+GILDED_BLACKSTONE:4
+GLOWSTONE:3
+GRAVEL:30
+LAVA:50
+MAGMA_BLOCK:50
+NETHER_BRICKS:30
+NETHER_GOLD_ORE:6
+NETHER_QUARTZ_ORE:15
+NETHER_SPROUTS:7
+NETHER_WART:30
+NETHER_WART_BLOCK:6
+NETHERRACK:600
+OBSIDIAN:5
+OCHRE_FROGLIGHT:4
+PEARLESCENT_FROGLIGHT:4
+POLISHED_BLACKSTONE:6
+POLISHED_BLACKSTONE_BRICKS:4
+SHROOMLIGHT:5
+SOUL_FIRE:5
+SOUL_SAND:100
+SOUL_SOIL:10
+SPAWNER:0.001
+TWISTING_VINES:5
+VERDANT_FROGLIGHT:4
+WARPED_FUNGUS:6
+WARPED_HYPHAE:6
+WARPED_NYLIUM:60
+WARPED_ROOTS:6
+WARPED_STEM:10
+WARPED_WART_BLOCK:10
 ```
  
 ### End Grid Settings:
 (**world_the_end.txt** found in the SkygridBlocks folder):
  
 ```
+BREWING_STAND:.01
 CHEST:0.00001
-CHORUS_FLOWER:4
-END_ROD:2
-END_STONE:78
-END_STONE_BRICKS:30
-OBSIDIAN:24
-PURPUR_BLOCK:50
+CHORUS_FLOWER:5
+END_ROD:10
+END_STONE:60
+END_STONE_BRICKS:5
+ENDER_CHEST:.01
+OBSIDIAN: 10
+PURPLE_STAINED_GLASS:5
+PURPUR_BLOCK:5
+PURPUR_PILLAR:5
+PURPUR_STAIRS:5
 SPAWNER:0.000001
 ```
