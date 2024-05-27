@@ -29,7 +29,13 @@ public class SkyGridPlugin extends JavaPlugin implements Listener {
 
 		// Register the instance as a listener
 		getServer().getPluginManager().registerEvents(manager, this);
-
+		
+		// Ensure plugin folders exist
+		bootChecker = new FirstBootChecker(this);
+		bootChecker.createFoldersIfNotExist("SkygridBlocks");
+		bootChecker.createFoldersIfNotExist("OreGenBlock");
+		firstBoot = bootChecker.checkForFirstBoot();
+		
 		// Initialize PluginSettings
 		settings = new PluginSettings(this);
 
@@ -77,13 +83,6 @@ public class SkyGridPlugin extends JavaPlugin implements Listener {
 		// Register PatchCommand as command executor for /patch
 		getCommand("patch").setExecutor(new PatchCommand(this));
 
-		// Ensure plugin folders exist
-		bootChecker = new FirstBootChecker(this);
-		bootChecker.createFoldersIfNotExist("SkygridBlocks");
-		bootChecker.createFoldersIfNotExist("OreGenBlock");
-
-		// Check for first boot
-		firstBoot = bootChecker.checkForFirstBoot();
 		handleGeneration();
 	}
 
