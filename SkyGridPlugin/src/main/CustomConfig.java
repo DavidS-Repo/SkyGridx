@@ -8,28 +8,11 @@ import java.util.logging.Level;
 
 public class CustomConfig {
     private final JavaPlugin plugin;
-    private final String fileName;
     private final Path configFilePath;
 
     public CustomConfig(JavaPlugin plugin, String fileName) {
         this.plugin = plugin;
-        this.fileName = fileName;
         this.configFilePath = Paths.get(plugin.getDataFolder().getPath(), fileName);
-    }
-
-    public void saveDefaultConfig() {
-        if (!Files.exists(configFilePath)) {
-            try (InputStream inputStream = plugin.getResource(fileName)) {
-                if (inputStream != null) {
-                    Files.createDirectories(configFilePath.getParent());
-                    Files.copy(inputStream, configFilePath);
-                } else {
-                    plugin.getLogger().warning("Could not find " + fileName + " in the plugin resources.");
-                }
-            } catch (IOException e) {
-                plugin.getLogger().log(Level.SEVERE, "Could not save default config", e);
-            }
-        }
     }
 
     public void saveConfig(String content) {
