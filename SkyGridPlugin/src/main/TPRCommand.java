@@ -8,30 +8,22 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.plugin.java.JavaPlugin;
 
 public class TPRCommand implements CommandExecutor {
 	private final Map<UUID, Map<World.Environment, Long>> lastTeleportTimes = new HashMap<>();
 	private final Map<UUID, Long> lastCommandTimes = new HashMap<>();
-	private final Set<Material> dangerousBlocks = EnumSet.noneOf(Material.class);
 	private static final String ERROR_MESSAGE = ChatColor.RED + ("Only players can use this command.");
+	private final EnumSet<Material> DANGEROUSBLOCKS;
+
 
 	private final PluginSettings settings;
+	private final JavaPlugin plugin;
 
-	public TPRCommand(PluginSettings settings) {
+	public TPRCommand(PluginSettings settings, JavaPlugin plugin) {
 		this.settings = settings;
-		Collections.addAll(dangerousBlocks, Material.LAVA, Material.CACTUS, Material.FIRE, Material.WATER, Material.LAVA_CAULDRON,
-				Material.MAGMA_BLOCK, Material.SWEET_BERRY_BUSH, Material.CAMPFIRE, Material.WITHER_ROSE,
-				Material.SUGAR_CANE, Material.VINE, Material.WEEPING_VINES, Material.TWISTING_VINES,
-				Material.POINTED_DRIPSTONE, Material.AIR, Material.SNOW, Material.GRASS, Material.CORNFLOWER, 
-				Material.SUNFLOWER, Material.TORCHFLOWER, Material.FERN, Material.DANDELION, Material.POPPY,
-				Material.SPORE_BLOSSOM, Material.HANGING_ROOTS, Material.BIG_DRIPLEAF, Material.SMALL_DRIPLEAF,
-				Material.CAVE_VINES_PLANT, Material.TALL_GRASS, Material.SEAGRASS, Material.BROWN_MUSHROOM,
-				Material.RED_MUSHROOM, Material.WHEAT, Material.POTATOES, Material.CARROTS, Material.BEETROOTS,
-				Material.KELP, Material.MELON_STEM, Material.NETHER_WART, Material.PUMPKIN_STEM, Material.TORCHFLOWER_CROP,
-				Material.TWISTING_VINES, Material.WEEPING_VINES, Material.ROSE_BUSH, Material.PITCHER_PLANT, Material.PEONY,
-				Material.LILAC, Material.LARGE_FERN, Material.TALL_SEAGRASS,Material.ALLIUM, Material.AZURE_BLUET, 
-				Material.BLUE_ORCHID, Material.LILY_OF_THE_VALLEY,Material.OXEYE_DAISY, Material.RED_TULIP, Material.ORANGE_TULIP, 
-				Material.WHITE_TULIP, Material.PINK_TULIP, Material.WITHER_ROSE, Material.DEAD_BUSH);
+		this.plugin = plugin;
+		this.DANGEROUSBLOCKS = settings.getDangerousBlocks();
 	}
 
 	@Override
@@ -131,7 +123,7 @@ public class TPRCommand implements CommandExecutor {
 		Random random = new Random();
 		int randomX = random.nextInt(settings.getMaxX() - settings.getMinX()) + settings.getMinX();
 		int randomZ = random.nextInt(settings.getMaxZ() - settings.getMinZ()) + settings.getMinZ();
-		findNonAirBlock(player, world, randomX, settings.getDestinationY(), randomZ);
+		findNonAirBlock(player, world, randomX, settings.getDestinationY(), randomZ, true);
 	}
 
 	private long getRemainingCooldown(Player player, World world) {
@@ -152,7 +144,7 @@ public class TPRCommand implements CommandExecutor {
 		return (lastCommandTime + b2bDelay - System.currentTimeMillis()) / 1000;
 	}
 
-	private void findNonAirBlock(Player player, World world, int destinationX, int destinationY, int destinationZ) {
+	private void findNonAirBlock(Player player, World world, int destinationX, int destinationY, int destinationZ, boolean isRegularTeleport) {
 		int chunkX = destinationX >> 4;
 		int chunkZ = destinationZ >> 4;
 		world.loadChunk(chunkX, chunkZ, true);
@@ -174,11 +166,13 @@ public class TPRCommand implements CommandExecutor {
 
 								Block block = world.getBlockAt(x, y, z);
 								if (!block.getType().isAir() && !isDangerousBlock(block.getType())) {
-									UUID playerId = player.getUniqueId();
-									Map<World.Environment, Long> environmentTimes = lastTeleportTimes.getOrDefault(playerId, new HashMap<>());
-									environmentTimes.put(world.getEnvironment(), System.currentTimeMillis());
-									lastTeleportTimes.put(playerId, environmentTimes);
-									lastCommandTimes.put(playerId, System.currentTimeMillis());
+									if (isRegularTeleport) {
+										UUID playerId = player.getUniqueId();
+										Map<World.Environment, Long> environmentTimes = lastTeleportTimes.getOrDefault(playerId, new HashMap<>());
+										environmentTimes.put(world.getEnvironment(), System.currentTimeMillis());
+										lastTeleportTimes.put(playerId, environmentTimes);
+										lastCommandTimes.put(playerId, System.currentTimeMillis());
+									}
 									cancel();
 									return;
 								}
@@ -188,10 +182,17 @@ public class TPRCommand implements CommandExecutor {
 				}
 				tickCount++;
 			}
-		}.runTaskTimer(SkyGridPlugin.getPlugin(SkyGridPlugin.class), 0L, 0L);
+		}.runTaskTimer(plugin, 0L, 0L);
+	}
+
+	public void teleportPlayerForFirstJoin(Player player, World world) {
+		Random random = new Random();
+		int randomX = random.nextInt(settings.getMaxX() - settings.getMinX()) + settings.getMinX();
+		int randomZ = random.nextInt(settings.getMaxZ() - settings.getMinZ()) + settings.getMinZ();
+		findNonAirBlock(player, world, randomX, settings.getDestinationY(), randomZ, false);
 	}
 
 	private boolean isDangerousBlock(Material blockType) {
-		return dangerousBlocks.contains(blockType);
+		return DANGEROUSBLOCKS.contains(blockType);
 	}
 }
