@@ -87,13 +87,19 @@
 #		- Materials distribution is enforced loosely through a weigh percentage system.
 #		- All biomes must be included in the text file, omitting any biomes will result in blank chunks where the biomes are located
 #		- Here are all the current biomes for the End:
-#		-THE_END,END_BARRENS,END_HIGHLANDS,END_MIDLANDS,SMALL_END_ISLANDS-
+#
+#-THE_END,END_BARRENS,END_HIGHLANDS,END_MIDLANDS,SMALL_END_ISLANDS-
 
+BREWING_STAND:.01
 CHEST:0.00001
-CHORUS_FLOWER:4
-END_ROD:2
-END_STONE:78
-END_STONE_BRICKS:30
-OBSIDIAN:24
-PURPUR_BLOCK:50
+CHORUS_FLOWER:5
+END_ROD:10
+END_STONE:60
+END_STONE_BRICKS:5
+ENDER_CHEST:.01
+OBSIDIAN: 10
+PURPLE_STAINED_GLASS:5
+PURPUR_BLOCK:5
+PURPUR_PILLAR:5
+PURPUR_STAIRS:5
 SPAWNER:0.000001
