@@ -40,8 +40,8 @@ public class SkyGridPlugin extends JavaPlugin implements Listener {
 		Fog fogCommandExecutor = new Fog(manager, settings);
 
 		// Register GrowthControl as a listener
-		GrowthControl growthControl = new GrowthControl(this);
-		growthControl.initialize();
+		EventControl eventControl = new EventControl(this, settings);
+		eventControl.initialize();
 
 		// Create a custom filter to suppress specific warnings
 		Filter logFilter = new LogFilter();
@@ -54,17 +54,20 @@ public class SkyGridPlugin extends JavaPlugin implements Listener {
 		getCommand("fogoff").setExecutor(fogCommandExecutor);
 
 		// Register the "/tpr" command
-		TPRCommand tprCommand = new TPRCommand(settings);
+		TPRCommand tprCommand = new TPRCommand(settings, this);
 		getCommand("tpr").setTabCompleter(new TPRAutoCompleter());
 		getCommand("tpr").setExecutor(tprCommand);
 		getCommand("tpro").setExecutor(tprCommand);
 		getCommand("tprn").setExecutor(tprCommand);
 		getCommand("tpre").setExecutor(tprCommand);
 
+		// Register PlayerJoin as a listener
+		getServer().getPluginManager().registerEvents(new PlayerJoin(settings, tprCommand), this);
+
 		// Set the executor for GrowthControlOn and GrowthControlOff commands
-		GrowthControlCommands commands = new GrowthControlCommands(this, growthControl);
-		getCommand("gclogson").setExecutor(commands);
-		getCommand("gclogsoff").setExecutor(commands);
+		EventControlCommands commands = new EventControlCommands(this, eventControl);
+		getCommand("eclogson").setExecutor(commands);
+		getCommand("eclogsoff").setExecutor(commands);
 
 		// PreGeneratorCommands as the executor and tab completer for the /pregen command
 		PreGeneratorCommands preGeneratorCommands = new PreGeneratorCommands(preGenerator);
@@ -73,9 +76,6 @@ public class SkyGridPlugin extends JavaPlugin implements Listener {
 
 		// Register PatchCommand as command executor for /patch
 		getCommand("patch").setExecutor(new PatchCommand(this));
-
-		// Register the RegenCommand with the Generator instance
-		getCommand("regen").setExecutor(new RegenerateCommand(this, generator));
 
 		// Ensure plugin folders exist
 		bootChecker = new FirstBootChecker(this);
@@ -103,6 +103,9 @@ public class SkyGridPlugin extends JavaPlugin implements Listener {
 		if (generator == null) {
 			generator = new Generator(this);
 			generator.initialize();
+			
+			// Register the RegenCommand with the Generator instance
+			getCommand("regen").setExecutor(new RegenerateCommand(this, generator));
 
 			if (firstBoot) {
 				new ChunkLoader(this).loadChunksAndRun(() -> {
