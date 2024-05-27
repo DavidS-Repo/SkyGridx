@@ -30,14 +30,14 @@ commands:
     description: Disable fog
     permission: sg.fogoff
     usage: /fogoff
-  gclogson:
-    description: Enable GrowthControl logging
-    permission: sg.gclogson
-    usage: /gclogson
-  gclogsoff:
-    description: Disable GrowthControl logging
-    permission: sg.gclogsoff
-    usage: /gclogsoff
+  eclogson:
+    description: Enable Event Control logging
+    permission: sg.eclogson
+    usage: /eclogson
+  eclogsoff:
+    description: Disable Event Control logging
+    permission: sg.eclogsoff
+    usage: /eclogsoff
   pregen:
     description: Enable pre-generation with customizable parameters
     permission: sg.pregen
@@ -81,11 +81,11 @@ permissions:
   sg.fogoff:
     description: Allows disabling fog with the /fogoff command
     default: op
-  sg.gclogson:
-    description: Grants permission to enable GrowthControl logging using /gclogson
+  sg.eclogson:
+    description: Grants permission to enable Event Control logging using /eclogson
     default: op
-  sg.gclogsoff:
-    description: Grants permission to disable GrowthControl logging using /gclogsoff
+  sg.eclogsoff:
+    description: Grants permission to disable Event Control logging using /eclogsoff
     default: op
   sg.pregen:
     description: Grants permission to use the pre-generation command with customizable parameters
@@ -109,8 +109,8 @@ permissions:
       sg.tpr.end: true
       sg.fogon: true
       sg.fogoff: true
-      sg.gclogson: true
-      sg.gclogsoff: true
+      sg.eclogson: true
+      sg.eclogsoff: true
       sg.pregen: true
       sg.pregenoff: true
       sg.patch: true
