@@ -14,7 +14,9 @@ import org.bukkit.event.block.BlockFormEvent;
 import org.bukkit.event.block.BlockFromToEvent;
 import org.bukkit.event.block.BlockGrowEvent;
 import org.bukkit.event.block.BlockIgniteEvent;
+import org.bukkit.event.block.BlockSpreadEvent;
 import org.bukkit.event.entity.EntityChangeBlockEvent;
+import org.bukkit.event.world.StructureGrowEvent;
 import org.bukkit.plugin.Plugin;
 
 import java.util.EnumSet;
@@ -26,17 +28,17 @@ public class EventControl implements Listener {
 	private static final String ON_MESSAGE = ChatColor.GREEN + "Event control logging enabled.";
 	private static final String OFF_MESSAGE = ChatColor.RED + "Event control logging disabled.";
 	private boolean loggingEnabled = false;
+	private static boolean 
+	BlockGrowEventToggle = PluginSettings.isBlockIgniteEvent(), BlockFadeEventToggle = PluginSettings.isBlockFadeEvent(), 
+	BlockFromToEventToggle = PluginSettings.isBlockFromToEvent(), StructureGrowEventToggle = PluginSettings.isStructureGrowEvent(),
+	BlockSpreadEventToggle = PluginSettings.isBlockSpreadEvent(), BlockIgniteEventToggle = PluginSettings.isBlockIgniteEvent(), 
+	BlockFormEventToggle = PluginSettings.isBlockFormEvent(), EntityChangeBlockEventToggle = PluginSettings.isEntityChangeBlockEvent();
 
-	private final EnumSet<Material> GROWTH_BLOCKS;
-	private final EnumSet<Material> GRAVITY_AFFECTED_BLOCKS;
-	private static final EnumSet<Material> IS_FLOATING = EnumSet.of(
-			Material.AIR, Material.VOID_AIR
-			);
+	private static final EnumSet<Material> GRAVITY_AFFECTED_BLOCKS= PluginSettings.getGravityAffectedBlocks();
+	private static final EnumSet<Material> IS_FLOATING = EnumSet.of(Material.AIR, Material.VOID_AIR);
 
-	public EventControl(Plugin plugin, PluginSettings settings) {
+	public EventControl(Plugin plugin) {
 		this.plugin = plugin;
-		this.GROWTH_BLOCKS = settings.getGrowthBlocks();
-		this.GRAVITY_AFFECTED_BLOCKS = settings.getGravityAffectedBlocks();
 	}
 
 	public void initialize() {
@@ -56,85 +58,114 @@ public class EventControl implements Listener {
 
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onBlockGrow(BlockGrowEvent event) {
-		Block block = event.getBlock();
-		Block belowBlock = block.getRelative(BlockFace.DOWN);
-		Material belowMaterial = belowBlock.getType();
-		Block aboveBlock = block.getRelative(BlockFace.UP);
-		Material aboveMaterial = aboveBlock.getType();
-		Material materialTwoBelow = aboveBlock.getRelative(BlockFace.DOWN).getType();
+		if (BlockGrowEventToggle){
+			Block block = event.getBlock();
+			Block Blockbelow = block.getRelative(0 , -2, 0);
+			if (IS_FLOATING.contains((Blockbelow.getType()))) {
+				event.setCancelled(true);
+			}
+		}
+	}
 
-		if ((GROWTH_BLOCKS.contains(aboveMaterial) || GROWTH_BLOCKS.contains(belowMaterial)) && IS_FLOATING.contains(materialTwoBelow)) {
-			event.setCancelled(true);
+	@EventHandler(priority = EventPriority.HIGHEST)
+	public void onStructureGrow(StructureGrowEvent event) {
+		if (StructureGrowEventToggle) {
+			Block block = event.getLocation().getBlock();
+			Block blockBelow = block.getRelative(0 , -1, 0);
+			if (IS_FLOATING.contains(blockBelow.getType())) {
+				event.setCancelled(true);
+				if (loggingEnabled) {
+					plugin.getLogger().info("Cancelled sapling growth event at: " + block.getLocation());
+				}
+			}
+		}
+	}
+
+	@EventHandler(priority = EventPriority.HIGHEST)
+	public void onBlockSpread(BlockSpreadEvent event) {
+		if (BlockSpreadEventToggle) {
+			if (event.getSource().getType() == Material.BAMBOO_SAPLING) {
+				Block block = event.getBlock();
+				Block blockBelow = block.getRelative(0 , -2, 0);
+				if (IS_FLOATING.contains(blockBelow.getType())) {
+					event.setCancelled(true);
+					if (loggingEnabled) {
+						plugin.getLogger().info("Cancelled Bamboo sapling growth event at: " + block.getLocation());
+					}
+				}
+			}
 		}
 	}
 
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onBlockForm(BlockFormEvent event) {
-		Block block = event.getBlock();
-		Material newStateType = event.getNewState().getType();
-		Block belowBlock = block.getRelative(BlockFace.DOWN);
-		Material belowMaterial = belowBlock.getType();
+		if (BlockFormEventToggle) {
+			Block block = event.getBlock();
+			Material newStateType = event.getNewState().getType();
+			Block belowBlock = block.getRelative(BlockFace.DOWN);
+			Material belowMaterial = belowBlock.getType();
 
-		if (newStateType == Material.SNOW && GRAVITY_AFFECTED_BLOCKS.contains(belowMaterial)) {
-			event.setCancelled(true);
-			if (loggingEnabled) {
-				plugin.getLogger().info("Cancelled snow form event at: " + block.getLocation());
+			if (newStateType == Material.SNOW && GRAVITY_AFFECTED_BLOCKS.contains(belowMaterial)) {
+				event.setCancelled(true);
+				if (loggingEnabled) {
+					plugin.getLogger().info("Cancelled snow form event at: " + block.getLocation());
+				}
 			}
 		}
 	}
 
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onBlockFade(BlockFadeEvent event) {
-		Block block = event.getBlock();
-		Material originalType = event.getBlock().getType();
-		Material newType = event.getNewState().getType();
+		if (BlockFadeEventToggle) {
+			Block block = event.getBlock();
+			Material originalType = event.getBlock().getType();
+			Material newType = event.getNewState().getType();
 
-		if (originalType == Material.ICE && newType == Material.WATER) {
-			for (BlockFace face : EnumSet.of(BlockFace.DOWN, BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST, BlockFace.UP)) {
-				if (!IS_FLOATING.contains(block.getRelative(face).getType())) {
-					return;
+			if (originalType == Material.ICE && newType == Material.WATER) {
+				for (BlockFace face : EnumSet.of(BlockFace.DOWN, BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST, BlockFace.UP)) {
+					if (!IS_FLOATING.contains(block.getRelative(face).getType())) {
+						return;
+					}
 				}
-			}
-			event.setCancelled(true);
-			if (loggingEnabled) {
-				plugin.getLogger().info("Cancelled melt event at: " + block.getLocation());
-			}
-		} else if ((originalType == Material.FIRE || originalType == Material.SOUL_FIRE) && newType == Material.AIR) {
-			for (BlockFace face : EnumSet.of(BlockFace.DOWN, BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST, BlockFace.UP)) {
-				if (!IS_FLOATING.contains(block.getRelative(face).getType())) {
-					return;
+				event.setCancelled(true);
+				if (loggingEnabled) {
+					plugin.getLogger().info("Cancelled melt event at: " + block.getLocation());
 				}
-			}
-			event.setCancelled(true);
-			if (loggingEnabled) {
-				plugin.getLogger().info("Cancelled fire extinguish event at: " + block.getLocation());
+			} else if ((originalType == Material.FIRE || originalType == Material.SOUL_FIRE) && newType == Material.AIR) {
+				for (BlockFace face : EnumSet.of(BlockFace.DOWN, BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST, BlockFace.UP)) {
+					if (!IS_FLOATING.contains(block.getRelative(face).getType())) {
+						return;
+					}
+				}
+				event.setCancelled(true);
+				if (loggingEnabled) {
+					plugin.getLogger().info("Cancelled fire extinguish event at: " + block.getLocation());
+				}
 			}
 		}
 	}
 
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onBlockIgnite(BlockIgniteEvent event) {
-		Block block = event.getBlock();
-
-		for (BlockFace face : EnumSet.of(BlockFace.DOWN, BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST, BlockFace.UP)) {
-			if (!IS_FLOATING.contains(block.getRelative(face).getType())) {
-				return;
+		if(BlockIgniteEventToggle) {
+			Block block = event.getBlock();
+			for (BlockFace face : EnumSet.of(BlockFace.DOWN, BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST, BlockFace.UP)) {
+				if (!IS_FLOATING.contains(block.getRelative(face).getType())) {
+					return;
+				}
 			}
-		}
-
-		event.setCancelled(true);
-		if (loggingEnabled) {
-			plugin.getLogger().info("Cancelled ignition event at: " + block.getLocation());
+			event.setCancelled(true);
+			if (loggingEnabled) {
+				plugin.getLogger().info("Cancelled ignition event at: " + block.getLocation());
+			}
 		}
 	}
 
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onEntityChangeBlock(EntityChangeBlockEvent event) {
-		if (event.getEntity() instanceof FallingBlock) {
-			Block block = event.getBlock();
-			Material blockType = block.getType();
-
-			if (GRAVITY_AFFECTED_BLOCKS.contains(blockType)) {
+		if (EntityChangeBlockEventToggle) {
+			if (event.getEntity() instanceof FallingBlock) {
+				Block block = event.getBlock();
 				for (BlockFace face : EnumSet.of(BlockFace.DOWN, BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST, BlockFace.UP)) {
 					if (!IS_FLOATING.contains(block.getRelative(face).getType())) {
 						return;
@@ -150,22 +181,24 @@ public class EventControl implements Listener {
 
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onBlockFromTo(BlockFromToEvent event) {
-		Block block = event.getBlock();
-		Material blockType = block.getType();
-		Block toBlock = event.getToBlock();
+		if (BlockFromToEventToggle) {
+			Block block = event.getBlock();
+			Material blockType = block.getType();
+			Block toBlock = event.getToBlock();
 
-		if (blockType == Material.WATER || blockType == Material.LAVA) {
-			Block adjustedToBlock = toBlock.getRelative(BlockFace.UP);
+			if (blockType == Material.WATER || blockType == Material.LAVA) {
+				Block adjustedToBlock = toBlock.getRelative(BlockFace.UP);
 
-			for (BlockFace face : EnumSet.of(BlockFace.DOWN, BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST, BlockFace.UP)) {
-				if (!IS_FLOATING.contains(adjustedToBlock.getRelative(face).getType())) {
-					return;
+				for (BlockFace face : EnumSet.of(BlockFace.DOWN, BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST, BlockFace.UP)) {
+					if (!IS_FLOATING.contains(adjustedToBlock.getRelative(face).getType())) {
+						return;
+					}
 				}
-			}
 
-			event.setCancelled(true);
-			if (loggingEnabled) {
-				plugin.getLogger().info("Cancelled BlockFromToEvent for " + blockType.name() + " at: " + toBlock.getLocation());
+				event.setCancelled(true);
+				if (loggingEnabled) {
+					plugin.getLogger().info("Cancelled BlockFromToEvent for " + blockType.name() + " at: " + toBlock.getLocation());
+				}
 			}
 		}
 	}
