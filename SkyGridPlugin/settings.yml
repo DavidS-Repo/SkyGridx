@@ -4,7 +4,7 @@
 generator:
   # Delay in ticks before processing chunks after chunk load event.
   # A shorter delay increases server load, while a longer delay may affect player immersion.
-  processDelay: 10
+  processDelay: 5
   
   # Max and Min height for blocks placed in the Grids for all Environments.
   # Keep within increments of 4 starting from the current min or max.
@@ -145,32 +145,33 @@ fog:
   autoEnable: false
   
 # Event Control settings
-# Other events not included here that we still monitor are ;
-# onBlockIgnite (Prevents lava from causing fires to near by flammable grid blocks)
-# BlockFadeEvent (Prevents ice from melting if it's in the grid and fire from burning out)
-# BlockFromToEvent (Prevents lava and water from flowing due to server overload)
 EventControl:
-  # Used for preventing BlockGrowEvents (blocks that grow from one block to another)
-  GROWTH_BLOCKS:
-    Materials:
-      - KELP_PLANT
-      - SUGAR_CANE
-      - CACTUS
-      - BAMBOO_SAPLING
-      - ACACIA_SAPLING
-      - CHERRY_SAPLING
-      - DARK_OAK_SAPLING
-      - JUNGLE_SAPLING
-      - OAK_SAPLING
-      - SPRUCE_SAPLING
-      - BIRCH_SAPLING
-      - JUNGLE_SAPLING
-      - MANGROVE_PROPAGULE
-      - TWISTING_VINES_PLANT
-
-  # This list is for blocks that you want to monitor the following events.
-  # BlockFormEvent is used to prevent block updates that mess up the grid in snow biomes(snow forming on top of blocks)
-  # EntityChangeBlockEvents prevent gravity-affected blocks from randomly falling due to overload
+  # BlockIgniteEvent - Prevents lava from causing fires to near by flammable grid blocks
+  # (true to enable event check, false to disable)
+  BlockIgniteEvent: true
+  
+  # BlockFadeEvent - Prevents ice from melting if it's in the grid and fire from burning out
+  BlockFadeEvent: true
+  
+  # BlockFromToEvent - Prevents lava and water from flowing due to server overload
+  BlockFromToEvent: true
+  
+  # StructureGrowEvent - Prevents saplings in floating in grid from growing
+  StructureGrowEvent: true
+  
+  # BlockSpreadEvent - Prevents bamboo sapling from growing since it does not trigger with StructureGrowEvent
+  BlockSpreadEvent: true
+  
+  # BlockGrowEvent is used for KELP_PLANT, SUGAR_CANE, CACTUS, and TWISTING_VINES_PLANT (not logged in /eclogson, to much spam)
+  BlockGrowEvent: true
+  
+  # BlockFormEvent - Prevents block updates that mess up the grid in snow biomes, snow forming on top of blocks
+  BlockFormEvent: true
+  
+  # EntityChangeBlock - Prevents gravity-affected blocks from randomly falling due to overload
+  EntityChangeBlockEvent: true
+  
+  # This list is for blocks that you want to monitor the BlockFormEvent and EntityChangeBlock events.
   GRAVITY_AFFECTED_BLOCKS:
     Materials:
       - SAND
@@ -178,8 +179,6 @@ EventControl:
       - GRAVEL
       - KELP_PLANT
       - ANVIL
-      - SUGAR_CANE
-      - CACTUS
       - SUSPICIOUS_SAND
       - SUSPICIOUS_GRAVEL
       - DRAGON_EGG
