@@ -8,6 +8,7 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
+
 import java.util.logging.Filter;
 
 public class SkyGridPlugin extends JavaPlugin implements Listener {
@@ -46,7 +47,7 @@ public class SkyGridPlugin extends JavaPlugin implements Listener {
 		Fog fogCommandExecutor = new Fog(manager, settings);
 
 		// Register GrowthControl as a listener
-		EventControl eventControl = new EventControl(this, settings);
+		EventControl eventControl = new EventControl(this);
 		eventControl.initialize();
 
 		// Create a custom filter to suppress specific warnings
@@ -126,16 +127,14 @@ public class SkyGridPlugin extends JavaPlugin implements Listener {
 
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onPlayerJoin(PlayerJoinEvent event) {
-		if (!firstPlayerConnected && firstBoot) {
-			firstPlayerConnected = true;
-
-			// Schedule a sync task to re-process all loaded chunks when the first player joins
-			new BukkitRunnable() {
-				@Override
-				public void run() {
-					generator.processAllLoadedChunks();
-				}
-			}.runTask(this);
-		}
+	    if (!firstPlayerConnected && firstBoot) {
+	        firstPlayerConnected = true;
+	        new BukkitRunnable() {
+	            @Override
+	            public void run() {
+	                generator.processAllLoadedChunks();
+	            }
+	        }.runTaskLater(this, 30);
+	    }
 	}
 }
