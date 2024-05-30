@@ -23,7 +23,6 @@ public class ChunkLoader {
 	}
 
 	public void loadChunksAndRun(Runnable task) {
-		// Set loading flag to true
 		if (plugin instanceof SkyGridPlugin) {
 			((SkyGridPlugin) plugin).setChunksLoading(true);
 		}
@@ -38,16 +37,15 @@ public class ChunkLoader {
 		List<World> worlds = Bukkit.getWorlds();
 		int centerX = 0;
 		int centerZ = 0;
-		int radius = 16;
+		int chunkRange = 4; // 4 chunks in each direction
 
 		CompletableFuture<?>[] futures = worlds.stream().flatMap(world -> {
-			CompletableFuture<?>[] worldFutures = new CompletableFuture<?>[(2 * radius + 1) * (2 * radius + 1)];
+			CompletableFuture<?>[] worldFutures = new CompletableFuture<?>[(2 * chunkRange + 1) * (2 * chunkRange + 1)];
 			int index = 0;
-			for (int x = -radius; x <= radius; x++) {
-				for (int z = -radius; z <= radius; z++) {
+			for (int x = -chunkRange; x <= chunkRange; x++) {
+				for (int z = -chunkRange; z <= chunkRange; z++) {
 					Location loc = new Location(world, (centerX + x) << 4, 0, (centerZ + z) << 4);
 					worldFutures[index++] = PaperLib.getChunkAtAsync(loc).thenAccept(chunk -> {
-						// Ensure the chunk stays loaded
 						chunk.setForceLoaded(true);
 					});
 				}
@@ -61,7 +59,6 @@ public class ChunkLoader {
 				public void run() {
 					Bukkit.broadcastMessage(READY_MESSAGE);
 					Bukkit.broadcastMessage(THANKS_MESSAGE);
-					// Set loading flag to false
 					if (plugin instanceof SkyGridPlugin) {
 						((SkyGridPlugin) plugin).setChunksLoading(false);
 					}
