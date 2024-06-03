@@ -13,8 +13,13 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 public class CustomChest {
 
@@ -23,13 +28,15 @@ public class CustomChest {
 	private final Map<ChestKey, Map<Material, ItemSettings>> chestItemsMap;
 	private final Map<Biome, Set<ChestKey>> chestBiomesMap;
 	private final Logger logger;
+	private final ExecutorService executorService;
 
 	private CustomChest(JavaPlugin plugin) {
 		CustomChest.plugin = plugin;
-		this.chestItemsMap = new HashMap<>();
-		this.chestBiomesMap = new HashMap<>();
+		this.chestItemsMap = new ConcurrentHashMap<>();
+		this.chestBiomesMap = new ConcurrentHashMap<>();
 		this.logger = plugin.getLogger();
-		loadChestSettings();
+		this.executorService = Executors.newWorkStealingPool();
+		loadChestSettingsAsync();
 	}
 
 	public static CustomChest getInstance(JavaPlugin plugin) {
@@ -45,37 +52,57 @@ public class CustomChest {
 			Inventory chestInventory = chest.getInventory();
 			Biome biome = block.getBiome();
 
-			Set<ChestKey> chestKeys = chestBiomesMap.get(biome);
-			if (chestKeys != null) {
-				for (ChestKey chestKey : chestKeys) {
-					Map<Material, ItemSettings> itemsMap = chestItemsMap.get(chestKey);
-					loadChestWithItems(itemsMap, chestInventory);
-					return;
+			CompletableFuture.runAsync(() -> {
+				Set<ChestKey> chestKeys = chestBiomesMap.get(biome);
+				if (chestKeys != null) {
+					for (ChestKey chestKey : chestKeys) {
+						Map<Material, ItemSettings> itemsMap = chestItemsMap.get(chestKey);
+						calculateItemsToPlace(itemsMap, chestInventory)
+						.thenAccept(itemsToPlace -> plugin.getServer().getScheduler().runTask(plugin, 
+								() -> placeItemsInChest(chestInventory, itemsToPlace)));
+						return;
+					}
+				} else {
+					logger.warning("Biome-specific chest settings not found for biome: " + biome.name());
 				}
-			}
-			logger.warning("Biome-specific chest settings not found for biome: " + biome.name());
+			}, executorService);
 		}
 	}
 
-	private void loadChestWithItems(Map<Material, ItemSettings> itemsMap, Inventory chestInventory) {
-		Set<Integer> emptySlots = getEmptySlots(chestInventory);
+	private CompletableFuture<ItemStack[]> calculateItemsToPlace(Map<Material, ItemSettings> itemsMap, Inventory chestInventory) {
+		ItemStack[] itemsToPlace = new ItemStack[chestInventory.getSize()];
 		Map<Material, Integer> currentItemCounts = getCurrentItemCounts(chestInventory);
+		Set<Integer> emptySlots = getEmptySlots(chestInventory);
 
-		for (Integer slot : emptySlots) {
-			ItemSettings itemSettings = chooseRandomItemSettingsWithWeights(itemsMap);
+		List<CompletableFuture<Void>> futures = emptySlots.stream()
+				.map(slot -> CompletableFuture.runAsync(() -> {
+					ItemSettings itemSettings = chooseRandomItemSettingsWithWeights(itemsMap);
+					if (itemSettings != null) {
+						Material material = itemSettings.material;
+						int currentAmount = currentItemCounts.getOrDefault(material, 0);
+						int maxAddable = itemSettings.maxAmount - currentAmount;
+						if (maxAddable > 0) {
+							int amount = ThreadLocalRandom.current().nextInt(1, maxAddable + 1);
+							itemsToPlace[slot] = new ItemStack(material, amount);
+							currentItemCounts.merge(material, amount, Integer::sum);
+						}
+					}
+				}, executorService))
+				.collect(Collectors.toList());
 
-			if (itemSettings != null) {
-				Material material = itemSettings.material;
+		return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
+				.thenApply(v -> itemsToPlace);
+	}
 
-				int currentAmount = currentItemCounts.getOrDefault(material, 0);
-				int amount = getRandomAmount(itemSettings, currentAmount);
-
-				if (amount > 0) {
-					chestInventory.setItem(slot, new ItemStack(material, amount));
-					currentItemCounts.put(material, currentAmount + amount);
-				}
+	private void placeItemsInChest(Inventory chestInventory, ItemStack[] itemsToPlace) {
+		ItemStack[] finalContents = chestInventory.getContents();
+		for (int i = 0; i < itemsToPlace.length; i++) {
+			ItemStack itemStack = itemsToPlace[i];
+			if (itemStack != null) {
+				finalContents[i] = itemStack;
 			}
 		}
+		chestInventory.setContents(finalContents);
 	}
 
 	private Set<Integer> getEmptySlots(Inventory inventory) {
@@ -90,7 +117,7 @@ public class CustomChest {
 	}
 
 	private Map<Material, Integer> getCurrentItemCounts(Inventory inventory) {
-		Map<Material, Integer> currentItemCounts = new HashMap<>();
+		Map<Material, Integer> currentItemCounts = new ConcurrentHashMap<>();
 		for (ItemStack item : inventory.getContents()) {
 			if (item != null) {
 				currentItemCounts.merge(item.getType(), item.getAmount(), Integer::sum);
@@ -99,79 +126,65 @@ public class CustomChest {
 		return currentItemCounts;
 	}
 
-	private int getRandomAmount(ItemSettings itemSettings, int currentAmount) {
-		int maxAddable = itemSettings.maxAmount - currentAmount;
-		return maxAddable <= 0 ? 0 : ThreadLocalRandom.current().nextInt(1, maxAddable + 1);
-	}
-
 	private ItemSettings chooseRandomItemSettingsWithWeights(Map<Material, ItemSettings> itemsMap) {
 		if (itemsMap.isEmpty()) {
 			return null;
 		}
-
-		double totalWeight = itemsMap.values().stream().mapToDouble(item -> item.weight).sum();
+		double totalWeight = itemsMap.values().parallelStream().mapToDouble(item -> item.weight).sum();
 		double randomValue = ThreadLocalRandom.current().nextDouble() * totalWeight;
-
 		for (ItemSettings itemSettings : itemsMap.values()) {
 			randomValue -= itemSettings.weight;
 			if (randomValue <= 0.0) {
 				return itemSettings;
 			}
 		}
-
 		return null;
 	}
 
-	private void loadChestSettings() {
-		File chestSettingsFile = new File(plugin.getDataFolder(), "SkygridBlocks/ChestSettings.yml");
-
-		if (!chestSettingsFile.exists()) {
-			logger.warning("ChestSettings.yml not found.");
-			return;
-		}
-
-		FileConfiguration chestSettings = YamlConfiguration.loadConfiguration(chestSettingsFile);
-
-		if (chestSettings.isConfigurationSection("ChestSettings")) {
-			ConfigurationSection chestSettingsSection = chestSettings.getConfigurationSection("ChestSettings");
-
-			for (String chestKeyString : chestSettingsSection.getKeys(false)) {
-				ChestKey chestKey = new ChestKey(chestKeyString);
-				Map<Material, ItemSettings> itemsMap = new HashMap<>();
-				List<String> biomeNames = chestSettingsSection.getStringList(chestKeyString + ".Biomes");
-
-				for (String biomeName : biomeNames) {
-					try {
-						Biome biome = Biome.valueOf(biomeName);
-						chestBiomesMap.computeIfAbsent(biome, k -> new HashSet<>()).add(chestKey);
-					} catch (IllegalArgumentException e) {
-						logger.warning("Invalid biome name: " + biomeName);
-					}
-				}
-
-				List<String> itemSettingsStrings = chestSettingsSection.getStringList(chestKeyString + ".Items");
-				for (String itemSettingsString : itemSettingsStrings) {
-					String[] parts = itemSettingsString.split(":");
-					if (parts.length == 3) {
-						Material material = Material.matchMaterial(parts[0]);
-						if (material != null) {
-							try {
-								double weight = Double.parseDouble(parts[1]);
-								int maxAmount = Integer.parseInt(parts[2]);
-								itemsMap.put(material, new ItemSettings(material, weight, maxAmount));
-							} catch (NumberFormatException e) {
-								logger.warning("Invalid number format in item settings: " + itemSettingsString);
-							}
-						} else {
-							logger.warning("Invalid material name: " + parts[0]);
+	private void loadChestSettingsAsync() {
+		CompletableFuture.runAsync(() -> {
+			File chestSettingsFile = new File(plugin.getDataFolder(), "SkygridBlocks/ChestSettings.yml");
+			if (!chestSettingsFile.exists()) {
+				logger.warning("ChestSettings.yml not found.");
+				return;
+			}
+			FileConfiguration chestSettings = YamlConfiguration.loadConfiguration(chestSettingsFile);
+			if (chestSettings.isConfigurationSection("ChestSettings")) {
+				ConfigurationSection chestSettingsSection = chestSettings.getConfigurationSection("ChestSettings");
+				for (String chestKeyString : chestSettingsSection.getKeys(false)) {
+					ChestKey chestKey = new ChestKey(chestKeyString);
+					Map<Material, ItemSettings> itemsMap = new HashMap<>();
+					List<String> biomeNames = chestSettingsSection.getStringList(chestKeyString + ".Biomes");
+					for (String biomeName : biomeNames) {
+						try {
+							Biome biome = Biome.valueOf(biomeName);
+							chestBiomesMap.computeIfAbsent(biome, k -> new HashSet<>()).add(chestKey);
+						} catch (IllegalArgumentException e) {
+							logger.warning("Invalid biome name: " + biomeName);
 						}
 					}
+					List<String> itemSettingsStrings = chestSettingsSection.getStringList(chestKeyString + ".Items");
+					for (String itemSettingsString : itemSettingsStrings) {
+						String[] parts = itemSettingsString.split(":");
+						if (parts.length == 3) {
+							Material material = Material.matchMaterial(parts[0]);
+							if (material != null) {
+								try {
+									double weight = Double.parseDouble(parts[1]);
+									int maxAmount = Integer.parseInt(parts[2]);
+									itemsMap.put(material, new ItemSettings(material, weight, maxAmount));
+								} catch (NumberFormatException e) {
+									logger.warning("Invalid number format in item settings: " + itemSettingsString);
+								}
+							} else {
+								logger.warning("Invalid material name: " + parts[0]);
+							}
+						}
+					}
+					chestItemsMap.put(chestKey, itemsMap);
 				}
-
-				chestItemsMap.put(chestKey, itemsMap);
 			}
-		}
-
-		logger.info("ChestSettings Loaded");
+			logger.info("ChestSettings Loaded");
+		}, executorService);
 	}
 }
