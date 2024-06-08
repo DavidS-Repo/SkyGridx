@@ -19,22 +19,28 @@ This server serves as an exclusive testing environment for the latest SkyGrid pl
    - SkyGrid generates in real-time as you explore.
 
 **Built-in Fog Feature:**
-   - Added a new fog feature accompanied by a texture pack. Admins can enable it using **/fogon** and disable with **/fogoff**. This feature allows lower render distances without disrupting immersion.
+   - Fog feature accompanied by a texture pack. Admins can enable it using '/fogon' and disable with '/fogoff'. This feature allows lower render distances without disrupting immersion.
+   - Feature is included in the settings file if you would like to enable it by default, it will come as disabled by default.
 
 **Material Distribution:**
    - Define personalized materials for block placement per world.
    - Fine-tune material distribution percentages for a distinct experience.
 
 **Biome-Specific Grids:**
-   - Customize grids in Overworld, Nether, and End with unique blocks for each supported [biome](https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/block/biome.html).
+   - Customize grids in Overworld, Nether, and End with unique blocks at the [biome](https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/block/biome.html) level.
 
 **Ore Generation:**
-   - Seamlessly integrated into the gameplay, this feature spawns ores when the player generates stone or cobblestone. 
-   - The block types generated, and their percentages can be effortlessly modified to suit your preferences, and work on all worlds where stone can be generated.
+   - Seamlessly integrated into the gameplay, this feature replaced generated stone or cobblestone with any blocks you want.
+   - The block types generated, and their percentages can be effortlessly modified to suit your preferences in the ores.yml file inside the OreGenBlock folder, and work on all worlds where stone or cobblestone can be generated.
 
 **Teleportation Command:**
-   - Use **/tpr** for thrilling journeys.
-   - Securely teleport to random locations in Overworld, Nether (**/tpr nether**), and End (**/tpr end**).
+   - Securely teleport to random locations in
+     - Overworld (/**tpr overworld**) or (**/tpro**)
+     - Nether (**/tpr nether**) or (**/tprn**)
+     - End (**/tpr end**) or (**/tpre**).
+   - Range can be customized in the settings
+   - Settings also include cooldown for per world command reuse
+   - All have their own individualize permissions
 
 **Spawner Settings:**
    - The available entities for use can be found at [here](https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/entity/EntityType.html)
@@ -53,12 +59,14 @@ This server serves as an exclusive testing environment for the latest SkyGrid pl
 
 ```yaml
 chunk-system:
-  gen-parallelism: 'true'
+  gen-parallelism: default
   io-threads: 12
   worker-threads: 12
 ```
-   - io-threads and worker-threads should match the number of threads for you CPU, if left at default only half will be used
-   - Usage: /pregen chunksPerCycle PrintUpdate(DelayinMinutes)
+   - Adjust **io-threads** and **worker-threads** to match your CPU’s thread count. Default settings utilize only half.
+     - Usage: /pregen chunksPerCycle PrintUpdate(DelayinMinutes)
+   - For **chunksPerCycle** It’s recommended to match the number of threads your system has. For example, 12 threads yielded 108-112 chunks per second on a 5600x CPU, depending on server activity and other system tasks.
+   - Increasing **chunksPerCycle** if you are not already utilizing 100% CPU can take that further, I was able to bring mine up to 24 **chunksPerCycle** yielded 128-134 chunks per second.
 
 **Demonstrations:**
    - Ore generation examples:
