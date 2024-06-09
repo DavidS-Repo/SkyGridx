@@ -106,16 +106,16 @@ chunk-system:
 
 ## Installation Instructions
 
-For detailed installation instructions, [click here](Installation.md).
+For detailed installation instructions, [click here](Settings/Installation.md).
 
 ## Configuration Files
-- [Plugin Settings](settings.md)
-- [Ore Generator Settings](ores.md)
-- [Mob Spawner Settings](spawner_settings.md)
-- [Chest Settings](chest_settings.md)
-- [SkyGrid World Block Selection Guide](block_selection.md)
+- [Plugin Settings](Settings/settings.md)
+- [Ore Generator Settings](Settings/ores.md)
+- [Mob Spawner Settings](Settings/spawner_settings.md)
+- [Chest Settings](Settings/chest_settings.md)
+- [SkyGrid World Block Selection Guide](Settings/block_selection.md)
 ---
 
 **Additional Mechanisms:**
-- [Biome-Specific Block Generation Guide](biome_specific.md)
+- [Biome-Specific Block Generation Guide](Settings/biome_specific.md)
 ---
