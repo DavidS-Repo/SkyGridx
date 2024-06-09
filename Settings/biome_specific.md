@@ -6,9 +6,9 @@
  
 - Customize the block generation in your world based on different biomes.
 - Specify unique block materials and percentages for each biome in the world.
-- Biomes are signified by the `-**BIOME_NAME**-` header, and everything under the biome header will generate only in that biome unless another biome is specified after it.
+- Biomes are signified by the `-BIOME_NAME-` header, and everything under the biome header will generate only in that biome unless another biome is specified after it.
 - Multiple biomes in the header of the material files are supported. You can now specify multiple biomes separated by commas.
-  - For example: `-**BIOME1**,**BIOME2**-`
+  - For example: `-BIOME1,BIOME2-`
 - Supported biomes can be found here: [https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/block/Biome.html]
  
 ### Example:
