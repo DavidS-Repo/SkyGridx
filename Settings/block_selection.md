@@ -80,7 +80,7 @@ When the block percentages in a biome's list don't add up to 100%, the leftover 
 
 **Additional Mechanisms:**
 
-- [Biome-Specific Block Generation Guide](Settings/biome_specific.md)
+- [Biome-Specific Block Generation Guide](biome_specific.md)
 
 ## Grid Settings:
 
