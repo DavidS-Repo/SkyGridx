@@ -54,7 +54,7 @@ This server serves as an exclusive testing environment for the latest SkyGrid pl
    - Customize chest loot for specific biomes, allowing for a more immersive and thematic distribution of items based on the environment.
 
 **Pre-Generator Feature:**
-   - Built in async pre-generator feature that allows for efficient world generation. This feature is accessible through the **/pregen** command, with customizable parameters for chunks per cycle and print update delay.
+   - Built in async pre-generator feature that allows for efficient world generation. This feature is accessible through the **/pregen** command, with customizable parameters for Parallel Tasks Multiplier, print update delay and world.
    - Works best on paper servers, on none paper servers the async functionality will not be used. Recommend you go into your paper server paper-global.yml and update these
 
 ```yaml
@@ -63,13 +63,23 @@ chunk-system:
   io-threads: 12
   worker-threads: 12
 ```
-   - Adjust **io-threads** and **worker-threads** to match your CPU’s thread count. Default settings utilize only half.
-     - Usage: /pregen chunksPerCycle PrintUpdate(DelayinMinutes)
-   - For **chunksPerCycle** It’s recommended to match the number of threads your system has. For example, 12 threads yielded 108-112 chunks per second on a 5600x CPU, depending on server activity and other system tasks.
-   - Increasing **chunksPerCycle** if you are not already utilizing 100% CPU can take that further, I was able to bring mine up to 24 **chunksPerCycle** yielded 128-134 chunks per second.
+   - Adjust `io-threads` and `worker-threads` to match your CPU’s thread count. Default settings utilize only half.
+   - Usage: /pregen <ParallelTasksMultiplier> <PrintUpdateDelay(inSeconds/Minutes/Hours)> <world>
+     - Example: `/pregen 6 5s world`
+       - Pre-Generate the `overworld` at a max rate of (threads_available * 6 parallel_tasks), prints logs every 5 seconds
+     - Example: `/pregen 2 2m world_nether`
+       - Pre-Generate the `nether` at a max rate of (threads_available * 2 parallel_tasks), prints logs every 2 minutes
+     - Example: `/pregen 1 12h world_the_end`
+       - Pre-Generate the `the end` at a max rate of (threads_available * 1 parallel_tasks), prints logs every 12 hours
+   - For `ParallelTasksMultiplier`, it is recommended to stay below your thread count.
+   - `ParallelTasksMultiplier` limits the number of parallel chunk load tasks. It is multiplied by the number of threads available at server initialization. For instance, if your server starts with 12 threads, the maximum number of parallel tasks allowed when `ParallelTasksMultiplier` is set to 6 will be 72.
+   - A `ParallelTasksMultiplier` of 6 yielded ~150-200 chunks per second on a 5600x CPU, depending on server activity and other system tasks.
+   - Increasing `ParallelTasksMultiplier` beyond current CPU utilization can further enhance performance. For example, setting it to 12 yielded ~190-250 chunks per second.
+   - In summary, `ParallelTasksMultiplier` determines the load on your server. A smaller number results in a lower load and fewer chunks per second, while a larger number increases the server load but improves chunk processing speed.
 
-**Demonstrations:**
-   - Ore generation examples:
+---
+
+**Ore generation examples:**
 ![instrunctions step 1](https://i3.ytimg.com/vi/UrzhCaiLKyI/maxresdefault.jpg)
 ![instrunctions step 1](https://i3.ytimg.com/vi/NMkvj6UvmLg/maxresdefault.jpg)
 
@@ -89,20 +99,23 @@ chunk-system:
 
 ## Permissions:
 
-- `sg.tpr`: Allows teleportation to Overworld, Nether, and End using the `/tpr [world]` command. (Default all)
-- `sg.tpr.overworld`: Grants permission to use the `/tpro` command for teleportation in the Overworld. (Default all)
-- `sg.tpr.nether`: Grants permission to use the `/tprn` command for teleportation in the Nether. (Default all)
-- `sg.tpr.end`: Enables usage of the `/tpre` command for teleportation in the End. (Default all)
-- `sg.tpr.*`: Provides access to all teleportation commands. (Default OP)
-- `sg.fogon`: Allows enabling fog using the `/fogon` command. (Default OP)
-- `sg.fogoff`: Allows disabling fog with the `/fogoff` command. (Default OP)
-- `sg.eclogson`: Grants permission to enable Event Control logging using `/eclogson`. (Default OP)
-- `sg.eclogsoff`: Grants permission to disable Event Control logging using `/eclogsoff`. (Default OP)
-- `sg.pregen`: Grants permission to use the pre-generation command with customizable parameters. (Default OP)
-- `sg.pregenoff`: Grants permission to disable pre-generation using the `/pregenoff` command. (Default OP)
-- `sg.patch`: Allows patching files to update materials and entities to another version. (Default OP)
-- `sg.regen`: Grants permission to regenerate all loaded chunks using the `/regen` command. (Default OP)
-- `sg.*`: Provides access to all SkyGrid commands. (Default OP)
+(**Default all**)
+- `sg.tpr`: Allows teleportation to Overworld, Nether, and End using the `/tpr [world]` command.
+- `sg.tpr.overworld`: Grants permission to use the `/tpro` command for teleportation in the Overworld.
+- `sg.tpr.nether`: Grants permission to use the `/tprn` command for teleportation in the Nether.
+- `sg.tpr.end`: Enables usage of the `/tpre` command for teleportation in the End.
+
+(**Default OP**)
+- `sg.tpr.*`: Provides access to all teleportation commands.
+- `sg.fogon`: Allows enabling fog using the `/fogon` command.
+- `sg.fogoff`: Allows disabling fog with the `/fogoff` command.
+- `sg.eclogson`: Grants permission to enable Event Control logging using `/eclogson`.
+- `sg.eclogsoff`: Grants permission to disable Event Control logging using `/eclogsoff`.
+- `sg.pregen`: Grants permission to use the pre-generation command with customizable parameters.
+- `sg.pregenoff`: Grants permission to disable pre-generation using the `/pregenoff` command.
+- `sg.patch`: Allows patching files to update materials and entities to another version.
+- `sg.regen`: Grants permission to regenerate all loaded chunks using the `/regen` command.
+- `sg.*`: Provides access to all SkyGrid commands.
 
 ## Installation Instructions
 
