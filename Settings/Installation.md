@@ -19,17 +19,19 @@ pause
 ![instrunctions step 3](https://www.toolsnexus.com/mc/3.png)
 
 3. **Download Plugin and Datapack:**
- - Obtain the latest version of the plugin from [SkyGridX](https://modrinth.com/plugin/skygridx/versions) and place it into the auto-generated "plugins" folder.
+ - Obtain the latest version of the plugin from [SkyGridX](https://modrinth.com/plugin/skygridx/versions) and place it into the auto-generated `plugins` folder.
 
 ![instrunctions step 4](https://www.toolsnexus.com/mc/4.png)
 ![instrunctions step 5](https://www.toolsnexus.com/mc/5.png)
 
- - Create a new folder named "world" within the server directory.
+ - Create a new folder named `world` within the server directory.
 
 ![instrunctions step 6](https://www.toolsnexus.com/mc/6.png)
 ![instrunctions step 7](https://www.toolsnexus.com/mc/7.png)
 
- - Inside "world," create a folder named "datapacks" and add the datapack downloaded from [Skyblock Void Worldgen](https://modrinth.com/datapack/skyblock-void-worldgen).
+ - Inside `world,` create a folder named `datapacks` and add the datapack downloaded from 
+[Skyblock Void Worldgen](https://modrinth.com/datapack/skyblock-void-worldgen) which includes biomes, boundary boxes for structures and some structures, or
+[Void-Biomes-1.21.zip](https://github.com/DavidS-Repo/SkyGridx/blob/main/Void-Biomes-1.21.zip), which is made by me, is lightweight, and will reduce chunk generation load when compared to `Skyblock Void Worldgen` and only includes biome data and the end portal and pillars.
 
 ![instrunctions step 8](https://www.toolsnexus.com/mc/8.png)
 ![instrunctions step 9](https://www.toolsnexus.com/mc/9.png)
