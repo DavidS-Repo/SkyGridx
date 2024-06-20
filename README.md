@@ -1,5 +1,5 @@
 
-The SkyGrid Plugin offers access to the latest blocks (1.20.6) and empowers users to fully customize the grids in the Overworld, Nether, and End dimensions. The initial generation process, which typically takes 1-5 minutes, adapts to the server's capabilities. Subsequently, all generation activities occur efficiently in real-time.
+The SkyGrid Plugin offers access to the latest blocks (1.21) and empowers users to fully customize the grids in the Overworld, Nether, and End dimensions. The initial generation process, which typically takes 1-5 minutes, adapts to the server's capabilities. Subsequently, all generation activities occur efficiently in real-time.
 
 This plugin also includes a built-in random teleport command for each dimension, ensuring that players can safely explore their chosen realm. Furthermore, it features an ore generator that can modify stone generation to create various blocks of your choice. While currently configured primarily for ores, the possibilities are virtually endless.
 
@@ -80,6 +80,7 @@ chunk-system:
 ---
 
 **Ore generation examples:**
+
 ![instrunctions step 1](https://i3.ytimg.com/vi/UrzhCaiLKyI/maxresdefault.jpg)
 ![instrunctions step 1](https://i3.ytimg.com/vi/NMkvj6UvmLg/maxresdefault.jpg)
 
@@ -93,7 +94,7 @@ chunk-system:
 - `/fogoff`: Disable fog.
 - `/eclogson`: Enable Event Control logging.
 - `/eclogsoff`: Disable Event Control logging.
-- `/pregen`: Pregenerate the overworld, nether, and end.
+- `/pregen`: Pregenerate any of the dimensions; overworld, nether, and end.
 - `/pregenoff`: Turn off pregeneration process.
 - `/patch`: Patch files to update materials and entities to the newest version.
 
