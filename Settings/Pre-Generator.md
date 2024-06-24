@@ -12,7 +12,7 @@ chunk-system:
   worker-threads: 12
 ```
    - Adjust `io-threads` and `worker-threads` to match your CPU’s thread count. Default settings utilize only half.
-   - Usage: /pregen <ParallelTasksMultiplier> <PrintUpdateDelayin(Seconds/Minutes/Hours)> <world> <Radius(Blocks/Chunks/Regions)>
+   - Usage: /pregen `ParallelTasksMultiplier` `PrintUpdateDelayin(Seconds/Minutes/Hours)` `world` `Radius(Blocks/Chunks/Regions)`
 
 ## Command usage
 ### Examples:
