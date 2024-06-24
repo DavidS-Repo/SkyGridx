@@ -11,29 +11,29 @@ This server serves as an exclusive testing environment for the latest SkyGrid pl
  
 # **Key Features:**
 
-**Block Selection:**
+## **Block Selection:**
    - Create a unique SkyGrid with a variety of blocks from the [Bukkit Material page](https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/material.html).
    - Customize block types and percentages effortlessly.
 
-**Real-time Generation:**
+## **Real-time Generation:**
    - SkyGrid generates in real-time as you explore.
 
-**Built-in Fog Feature:**
-   - Fog feature accompanied by a texture pack. Admins can enable it using '/fogon' and disable with '/fogoff'. This feature allows lower render distances without disrupting immersion.
+## **Built-in Fog Feature:**
+   - Fog feature accompanied by a texture pack. Admins can enable it using `/fogon` and disable with `/fogoff`. This feature allows lower render distances without disrupting immersion.
    - Feature is included in the settings file if you would like to enable it by default, it will come as disabled by default.
 
-**Material Distribution:**
+## **Material Distribution:**
    - Define personalized materials for block placement per world.
    - Fine-tune material distribution percentages for a distinct experience.
 
-**Biome-Specific Grids:**
+## **Biome-Specific Grids:**
    - Customize grids in Overworld, Nether, and End with unique blocks at the [biome](https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/block/biome.html) level.
 
-**Ore Generation:**
+## **Ore Generation:**
    - Seamlessly integrated into the gameplay, this feature replaced generated stone or cobblestone with any blocks you want.
    - The block types generated, and their percentages can be effortlessly modified to suit your preferences in the ores.yml file inside the OreGenBlock folder, and work on all worlds where stone or cobblestone can be generated.
 
-**Teleportation Command:**
+## **Teleportation Command:**
    - Securely teleport to random locations in
      - Overworld (/**tpr overworld**) or (**/tpro**)
      - Nether (**/tpr nether**) or (**/tprn**)
@@ -42,47 +42,21 @@ This server serves as an exclusive testing environment for the latest SkyGrid pl
    - Settings also include cooldown for per world command reuse
    - All have their own individualize permissions
 
-**Spawner Settings:**
+## **Spawner Settings:**
    - The available entities for use can be found at [here](https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/entity/EntityType.html)
    - Fine-tune spawner settings for entities, delay, max nearby entities, and more.
    - Random entity selection based on spawn weights for added unpredictability.
-   - Customize spawners for specific biomes at the block level, adding a new layer of customization. For example, if you specify the biome as "DEEP_DARK," you can configure spawners to spawn WARDEN entities exclusively in that biome.
+   - Customize spawners for specific biomes at the block level, adding a new layer of customization. For example, if you specify the biome as `DEEP_DARK,` you can configure spawners to spawn `WARDEN` entities exclusively in that biome.
 
-**Chest Loot Customization:**
+## **Chest Loot Customization:**
    - Tailor chest loot settings with precision, specifying items, percentages, and amounts.
    - Tiered loot distribution for added variety, each tier with its own set of items and probabilities.
    - Customize chest loot for specific biomes, allowing for a more immersive and thematic distribution of items based on the environment.
 
-**Pre-Generator Feature:**
+## **Pre-Generator Feature:**
    - Built in async pre-generator feature that allows for efficient world generation. This feature is accessible through the **/pregen** command, with customizable parameters for Parallel Tasks Multiplier, print update delay and world.
    - Works best on paper servers, on none paper servers the async functionality will not be used. Recommend you go into your paper server paper-global.yml and update these
-
-```yaml
-chunk-system:
-  gen-parallelism: default
-  io-threads: 12
-  worker-threads: 12
-```
-   - Adjust `io-threads` and `worker-threads` to match your CPU’s thread count. Default settings utilize only half.
-   - Usage: /pregen <ParallelTasksMultiplier> <PrintUpdateDelay(inSeconds/Minutes/Hours)> <world>
-     - Example: `/pregen 6 5s world`
-       - Pre-Generate the `overworld` at a max rate of (threads_available * 6 parallel_tasks), prints logs every 5 seconds
-     - Example: `/pregen 2 2m world_nether`
-       - Pre-Generate the `nether` at a max rate of (threads_available * 2 parallel_tasks), prints logs every 2 minutes
-     - Example: `/pregen 1 12h world_the_end`
-       - Pre-Generate the `the end` at a max rate of (threads_available * 1 parallel_tasks), prints logs every 12 hours
-   - For `ParallelTasksMultiplier`, it is recommended to stay below your thread count.
-   - `ParallelTasksMultiplier` limits the number of parallel chunk load tasks. It is multiplied by the number of threads available at server initialization. For instance, if your server starts with 12 threads, the maximum number of parallel tasks allowed when `ParallelTasksMultiplier` is set to 6 will be 72.
-   - A `ParallelTasksMultiplier` of 6 yielded ~150-200 chunks per second on a 5600x CPU, depending on server activity and other system tasks.
-   - Increasing `ParallelTasksMultiplier` beyond current CPU utilization can further enhance performance. For example, setting it to 12 yielded ~190-250 chunks per second.
-   - In summary, `ParallelTasksMultiplier` determines the load on your server. A smaller number results in a lower load and fewer chunks per second, while a larger number increases the server load but improves chunk processing speed.
-
 ---
-
-**Ore generation examples:**
-
-![instrunctions step 1](https://i3.ytimg.com/vi/UrzhCaiLKyI/maxresdefault.jpg)
-![instrunctions step 1](https://i3.ytimg.com/vi/NMkvj6UvmLg/maxresdefault.jpg)
 
 ## Commands:
 
@@ -119,7 +93,6 @@ chunk-system:
 - `sg.*`: Provides access to all SkyGrid commands.
 
 ## Installation Instructions
-
 For detailed installation instructions, [click here](Settings/Installation.md).
 
 ## Configuration Files
@@ -130,6 +103,7 @@ For detailed installation instructions, [click here](Settings/Installation.md).
 - [SkyGrid World Block Selection Guide](Settings/block_selection.md)
 ---
 
-**Additional Mechanisms:**
+## Additional Mechanisms:
 - [Biome-Specific Block Generation Guide](Settings/biome_specific.md)
+- [Pre-Generator Guide](Settings/Pre-Generator.md)
 ---

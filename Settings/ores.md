@@ -68,3 +68,8 @@ COBBLESTONE:
   DEEPSLATE_LAPIS_ORE: 0.2
   DEEPSLATE_REDSTONE_ORE: 0.3
 ```
+
+## Ore generation examples
+
+![instrunctions step 1](https://i3.ytimg.com/vi/UrzhCaiLKyI/maxresdefault.jpg)
+![instrunctions step 1](https://i3.ytimg.com/vi/NMkvj6UvmLg/maxresdefault.jpg)
