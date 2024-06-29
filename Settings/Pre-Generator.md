@@ -41,24 +41,36 @@ chunk-system:
 - `default` is the stadard world border for a Minecraft world, 14062361500009 total chunks in the world, you can use this if you just want to leave it on for a long time
 
 ## Command Settings
-### `ParallelTasksMultiplier`
-- it is recommended to stay below your thread count.
-- limits the number of parallel chunk load tasks. 
-- It is multiplied by the number of threads available at server initialization. For instance, if your server starts with 12 threads, the maximum number of parallel tasks allowed when **ParallelTasksMultiplier** is set to 6 will be 72.
-- A **ParallelTasksMultiplier** of 6 yielded ~150-200 chunks per second on a 5600x CPU, depending on server activity and other system tasks.
-- Increasing **ParallelTasksMultiplier** beyond current CPU utilization can further enhance performance. For example, setting it to 12 yielded ~190-250 chunks per second.
-- In summary, **ParallelTasksMultiplier** determines the load on your server. A smaller number results in a lower load and fewer chunks per second, while a larger number increases the server load but improves chunk processing speed.
-### `PrintUpdateDelay`
-- Used to determine how often you want the logs to be printed
-- The supported time frames are Seconds, Minutes, and Hours
-- To use it you just have to add the letters s,m, or h next to the actual number 
-- For example, **5m** for 5 minutes or **20s** for 20 seconds or **1h** for 1 hour
-### `World`
-- Determines what world you want to pregenerate
-- Tab auto complete will fetch all the vanilla worlds in the server and show them to you
-- Then you can choose what world you want and off you go.
-### `Radius` 
-- Determines the radius of chunks that will be pre-generated
-- The supported time frames are Blocks, Chunks and Regions
-- To use it you just have to add the letters b,c, or r next to the actual number 
-- For example, **20000b** is a 20000 block radius or **500c** is a 500 chunk radius or **30r** is a 30 region radius
+## `ParallelTasksMultiplier`
+- **Recommendation:** Stay below your thread count.
+- **Function:** Limits the number of parallel chunk load tasks. 
+- **Calculation:** Multiplied by the number of threads available at server initialization. For example, If your server starts with 12 threads, the maximum number of parallel tasks allowed when **ParallelTasksMultiplier** is set to 6 will be 72.
+
+### **Performance Examples:** 
+- **ParallelTasksMultiplier = 1:**
+- **Command:** `pregen 1 5s world 200c` 
+- **Chunks per second:** ~150-350 (on a 5600x CPU, depending on server activity and other system tasks) 
+- **Time:** Finished in 2.75 minutes 
+
+![ParallelTasksMultiplier = 1](https://www.toolsnexus.com/mc/2.75min.png) 
+- **ParallelTasksMultiplier = 6:**
+- **Command:** `pregen 6 5s world 200c`
+- **Chunks per second:** ~250-600 (on a 5600x CPU, depending on server activity and other system tasks)
+- **Time:** Finished in 1.7 minutes
+
+![ParallelTasksMultiplier = 6](https://www.toolsnexus.com/mc/1.7min.png)
+#### **Summary:** 
+- **Load Management:** Determines the load on your server.
+- **Small Number:** Lower load, fewer chunks per second.
+- **Large Number:** Higher load, faster chunk processing.
+- **Best Practice:** Start at 1 and increase by 1 until you encounter constant overload; that's when you know you have pushed it too far.
+
+## `World`
+- Determines what world you want to pregenerate.
+- Tab autocomplete will fetch all the vanilla worlds in the server and show them to you.
+- Then you can choose which world you want and off you go.
+## `Radius` 
+- Determines the radius of chunks that will be pre-generated.
+- The supported units are Blocks, Chunks, and Regions.
+- To use it, you just have to add the letters b, c, or r next to the actual number. 
+- For example, **20000b** is a 20000 block radius, **500c** is a 500 chunk radius, or **30r** is a 30 region radius.
