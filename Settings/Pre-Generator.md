@@ -38,7 +38,7 @@ chunk-system:
 - Pre-Generate the `overworld`
 - (threads * 4) results in a max of 48 concurrent parallel_tasks
 - Prints logs every 10 seconds
-- `default` is the stadard world border for a Minecraft world, 14062361500009 total chunks in the world, you can use this if you just want to leave it on for a long time
+- `default` Pre-Generates to the world border of the selected world, you can use this if set your world border manually using /worldborder set #
 
 ## Command Settings
 ## `ParallelTasksMultiplier`
