@@ -3,9 +3,6 @@ The SkyGrid Plugin offers access to the latest blocks (1.21) and empowers users 
 
 This plugin also includes a built-in random teleport command for each dimension, ensuring that players can safely explore their chosen realm. Furthermore, it features an ore generator that can modify stone generation to create various blocks of your choice. While currently configured primarily for ores, the possibilities are virtually endless.
 
-**Plugin Test Server:** - **IP**: skygrid.live
-This server serves as an exclusive testing environment for the latest SkyGrid plugin features. Please note that frequent world resets occur during plugin updates or modifications, and the server is not moderated. Players are encouraged to explore commands and test functionalities rather than building, as the world is periodically cleared. It's important to note that the plugin version on the test server is the latest, featuring some functionalities not yet available in the publicly released version.
-
 ![Skygrid](https://www.toolsnexus.com/mc/sg3.jpg)
 
  
