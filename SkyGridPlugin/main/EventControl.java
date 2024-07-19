@@ -182,22 +182,24 @@ public class EventControl implements Listener {
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onBlockFromTo(BlockFromToEvent event) {
 		if (BlockFromToEventToggle) {
-			Block block = event.getBlock();
-			Material blockType = block.getType();
-			Block toBlock = event.getToBlock();
+			Block sourceBlock = event.getBlock();
+			Material sourceType = sourceBlock.getType();
 
-			if (blockType == Material.WATER || blockType == Material.LAVA) {
-				Block adjustedToBlock = toBlock.getRelative(BlockFace.UP);
-
+			if (sourceType == Material.WATER || sourceType == Material.LAVA) {
+				boolean allFloating = true;
 				for (BlockFace face : EnumSet.of(BlockFace.DOWN, BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST, BlockFace.UP)) {
-					if (!IS_FLOATING.contains(adjustedToBlock.getRelative(face).getType())) {
-						return;
+					Block adjacentBlock = sourceBlock.getRelative(face);
+					if (!IS_FLOATING.contains(adjacentBlock.getType())) {
+						allFloating = false;
+						break;
 					}
 				}
 
-				event.setCancelled(true);
-				if (loggingEnabled) {
-					plugin.getLogger().info("Cancelled BlockFromToEvent for " + blockType.name() + " at: " + toBlock.getLocation());
+				if (allFloating) {
+					event.setCancelled(true);
+					if (loggingEnabled) {
+						plugin.getLogger().info("Cancelled BlockFromToEvent for " + sourceType.name() + " at: " + sourceBlock.getLocation());
+					}
 				}
 			}
 		}
