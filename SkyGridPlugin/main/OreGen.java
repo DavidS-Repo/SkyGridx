@@ -81,16 +81,19 @@ public class OreGen implements Listener {
 		Block block = event.getBlock();
 		Material toType = event.getNewState().getType();
 		Material fromType = block.getType();
-		if ((toType == Material.STONE || toType == Material.COBBLESTONE) &&
-				(fromType == Material.LAVA || fromType == Material.WATER)) {
-			if (oreChances.isEmpty()) {
-				loadOreChances();
-			}
-			Material replacement = determineReplacement(toType);
-			if (replacement != null) {
-				event.setCancelled(true);
-				block.setType(replacement, true);
-			}
+		if ((toType == Material.STONE || toType == Material.COBBLESTONE || toType == Material.BASALT) && fromType == Material.LAVA) {
+			handleOreGeneration(event, toType);
+		}
+	}
+
+	private void handleOreGeneration(BlockFormEvent event, Material toType) {
+		if (oreChances.isEmpty()) {
+			loadOreChances();
+		}
+		Material replacement = determineReplacement(toType);
+		if (replacement != null) {
+			event.setCancelled(true);
+			event.getBlock().setType(replacement, true);
 		}
 	}
 
@@ -108,7 +111,7 @@ public class OreGen implements Listener {
 		}
 		return null;
 	}
-	
+
 	static class OreChance {
 		public final Material material;
 		public final double chance;
