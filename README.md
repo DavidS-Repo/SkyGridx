@@ -27,8 +27,8 @@ This plugin also includes a built-in random teleport command for each dimension,
    - Customize grids in Overworld, Nether, and End with unique blocks at the [biome](https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/block/biome.html) level.
 
 ## **Ore Generation:**
-   - Seamlessly integrated into the gameplay, this feature replaced generated stone or cobblestone with any blocks you want.
-   - The block types generated, and their percentages can be effortlessly modified to suit your preferences in the ores.yml file inside the OreGenBlock folder, and work on all worlds where stone or cobblestone can be generated.
+   - Seamlessly integrated into the gameplay, this feature replaced generated stone, cobblestone or basalt with any blocks you want.
+   - The block types generated, and their percentages can be effortlessly modified to suit your preferences in the ores.yml file inside the OreGenBlock folder, and work on all worlds where stone, cobblestone or basalt can be generated.
 
 ## **Teleportation Command:**
    - Securely teleport to random locations in
