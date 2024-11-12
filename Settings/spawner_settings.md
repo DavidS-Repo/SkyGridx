@@ -2,16 +2,16 @@
 
 ## How to Use:
  
-The available entities can be found here https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/entity/EntityType.html
+The available entities can be found here https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/entity/EntityType.html \
 The available biomes can be found here: https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/block/Biome.html
  
-Entities - Define entities and their chances of being chosen for the spawner. Formatting `- DOLPHIN:33.33`
-Biomes -  List the biomes where this spawner will spawn. Formatting "- BEACH"
-Delay: - Set the spawner's delay. If set to -1, the delay will be randomized (randomly choose a delay between min and max spawn delays).
-MaxNearbyEntities - Set the maximum nearby entities (of the same type) allowed. Default value is `16`.
-MaxSpawnDelay - The maximum spawn delay amount (in ticks). This value must be greater than `0` and less than or equal to MaxSpawnDelay. Default value is `800` ticks.
-MinSpawnDelay - The minimum spawn delay amount (in ticks). Default value is `200` ticks.
-PlayerRange - Set the range for player activation (given that there are players online). Default value is `16`.
+Entities - Define entities and their chances of being chosen for the spawner. Formatting `- DOLPHIN:33.33`\
+Biomes -  List the biomes where this spawner will spawn. Formatting "- BEACH"\
+Delay: - Set the spawner's delay. If set to -1, the delay will be randomized (randomly choose a delay between min and max spawn delays).\
+MaxNearbyEntities - Set the maximum nearby entities (of the same type) allowed. Default value is `16`.\
+MaxSpawnDelay - The maximum spawn delay amount (in ticks). This value must be greater than `0` and less than or equal to MaxSpawnDelay. Default value is `800` ticks.\
+MinSpawnDelay - The minimum spawn delay amount (in ticks). Default value is `200` ticks.\
+PlayerRange - Set the range for player activation (given that there are players online). Default value is `16`.\
 SpawnCount - Set how many mobs attempt to spawn. Default value is `4`.
  
 ## Example with Expanded Formatting:

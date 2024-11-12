@@ -2,28 +2,29 @@
  
 ## How to Use:
  
-The available items can be found here https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Material.html
+The available items can be found here https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Material.html \
 The available biomes can be found here: https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/block/Biome.html
 
 In YAML, identifiers or keys (such as "Chest1" in your example) are subject to certain rules.
 
-- Do's -
-Alphanumeric Characters: Identifiers can contain letters (both uppercase and lowercase) and numbers. For example, "Chest1" is a valid identifier.
-Underscores: You can use underscores (_) in identifiers. For instance, "my_chest" is a valid identifier.
-Hyphens in Quoted Strings: If an identifier contains special characters or spaces, you can enclose it in single or double quotes. For example, "'Special Chest'" or "\"Special Chest\"" are valid.
+### Do's
+- Alphanumeric Characters: Identifiers can contain letters (both uppercase and lowercase) and numbers. For example, "Chest1" is a valid identifier.
+- Underscores: You can use underscores (_) in identifiers. For instance, "my_chest" is a valid identifier.
+- Hyphens in Quoted Strings: If an identifier contains special characters or spaces, you can enclose it in single or double quotes. For example, "'Special Chest'" or "\"Special Chest\"" are valid.
 
-- Don'ts -
-Special Characters: Avoid using special characters like !, @, #, $, %, etc., in identifiers without enclosing them in quotes. For example, "Chest@123" should be written as "'Chest@123'" if you want to use special characters.
-Leading Spaces: Identifiers should not have leading spaces. For instance, " MyChest" with a space at the beginning is not a valid identifier.
-Trailing Spaces: Similarly, identifiers should not have trailing spaces. "MyChest " with a space at the end is not valid.
-Spaces in the Middle: While you can use spaces within identifiers if they are enclosed in quotes, it's generally a good practice to avoid spaces within identifiers for clarity. For example, "My Chest" is valid, but "MyChest" is more commonly used.
-Reserved Keywords: Avoid using YAML reserved keywords as identifiers. These keywords have special meaning in YAML and should not be used as keys. For example, "true," "false," and "null" are reserved keywords.
-Case Sensitivity: YAML is case-sensitive. "myChest" and "MyChest" would be considered as two different identifiers.
+### Don'ts
+- Special Characters: Avoid using special characters like !, @, #, $, %, etc., in identifiers without enclosing them in quotes. For example, "Chest@123" should be written as "'Chest@123'" if you want to use special characters.
+- Leading Spaces: Identifiers should not have leading spaces. For instance, " MyChest" with a space at the beginning is not a valid identifier.
+- Trailing Spaces: Similarly, identifiers should not have trailing spaces. "MyChest " with a space at the end is not valid.
+- Spaces in the Middle: While you can use spaces within identifiers if they are enclosed in quotes, it's generally a good practice to avoid spaces within identifiers for clarity. For example, "My Chest" is valid, but "MyChest" is more commonly used.
+- Reserved Keywords: Avoid using YAML reserved keywords as identifiers. These keywords have special meaning in YAML and should not be used as keys. For example, "true," "false," and "null" are reserved keywords.
+- Case Sensitivity: YAML is case-sensitive. "myChest" and "MyChest" would be considered as two different identifiers.
 
-ChestSettings: This is the top-level section of the YAML configuration and acts as the main container for all chest settings.
-Chest1: This represents the first chest configuration, which we'll be using as an example. The code will look for a chest configuration with the key "Chest1." The key can be whatever you want; it serves as an identifier.
-Items: Under the "Chest1" configuration, there is an "Items" section. The code will process the items listed here to determine what should be placed in the chest's inventory. Formatting: "- ITEM_NAME:PERCENTAGE:MAX_AMOUNT"
-Biomes: This section lists the biomes in which the chest's item configuration will apply. Formatting: "- BIOME_NAME"
+### Format
+- ChestSettings: This is the top-level section of the YAML configuration and acts as the main container for all chest settings.
+- Chest1: This represents the first chest configuration, which we'll be using as an example. The code will look for a chest configuration with the key "Chest1." The key can be whatever you want; it serves as an identifier.
+- Items: Under the "Chest1" configuration, there is an "Items" section. The code will process the items listed here to determine what should be placed in the chest's inventory. Formatting: "- ITEM_NAME:PERCENTAGE:MAX_AMOUNT"
+- Biomes: This section lists the biomes in which the chest's item configuration will apply. Formatting: "- BIOME_NAME"
  
 ## Example with Expanded Formatting:
  

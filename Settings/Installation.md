@@ -31,7 +31,7 @@ pause
 
  - Inside `world,` create a folder named `datapacks` and add the datapack downloaded from 
 [Skyblock Void Worldgen](https://modrinth.com/datapack/skyblock-void-worldgen) which includes biomes, boundary boxes for structures and some structures, or
-[Void-Biomes-1.21.zip](https://github.com/DavidS-Repo/SkyGridx/blob/main/Void-Biomes-1.21.zip), which is made by me, is lightweight, and will reduce chunk generation load when compared to `Skyblock Void Worldgen` and only includes biome data and the end portal and pillars.
+[Void-Biomes-1.21.03.zip](https://github.com/DavidS-Repo/SkyGridx/blob/main/Void-Biomes-1.21.03.zip), which is made by me, is lightweight, and will reduce chunk generation load when compared to `Skyblock Void Worldgen` and only includes biome data and the end portal and pillars.
 
 ![instrunctions step 8](https://www.toolsnexus.com/mc/8.png)
 ![instrunctions step 9](https://www.toolsnexus.com/mc/9.png)
