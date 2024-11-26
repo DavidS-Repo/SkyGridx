@@ -109,6 +109,10 @@ public class PluginSettings {
 				.map(Material::valueOf)
 				.collect(Collectors.toCollection(() -> EnumSet.noneOf(Material.class)));
 	}
+	
+	public final static int THREADS() {
+		return Runtime.getRuntime().availableProcessors();
+	}
 
 	public static EnumSet<Material> getDangerousBlocks() {
 		return loadMaterialSet("tprCommand.DANGEROUSBLOCKS.Materials");

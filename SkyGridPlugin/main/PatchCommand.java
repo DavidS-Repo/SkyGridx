@@ -1,13 +1,12 @@
 package main;
 
-import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 
 public class PatchCommand implements CommandExecutor {
 
-    private static final String WARNING_MESSAGE = ChatColor.translateAlternateColorCodes('&', "&e&lWARNING: &cThis command will wipe all default item and entity files. Enter &a&l'/patch confirm'&c to proceed.");
+    private static final String WARNING_MESSAGE = "WARNING: This command will wipe all default item and entity files. Enter '/patch confirm' to proceed.";
     private final SkyGridPlugin plugin;
 
     public PatchCommand(SkyGridPlugin plugin) {
@@ -21,7 +20,7 @@ public class PatchCommand implements CommandExecutor {
                 Patch.patchFiles(sender, plugin);
                 return true;
             } else {
-                sender.sendMessage(WARNING_MESSAGE);
+            	Cc.sendS(sender, Cc.RED, WARNING_MESSAGE);
                 return true;
             }
         }

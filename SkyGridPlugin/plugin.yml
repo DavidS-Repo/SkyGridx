@@ -1,9 +1,10 @@
 name: SkyGrid
-version: 1.21
+version: 1.21.3
 main: main.SkyGridPlugin
 author: Go0fy_Go0ber
 description: A plugin that generates a SkyGrid and more.
-api-version: 1.17
+api-version: 1.21
+paperweight-mappings-namespace: mojang
 commands:
   tpr:
     description: Teleport to a random location in the overworld, nether or end
@@ -38,14 +39,6 @@ commands:
     description: Disable Event Control logging
     permission: sg.eclogsoff
     usage: /eclogsoff
-  pregen:
-    description: Enable pre-generation with customizable parameters
-    permission: sg.pregen
-    usage: /pregen <ParallelTasksMultiplier> <PrintUpdateDelayin(Seconds/Minutes/Hours)> <world> <Radius(Blocks/Chunks/Regions)>
-  pregenoff:
-    description: Disable pre-generation
-    permission: sg.pregenoff
-    usage: /pregenoff
   patch:
     description: Patch files to update materials and entities to another version
     permission: sg.patch
@@ -87,12 +80,6 @@ permissions:
   sg.eclogsoff:
     description: Grants permission to disable Event Control logging using /eclogsoff
     default: op
-  sg.pregen:
-    description: Grants permission to use the pre-generation command with customizable parameters
-    default: op
-  sg.pregenoff:
-    description: Grants permission to disable pre-generation using the /pregenoff command
-    default: op
   sg.patch:
     description: Allows patching files to update materials and entities to another version
     default: op
@@ -111,7 +98,5 @@ permissions:
       sg.fogoff: true
       sg.eclogson: true
       sg.eclogsoff: true
-      sg.pregen: true
-      sg.pregenoff: true
       sg.patch: true
       sg.regen: true

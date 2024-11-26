@@ -20,7 +20,7 @@ public class TPRCommand implements CommandExecutor {
 	private final JavaPlugin plugin;
 	private final Object2ObjectOpenHashMap<UUID, Object2LongOpenHashMap<World.Environment>> lastTeleportTimes = new Object2ObjectOpenHashMap<>();
 	private final Object2LongOpenHashMap<UUID> lastCommandTimes = new Object2LongOpenHashMap<>();
-	private static final String ERROR_MESSAGE = ChatColor.RED + "Only players can use this command.";
+	private static final String ERROR_MESSAGE = "Only players can use this command.";
 	private static final World netherWorld = Bukkit.getWorld("world_nether");
 	private static final World endWorld = Bukkit.getWorld("world_the_end");
 	private static final World overworld = Bukkit.getWorld("world");
@@ -40,7 +40,7 @@ public class TPRCommand implements CommandExecutor {
 	@Override
 	public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
 		if (!(sender instanceof Player)) {
-			sender.sendMessage(ERROR_MESSAGE);
+			Cc.sendS(sender, Cc.RED, ERROR_MESSAGE);
 			return true;
 		}
 		Player player = (Player) sender;
@@ -51,12 +51,12 @@ public class TPRCommand implements CommandExecutor {
 			long regularCooldown = getRemainingCooldown(player, world);
 			long b2bCooldown = getRemainingB2BCooldown(player);
 			if (regularCooldown > 0 && b2bCooldown > 0) {
-				player.sendMessage(ChatColor.RED + "Wait " + regularCooldown + "s before this command.");
-				player.sendMessage(ChatColor.RED + "Or, " + b2bCooldown + "s before any other tpr commands.");
+				Cc.sendS(player, Cc.RED, "Wait " + regularCooldown + "s before this command.");
+				Cc.sendS(player, Cc.RED, "Or, " + b2bCooldown + "s before any other tpr commands.");
 			} else if (regularCooldown > 0) {
-				player.sendMessage(ChatColor.RED + "Wait " + regularCooldown + "s before this command.");
+				Cc.sendS(player, Cc.RED, "Wait " + regularCooldown + "s before this command.");
 			} else if (b2bCooldown > 0) {
-				player.sendMessage(ChatColor.RED + "Wait " + b2bCooldown + "s before any other tpr commands.");
+				Cc.sendS(player, Cc.RED, "Wait " + b2bCooldown + "s before any other tpr commands.");
 			}
 		}
 		return true;

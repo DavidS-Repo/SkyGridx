@@ -1,7 +1,6 @@
 package main;
 
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -18,15 +17,15 @@ import java.util.Set;
 
 public class Fog implements CommandExecutor {
 
-	private static final BossBar fogBossBar = Bukkit.createBossBar(ChatColor.WHITE + "", BarColor.WHITE, BarStyle.SOLID, BarFlag.CREATE_FOG);
+	private static final BossBar fogBossBar = Bukkit.createBossBar("", BarColor.WHITE, BarStyle.SOLID, BarFlag.CREATE_FOG);
 	private static final Set<Player> fogPlayers = new HashSet<>();
 	private final ResourcePackManager manager;
 	private BukkitRunnable fogTask;
 
-	private static final String ON_MESSAGE = ChatColor.GREEN + "Fog Enabled";
-	private static final String ON_WARNING_MESSAGE = ChatColor.YELLOW + "Fog is already enabled!";
-	private static final String OFF_MESSAGE = ChatColor.RED + "Fog Disabled";
-	private static final String OFF_WARNING_MESSAGE = ChatColor.YELLOW + "Fog is already disabled!";
+	private static final String ON_MESSAGE = Cc.logO(Cc.GREEN, "Fog Enabled");
+	private static final String ON_WARNING_MESSAGE =  Cc.logO(Cc.YELLOW, "Fog is already enabled!");
+	private static final String OFF_MESSAGE =  Cc.logO(Cc.RED, "Fog Disabled");
+	private static final String OFF_WARNING_MESSAGE =  Cc.logO(Cc.YELLOW, "Fog is already disabled!");
 	private static boolean FogToggle = PluginSettings.isFogAutoEnabled();
 
 	public Fog(ResourcePackManager manager, PluginSettings settings) {
@@ -52,7 +51,7 @@ public class Fog implements CommandExecutor {
 				startFogTask();
 				manager.setEnabled(true);
 			} else {
-				Bukkit.broadcastMessage(ON_WARNING_MESSAGE);
+				Cc.logSB(ON_WARNING_MESSAGE);
 			}
 			break;
 		case "fogoff":
@@ -61,7 +60,7 @@ public class Fog implements CommandExecutor {
 				stopFogTask();
 				manager.setEnabled(false);
 			} else {
-				Bukkit.broadcastMessage(OFF_WARNING_MESSAGE);
+				Cc.logSB(OFF_WARNING_MESSAGE);
 			}
 			break;
 		}
@@ -78,7 +77,7 @@ public class Fog implements CommandExecutor {
 	}
 
 	private void startFogTask() {
-		Bukkit.broadcastMessage(ON_MESSAGE);
+		Cc.logSB(ON_MESSAGE);
 		fogTask = new BukkitRunnable() {
 			public void run() {
 				for (Player player : Bukkit.getOnlinePlayers()) {
@@ -91,7 +90,7 @@ public class Fog implements CommandExecutor {
 	}
 
 	private void stopFogTask() {
-		Bukkit.broadcastMessage(OFF_MESSAGE);
+		Cc.logSB(OFF_MESSAGE);
 		if (fogTask != null) {
 			fogTask.cancel();
 			fogTask = null;

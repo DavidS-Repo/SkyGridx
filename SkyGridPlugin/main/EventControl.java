@@ -1,7 +1,5 @@
 package main;
 
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -25,8 +23,8 @@ public class EventControl implements Listener {
 
 	private final Plugin plugin;
 	private static final String INITIALIZE_MESSAGE = "EventControl Enabled.";
-	private static final String ON_MESSAGE = ChatColor.GREEN + "Event control logging enabled.";
-	private static final String OFF_MESSAGE = ChatColor.RED + "Event control logging disabled.";
+	private static final String ON_MESSAGE = Cc.logO(Cc.GREEN, "Event control logging enabled.");
+	private static final String OFF_MESSAGE = Cc.logO(Cc.GREEN, "Event control logging disabled.");
 	private boolean loggingEnabled = false;
 	private static boolean 
 	BlockGrowEventToggle = PluginSettings.isBlockIgniteEvent(), BlockFadeEventToggle = PluginSettings.isBlockFadeEvent(), 
@@ -43,17 +41,17 @@ public class EventControl implements Listener {
 
 	public void initialize() {
 		plugin.getServer().getPluginManager().registerEvents(this, plugin);
-		plugin.getLogger().info(INITIALIZE_MESSAGE);
+		Cc.logSB(INITIALIZE_MESSAGE);
 	}
 
 	public void enableLogging() {
 		loggingEnabled = true;
-		Bukkit.broadcastMessage(ON_MESSAGE);
+		Cc.logSB(ON_MESSAGE);
 	}
 
 	public void disableLogging() {
 		loggingEnabled = false;
-		Bukkit.broadcastMessage(OFF_MESSAGE);
+		Cc.logSB(OFF_MESSAGE);
 	}
 
 	@EventHandler(priority = EventPriority.HIGHEST)
@@ -75,7 +73,7 @@ public class EventControl implements Listener {
 			if (IS_FLOATING.contains(blockBelow.getType())) {
 				event.setCancelled(true);
 				if (loggingEnabled) {
-					plugin.getLogger().info("Cancelled sapling growth event at: " + block.getLocation());
+					Cc.logSB("Cancelled sapling growth event at: " + block.getLocation());
 				}
 			}
 		}
@@ -90,7 +88,7 @@ public class EventControl implements Listener {
 				if (IS_FLOATING.contains(blockBelow.getType())) {
 					event.setCancelled(true);
 					if (loggingEnabled) {
-						plugin.getLogger().info("Cancelled Bamboo sapling growth event at: " + block.getLocation());
+						Cc.logSB("Cancelled Bamboo sapling growth event at: " + block.getLocation());
 					}
 				}
 			}
@@ -108,7 +106,7 @@ public class EventControl implements Listener {
 			if (newStateType == Material.SNOW && GRAVITY_AFFECTED_BLOCKS.contains(belowMaterial)) {
 				event.setCancelled(true);
 				if (loggingEnabled) {
-					plugin.getLogger().info("Cancelled snow form event at: " + block.getLocation());
+					Cc.logSB("Cancelled snow form event at: " + block.getLocation());
 				}
 			}
 		}
@@ -129,7 +127,7 @@ public class EventControl implements Listener {
 				}
 				event.setCancelled(true);
 				if (loggingEnabled) {
-					plugin.getLogger().info("Cancelled melt event at: " + block.getLocation());
+					Cc.logSB("Cancelled melt event at: " + block.getLocation());
 				}
 			} else if ((originalType == Material.FIRE || originalType == Material.SOUL_FIRE) && newType == Material.AIR) {
 				for (BlockFace face : EnumSet.of(BlockFace.DOWN, BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST, BlockFace.UP)) {
@@ -139,7 +137,7 @@ public class EventControl implements Listener {
 				}
 				event.setCancelled(true);
 				if (loggingEnabled) {
-					plugin.getLogger().info("Cancelled fire extinguish event at: " + block.getLocation());
+					Cc.logSB("Cancelled fire extinguish event at: " + block.getLocation());
 				}
 			}
 		}
@@ -156,7 +154,7 @@ public class EventControl implements Listener {
 			}
 			event.setCancelled(true);
 			if (loggingEnabled) {
-				plugin.getLogger().info("Cancelled ignition event at: " + block.getLocation());
+				Cc.logSB("Cancelled ignition event at: " + block.getLocation());
 			}
 		}
 	}
@@ -173,7 +171,7 @@ public class EventControl implements Listener {
 				}
 				event.setCancelled(true);
 				if (loggingEnabled) {
-					plugin.getLogger().info("Cancelled falling block event at: " + block.getLocation());
+					Cc.logSB("Cancelled falling block event at: " + block.getLocation());
 				}
 			}
 		}
@@ -198,7 +196,7 @@ public class EventControl implements Listener {
 				if (allFloating) {
 					event.setCancelled(true);
 					if (loggingEnabled) {
-						plugin.getLogger().info("Cancelled BlockFromToEvent for " + sourceType.name() + " at: " + sourceBlock.getLocation());
+						Cc.logSB("Cancelled BlockFromToEvent for " + sourceType.name() + " at: " + sourceBlock.getLocation());
 					}
 				}
 			}

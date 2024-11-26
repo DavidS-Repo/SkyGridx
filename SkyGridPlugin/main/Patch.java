@@ -1,6 +1,5 @@
 package main;
 
-import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 
 import java.io.IOException;
@@ -11,9 +10,9 @@ import java.nio.file.Paths;
 
 public class Patch {
 
-    private static final String SUCCESS_MESSAGE = ChatColor.translateAlternateColorCodes('&', "&a&lFiles patched successfully.");
-    private static final String INSTRUCTIONS_MESSAGE = ChatColor.translateAlternateColorCodes('&', "&7Please &e&l/reload&7 or &e&l/restart&7 the server for the changes to apply.");
-    private static final String FAILED_MESSAGE = ChatColor.RED + "Failed to patch files. Please check server logs for details.";
+    private static final String SUccESS_MESSAGE =  "Files patched successfully.";
+    private static final String INSTRUCTIONS_MESSAGE = "Please /reload or /restart the server for the changes to apply.";
+    private static final String FAILED_MESSAGE =  "Failed to patch files. Please check server logs for details.";
 
     public static void patchFiles(CommandSender sender, SkyGridPlugin plugin) {
         boolean filesPatched = copyFilesFromJar("world.txt", "SkygridBlocks", plugin) &&
@@ -24,10 +23,10 @@ public class Patch {
                 copyFilesFromJar("SpawnerSettings.yml", "SkygridBlocks", plugin);
         		copyFilesFromJar("config.yml", "", plugin);
         if (filesPatched) {
-            sender.sendMessage(SUCCESS_MESSAGE);
-            sender.sendMessage(INSTRUCTIONS_MESSAGE);
+            Cc.sendS(sender, Cc.GREEN, SUccESS_MESSAGE);
+            Cc.sendS(sender, Cc.YELLOW, INSTRUCTIONS_MESSAGE);
         } else {
-            sender.sendMessage(FAILED_MESSAGE);
+        	Cc.sendS(sender, Cc.RED, FAILED_MESSAGE);
         }
     }
 

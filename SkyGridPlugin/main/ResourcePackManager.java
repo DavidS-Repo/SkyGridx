@@ -1,7 +1,6 @@
 package main;
 
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -29,12 +28,13 @@ public class ResourcePackManager implements Listener {
 		}
 	}
 
+	@SuppressWarnings("deprecation")
 	private void applyResourcePack(Player player) {
 		try {
 			byte[] hashBytes = hexStringToByteArray(resourcePackHash);
 			player.setResourcePack(resourcePackURL, hashBytes);
 		} catch (IllegalArgumentException e) {
-			player.sendMessage(ChatColor.RED + "Failed to apply the resource pack.");
+			Cc.sendS(player, Cc.RED, "Failed to apply the resource pack.");
 			e.printStackTrace();
 		}
 	}

@@ -1,6 +1,5 @@
 package main;
 
-import org.bukkit.ChatColor;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -40,10 +39,6 @@ public class SkyGridPlugin extends JavaPlugin implements Listener {
 		// Initialize PluginSettings
 		settings = new PluginSettings(this);
 
-		// Register the PreGenerator
-		PreGenerator preGenerator = new PreGenerator(this);
-		getServer().getPluginManager().registerEvents(preGenerator, this);
-
 		// Create an instance of Fog and pass the ResourcePackManager instance and settings
 		Fog fogCommandExecutor = new Fog(manager, settings);
 
@@ -75,9 +70,6 @@ public class SkyGridPlugin extends JavaPlugin implements Listener {
 		EventControlCommands commands = new EventControlCommands(this, eventControl);
 		getCommand("eclogson").setExecutor(commands);
 		getCommand("eclogsoff").setExecutor(commands);
-
-		// PreGeneratorCommands as the executor and tab completer for the /pregen command
-		PreGeneratorCommands.registerCommands(this, preGenerator);
 
 		// Register PatchCommand as command executor for /patch
 		getCommand("patch").setExecutor(new PatchCommand(this));
@@ -116,10 +108,11 @@ public class SkyGridPlugin extends JavaPlugin implements Listener {
 		return generator;
 	}
 
+	@SuppressWarnings("deprecation")
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onPlayerLogin(PlayerLoginEvent event) {
 		if (chunksLoading) {
-			event.disallow(PlayerLoginEvent.Result.KICK_OTHER, ChatColor.RED + "Chunks are still loading, please wait a moment and try again.");
+			event.disallow(PlayerLoginEvent.Result.KICK_OTHER, Cc.RED + "Chunks are still loading, please wait a moment and try again." + Cc.RESET);
 		}
 	}
 

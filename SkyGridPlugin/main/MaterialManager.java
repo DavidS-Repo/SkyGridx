@@ -1,24 +1,22 @@
 package main;
 
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.objects.Object2DoubleMap;
 import it.unimi.dsi.fastutil.objects.Object2DoubleOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 
 import java.io.IOException;
-import java.nio.MappedByteBuffer;
-import java.nio.channels.FileChannel;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.ByteOrder;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
-import java.nio.charset.StandardCharsets;
 
 import org.bukkit.Material;
 
@@ -67,12 +65,8 @@ public class MaterialManager {
 
 	public void loadMaterialsForWorld(String fileName) {
 		Path filePath = Paths.get(plugin.getDataFolder().toString(), "SkygridBlocks", fileName);
-		try (FileChannel fileChannel = FileChannel.open(filePath)) {
-			MappedByteBuffer buffer = fileChannel.map(FileChannel.MapMode.READ_ONLY, 0, fileChannel.size());
-			buffer.order(ByteOrder.nativeOrder());
-			byte[] byteArray = new byte[buffer.remaining()];
-			buffer.get(byteArray);
-			String fileContent = new String(byteArray, StandardCharsets.UTF_8);
+		try {
+			String fileContent = Files.readString(filePath, StandardCharsets.UTF_8);
 			Object2DoubleMap<Material> distribution = new Object2DoubleOpenHashMap<>();
 			String worldName = getWorldNameFromFileName(fileName);
 			for (String line : fileContent.split("\n")) {
@@ -81,7 +75,7 @@ public class MaterialManager {
 			ObjectSet<String> biomes = worldBiomeMappings.get(fileName);
 			for (String biome : biomes) {
 				String alias = worldName + "-" + biome;
-				MaterialDistribution materialDistribution = new MaterialDistribution(new Object2DoubleOpenHashMap<>(distribution));
+				MaterialDistribution materialDistribution = new MaterialDistribution(distribution);
 				setMaterialDistribution(alias, materialDistribution);
 			}
 		} catch (IOException e) {
@@ -102,12 +96,8 @@ public class MaterialManager {
 
 	public void loadMaterialsForWorldMultiBiome(String fileName) {
 		Path filePath = Paths.get(plugin.getDataFolder().toString(), "SkygridBlocks", fileName);
-		try (FileChannel fileChannel = FileChannel.open(filePath)) {
-			MappedByteBuffer buffer = fileChannel.map(FileChannel.MapMode.READ_ONLY, 0, fileChannel.size());
-			buffer.order(ByteOrder.nativeOrder());
-			byte[] byteArray = new byte[buffer.remaining()];
-			buffer.get(byteArray);
-			String fileContent = new String(byteArray, StandardCharsets.UTF_8);
+		try {
+			String fileContent = Files.readString(filePath, StandardCharsets.UTF_8);
 			ObjectSet<String> currentBiomes = new ObjectOpenHashSet<>();
 			Object2DoubleMap<Material> materialsMap = new Object2DoubleOpenHashMap<>();
 			String worldName = getWorldNameFromFileName(fileName);
@@ -120,7 +110,7 @@ public class MaterialManager {
 					if (!currentBiomes.isEmpty() && !materialsMap.isEmpty()) {
 						for (String biome : currentBiomes) {
 							String alias = worldName + "-" + biome;
-							MaterialDistribution materialDistribution = new MaterialDistribution(new Object2DoubleOpenHashMap<>(materialsMap));
+							MaterialDistribution materialDistribution = new MaterialDistribution(materialsMap);
 							setMaterialDistribution(alias, materialDistribution);
 						}
 						currentBiomes.clear();
@@ -142,7 +132,7 @@ public class MaterialManager {
 			if (!currentBiomes.isEmpty() && !materialsMap.isEmpty()) {
 				for (String biome : currentBiomes) {
 					String alias = worldName + "-" + biome;
-					MaterialDistribution materialDistribution = new MaterialDistribution(new Object2DoubleOpenHashMap<>(materialsMap));
+					MaterialDistribution materialDistribution = new MaterialDistribution(materialsMap);
 					setMaterialDistribution(alias, materialDistribution);
 				}
 			}
@@ -188,8 +178,8 @@ public class MaterialManager {
 			probabilities = new double[size];
 			alias = new int[size];
 
-			ObjectArrayList<Integer> small = new ObjectArrayList<>();
-			ObjectArrayList<Integer> large = new ObjectArrayList<>();
+			IntArrayList small = new IntArrayList();
+			IntArrayList large = new IntArrayList();
 
 			double total = calculateTotal(distribution);
 			double[] normalized = new double[size];
@@ -207,8 +197,8 @@ public class MaterialManager {
 			}
 
 			while (!small.isEmpty() && !large.isEmpty()) {
-				int smallIndex = small.remove(small.size() - 1);
-				int largeIndex = large.remove(large.size() - 1);
+				int smallIndex = small.removeInt(small.size() - 1);
+				int largeIndex = large.removeInt(large.size() - 1);
 
 				probabilities[smallIndex] = normalized[smallIndex];
 				alias[smallIndex] = largeIndex;
@@ -223,11 +213,11 @@ public class MaterialManager {
 			}
 
 			while (!small.isEmpty()) {
-				probabilities[small.remove(small.size() - 1)] = 1.0;
+				probabilities[small.removeInt(small.size() - 1)] = 1.0;
 			}
 
 			while (!large.isEmpty()) {
-				probabilities[large.remove(large.size() - 1)] = 1.0;
+				probabilities[large.removeInt(large.size() - 1)] = 1.0;
 			}
 		}
 

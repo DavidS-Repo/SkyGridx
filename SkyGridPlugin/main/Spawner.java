@@ -60,27 +60,27 @@ public class Spawner {
 	}
 
 	public void BlockInfo(Block block) {
-		if (block == null || block.getType() != Material.SPAWNER) {
-			return;
-		}
+	    if (block == null || block.getType() != Material.SPAWNER) {
+	        return;
+	    }
 
-		String biomeName = block.getBiome().name().intern();
-		if (spawnerSettings != null && spawnerSettings.isConfigurationSection("SpawnerSettings")) {
-			ConfigurationSection spawnerSettingsSection = spawnerSettings.getConfigurationSection("SpawnerSettings");
+	    String biomeName = block.getBiome().getKey().toString().intern();
+	    if (spawnerSettings != null && spawnerSettings.isConfigurationSection("SpawnerSettings")) {
+	        ConfigurationSection spawnerSettingsSection = spawnerSettings.getConfigurationSection("SpawnerSettings");
 
-			for (String spawnerKey : spawnerSettingsSection.getKeys(false)) {
-				ConfigurationSection spawnerSection = spawnerSettingsSection.getConfigurationSection(spawnerKey);
-				ObjectOpenHashSet<String> biomes = biomeCache.computeIfAbsent(spawnerKey, key -> new ObjectOpenHashSet<>(spawnerSection.getStringList("Biomes")));
-				if (biomes.contains(biomeName)) {
-					String entityName = getEntityForBiome(spawnerSection);
-					if (entityName != null) {
-						setSpawnerSettings((CreatureSpawner) block.getState(), spawnerSection, entityName);
-						return;
-					}
-				}
-			}
-		}
-		setDefaultSpawnerSettings((CreatureSpawner) block.getState(), block.getWorld());
+	        for (String spawnerKey : spawnerSettingsSection.getKeys(false)) {
+	            ConfigurationSection spawnerSection = spawnerSettingsSection.getConfigurationSection(spawnerKey);
+	            ObjectOpenHashSet<String> biomes = biomeCache.computeIfAbsent(spawnerKey, key -> new ObjectOpenHashSet<>(spawnerSection.getStringList("Biomes")));
+	            if (biomes.contains(biomeName)) {
+	                String entityName = getEntityForBiome(spawnerSection);
+	                if (entityName != null) {
+	                    setSpawnerSettings((CreatureSpawner) block.getState(), spawnerSection, entityName);
+	                    return;
+	                }
+	            }
+	        }
+	    }
+	    setDefaultSpawnerSettings((CreatureSpawner) block.getState(), block.getWorld());
 	}
 
 	private void setSpawnerSettings(CreatureSpawner spawner, ConfigurationSection spawnerSection, String entityName) {
