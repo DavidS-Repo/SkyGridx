@@ -29,7 +29,6 @@ public class OreGen implements Listener {
 
 	private void loadOreChances() {
 		if (Files.exists(configFilePath)) {
-			List<String> warnings = new ArrayList<>();
 			try {
 				List<String> lines = Files.readAllLines(configFilePath);
 				Material currentBlockType = null;
@@ -42,26 +41,32 @@ public class OreGen implements Listener {
 					if (parts.length == 1) {
 						currentBlockType = Material.getMaterial(parts[0].trim());
 						if (currentBlockType == null) {
-							warnings.add("Invalid block type in ores.yml: " + parts[0].trim());
+							plugin.getLogger().warning("Invalid block type in ores.yml: " + parts[0].trim());
 						}
 					} else if (parts.length == 2 && currentBlockType != null) {
 						Material oreMaterial = Material.getMaterial(parts[0].trim());
-						double chance = Double.parseDouble(parts[1].trim()) / 100.0;
-						if (oreMaterial != null && chance > 0 && chance <= 1) {
-							oreChances.computeIfAbsent(currentBlockType, k -> new ArrayList<>())
-							.add(new OreChance(oreMaterial, chance));
-						} else {
-							warnings.add("Invalid ore data in ores.yml: " + line);
+						try {
+							double chance = Double.parseDouble(parts[1].trim()) / 100.0;
+							if (oreMaterial != null && chance > 0 && chance <= 1) {
+								oreChances.computeIfAbsent(currentBlockType, k -> new ArrayList<>())
+								.add(new OreChance(oreMaterial, chance));
+							} else {
+								plugin.getLogger().warning("Invalid ore chance or material in ores.yml: " + line);
+							}
+						} catch (NumberFormatException e) {
+							plugin.getLogger().warning("Non-numeric chance value in ores.yml: " + line);
 						}
 					} else {
-						warnings.add("Invalid line in ores.yml: " + line);
+						plugin.getLogger().warning("Invalid line in ores.yml: " + line);
 					}
 				}
 				oreChances.forEach(this::calculateCumulativeProbabilities);
-			} catch (IOException | NumberFormatException e) {
-				e.printStackTrace();
+				if (!validateConfiguration()) {
+					plugin.getLogger().warning("Configuration validation failed. Check your ores.yml for errors.");
+				}
+			} catch (IOException e) {
+				plugin.getLogger().severe("Failed to read ores.yml: " + e.getMessage());
 			}
-			warnings.forEach(plugin.getLogger()::warning);
 		} else {
 			plugin.getLogger().warning("Missing ores.yml file. No ores will be generated.");
 		}
@@ -81,7 +86,8 @@ public class OreGen implements Listener {
 		Block block = event.getBlock();
 		Material toType = event.getNewState().getType();
 		Material fromType = block.getType();
-		if ((toType == Material.STONE || toType == Material.COBBLESTONE || toType == Material.BASALT) && fromType == Material.LAVA) {
+		if ((toType == Material.STONE || toType == Material.COBBLESTONE || toType == Material.BASALT)
+				&& (fromType == Material.LAVA || fromType == Material.WATER)) {
 			handleOreGeneration(event, toType);
 		}
 	}
@@ -110,6 +116,23 @@ public class OreGen implements Listener {
 			}
 		}
 		return null;
+	}
+
+	private boolean validateConfiguration() {
+		boolean isValid = true;
+
+		for (Map.Entry<Material, List<OreChance>> entry : oreChances.entrySet()) {
+			double totalProbability = entry.getValue().stream().mapToDouble(oc -> oc.chance).sum();
+			if (totalProbability > 1.0) {
+				plugin.getLogger().warning("Total probability exceeds 100% for block type: " + entry.getKey());
+				isValid = false;
+			}
+			if (entry.getValue().isEmpty()) {
+				plugin.getLogger().warning("No ores configured for block type: " + entry.getKey());
+				isValid = false;
+			}
+		}
+		return isValid;
 	}
 
 	static class OreChance {
