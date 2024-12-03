@@ -1,43 +1,38 @@
 # Ore Replacement Chances
 
-# This file is used to specify the chances of different ores being chosen for replacement
-# when lava or water generates stone blocks in the world. The stone generate in the world can be replaced by any block you want as long as its in the bukkit materials list https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Material.html
+# This file specifies the chances of different ores replacing generated blocks.
+# When lava or water generates stone, cobblestone, or basalt, they can be replaced
+# with any valid block from the Bukkit Material list:
+# https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Material.html
 
-# Format: Material_Name:Percentage
-# The percentage represents the chance (in whole numbers) of the ore being chosen
-# for replacement out of the total replacements when lava or water generates stone.
+# Format:
+# Block_Type:
+#   Material_Name: Percentage
+#
+# Block_Type:
+#   - The block that is generated (STONE, COBBLESTONE, or BASALT).
+# Material_Name: Percentage
+#   - Each material name corresponds to the replacement block.
+#   - The percentage is the likelihood of that material being chosen.
 
-# Each line represents one ore with its corresponding replacement chance.
-# Lines starting with '#' are considered comments and will be ignored by the code.
+# Notes:
+# - Percentages are adjusted proportionally if the total exceeds 100.
+# - Comments starting with '#' are ignored.
 
 # Example:
-# DIAMOND_ORE:5
-# This means that there is a 5% chance of a diamond ore block being chosen
-# when lava or water generates a stone block.
+# If the configuration is:
+# STONE:
+#   STONE: 50
+#   COAL_ORE: 50
+# Then every time a stone block is generated, there is:
+# - 50% chance it remains as STONE
+# - 50% chance it is replaced with COAL_ORE.
 
-# The total sum of percentages should be less than or equal to 100.
-# If the sum exceeds 100, the probabilities will be scaled down proportionally
-# to fit within the 0-100 range.
+# Replaceable Blocks
 
-# For example, if the total sum of percentages exceeds 100 as follows:
-# DIAMOND_ORE:40
-# COAL_ORE:60
-# IRON_ORE:30
-# GOLD_ORE:20
-
-# The total sum is 40 + 60 + 30 + 20 = 150, which exceeds 100.
-# To fit within the 0-100 range, the probabilities will be scaled down proportionally:
-# DIAMOND_ORE: 40 * (100 / 150) = 26 (approximately 27)
-# COAL_ORE: 60 * (100 / 150) = 40
-# IRON_ORE: 30 * (100 / 150) = 20
-# GOLD_ORE: 20 * (100 / 150) = 13 (approximately 13)
-
-# The adjusted probabilities now add up to 26 + 40 + 20 + 13 = 99, which is within the 0-100 range.
-
-
-#For if the block generated is stone
+# When STONE is generated
 STONE:
-  STONE: 98
+  STONE: 98.00
   COAL_ORE: 0.3
   COPPER_ORE: 0.4
   DIAMOND_ORE: 0.1
@@ -47,7 +42,7 @@ STONE:
   LAPIS_ORE: 0.2
   REDSTONE_ORE: 0.3
 
-#For if the block generated cobblestone
+# When COBBLESTONE is generated
 COBBLESTONE:
   DEEPSLATE: 98
   DEEPSLATE_COAL_ORE: 0.3
@@ -59,10 +54,10 @@ COBBLESTONE:
   DEEPSLATE_LAPIS_ORE: 0.2
   DEEPSLATE_REDSTONE_ORE: 0.3
 
-#For if the block generated is basalt
+# When BASALT is generated
 BASALT:
   ANCIENT_DEBRIS: 0.1
-  BASALT : 44.9
+  BASALT: 44.9
   BLACKSTONE: 20
   GILDED_BLACKSTONE: 3.0
   NETHER_GOLD_ORE: 3.0
