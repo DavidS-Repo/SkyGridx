@@ -50,9 +50,6 @@ This plugin also includes a built-in random teleport command for each dimension,
    - Tiered loot distribution for added variety, each tier with its own set of items and probabilities.
    - Customize chest loot for specific biomes, allowing for a more immersive and thematic distribution of items based on the environment.
 
-## **Pre-Generator Feature:**
-   - Built in async pre-generator feature that allows for efficient world generation. This feature is accessible through the **/pregen** command, with customizable parameters for Parallel Tasks Multiplier, print update delay and world.
-   - Works best on paper servers, on none paper servers the async functionality will not be used. Recommend you go into your paper server paper-global.yml and update these
 ---
 
 ## Commands:
@@ -65,8 +62,6 @@ This plugin also includes a built-in random teleport command for each dimension,
 - `/fogoff`: Disable fog.
 - `/eclogson`: Enable Event Control logging.
 - `/eclogsoff`: Disable Event Control logging.
-- `/pregen`: Pregenerate any of the dimensions; overworld, nether, and end.
-- `/pregenoff`: Turn off pregeneration process.
 - `/patch`: Patch files to update materials and entities to the newest version.
 
 ## Permissions:
@@ -83,8 +78,6 @@ This plugin also includes a built-in random teleport command for each dimension,
 - `sg.fogoff`: Allows disabling fog with the `/fogoff` command.
 - `sg.eclogson`: Grants permission to enable Event Control logging using `/eclogson`.
 - `sg.eclogsoff`: Grants permission to disable Event Control logging using `/eclogsoff`.
-- `sg.pregen`: Grants permission to use the pre-generation command with customizable parameters.
-- `sg.pregenoff`: Grants permission to disable pre-generation using the `/pregenoff` command.
 - `sg.patch`: Allows patching files to update materials and entities to another version.
 - `sg.regen`: Grants permission to regenerate all loaded chunks using the `/regen` command.
 - `sg.*`: Provides access to all SkyGrid commands.
@@ -102,5 +95,4 @@ For detailed installation instructions, [click here](Settings/Installation.md).
 
 ## Additional Mechanisms:
 - [Biome-Specific Block Generation Guide](Settings/biome_specific.md)
-- [Pre-Generator Guide](Settings/Pre-Generator.md)
 ---
