@@ -1,57 +1,116 @@
-# Installation Instructions:
- 
-1. **Prepare Server Launch:**
- - Run the following commands within a **.bat** file to initialize the server:
+# SkyGridX Installation Guide for Minecraft 1.21.3 (Java 21)
 
-```
-@echo off
-java -Xms1G -Xmx4G -XX:+UseG1GC -XX:+UnlockExperimentalVMOptions -XX:G1NewSizePercent=30 -XX:G1MaxNewSizePercent=40 -XX:G1HeapRegionSize=8M -XX:G1ReservePercent=20 -XX:G1HeapWastePercent=5 -XX:G1MixedGCCountTarget=4 -XX:InitiatingHeapOccupancyPercent=15 -XX:G1MixedGCLiveThresholdPercent=90 -XX:G1RSetUpdatingPauseTimePercent=5 -XX:SurvivorRatio=32 -XX:+PerfDisableSharedMem -XX:MaxTenuringThreshold=1 -XX:+OptimizeStringConcat -XX:+UseCompressedOops -XX:+DisableExplicitGC -XX:+AlwaysPreTouch -XX:+ParallelRefProcEnabled -XX:+UseNUMA -XX:ParallelGCThreads=6 -XX:ConcGCThreads=6 -XX:MaxGCPauseMillis=200 -Dusing.aikars.flags=https://mcflags.emc.gs -Daikars.new.flags=true -jar NameOfJar.jar --nogui
-pause
-```
- - Remember to adjust memory settings to suit your server and replace **NameOfJar.jar** with your server's actual jar file name.
+Follow these steps to set up your SkyGridX plugin efficiently. This guide includes two options for installation: a quick automated setup or a detailed manual setup.
 
-![instrunctions step 1](https://www.toolsnexus.com/mc/1.png)
-![instrunctions step 2](https://www.toolsnexus.com/mc/2.png)
+---
 
-2. **Sign the EULA:**
- - Once the EULA is signed, refrain from starting the server yet.
+## **Quick Setup (Lazy Install)**
 
-![instrunctions step 3](https://www.toolsnexus.com/mc/3.png)
+If you'd prefer an automated process, you can use the `install.bat` script. This script will:
 
-3. **Download Plugin and Datapack:**
- - Obtain the latest version of the plugin from [SkyGridX](https://modrinth.com/plugin/skygridx/versions) and place it into the auto-generated `plugins` folder.
+- Create the required folders (`plugins`, `world`, `datapacks`).
+- Download and place the latest versions of the plugin([SkyGridX](https://modrinth.com/plugin/skygridx/versions)), datapack([Skyblock Void Worldgen](https://modrinth.com/datapack/skyblock-void-worldgen)), and Paper server JAR([Paper Server](https://papermc.io/downloads/paper)).
+- Automatically sign the `eula.txt`.
+- Generate a `run.bat` file with default memory settings: `-Xms1G -Xmx4G`.
 
-![instrunctions step 4](https://www.toolsnexus.com/mc/4.png)
-![instrunctions step 5](https://www.toolsnexus.com/mc/5.png)
+### Steps:
+1. [Download the `install.bat` script](https://github.com/DavidS-Repo/SkyGridx/blob/main/install.bat).
+2. Place the script in your server directory.
+3. Run the script by double-clicking it.
+4. Use the generated `run.bat` to start the server in the future.
 
- - Create a new folder named `world` within the server directory.
+> **Note:**
+> - You can adjust the memory allocation (`-Xms1G -Xmx4G`) in the `run.bat` file to increase or decrease server memory usage based on your machine's resources.
+> - If you are hosting this for yourself only your sever address will be `localhost`, you don't need to open any ports or anything if its only for you
 
-![instrunctions step 6](https://www.toolsnexus.com/mc/6.png)
-![instrunctions step 7](https://www.toolsnexus.com/mc/7.png)
+---
 
- - Inside `world,` create a folder named `datapacks` and add the datapack downloaded from 
-[Skyblock Void Worldgen](https://modrinth.com/datapack/skyblock-void-worldgen) which includes biomes, boundary boxes for structures and some structures, or
-[Void-Biomes-1.21.03.zip](https://github.com/DavidS-Repo/SkyGridx/blob/main/Void-Biomes-1.21.03.zip), which is made by me, is lightweight, and will reduce chunk generation load when compared to `Skyblock Void Worldgen` and only includes biome data and the end portal and pillars.
+## **Manual Setup**
 
-![instrunctions step 8](https://www.toolsnexus.com/mc/8.png)
-![instrunctions step 9](https://www.toolsnexus.com/mc/9.png)
-![instrunctions step 10](https://www.toolsnexus.com/mc/10.png)
+For those who prefer more control over the installation, follow the steps below:
 
-> Note: Ensure the datapack is placed here before launching the server to generate the world.
+### **1. Prepare Server Launch**
+1. Create a `.bat` file and paste the following commands to initialize the server:
 
-4. **Server Launch & World Generation:**
- - Re-run the **.bat** file to start the server and allow all necessary files to generate.
- - Watch for console messages indicating you to wait.
- 
-![instrunctions step 11](https://www.toolsnexus.com/mc/pl.png)
- 
-5. **Enjoy the SkyGrid World:**
- - Connect to the server to verify completion after ([INFO]: Chunks have been loaded. You can now connect!).
+    ```batch
+    @echo off
+    java -Xms1G -Xmx4G -XX:+UseG1GC -XX:+UnlockExperimentalVMOptions -XX:G1NewSizePercent=30 -XX:G1MaxNewSizePercent=40 -XX:G1HeapRegionSize=8M -XX:G1ReservePercent=20 -XX:G1HeapWastePercent=5 -XX:G1MixedGCCountTarget=4 -XX:InitiatingHeapOccupancyPercent=15 -XX:G1MixedGCLiveThresholdPercent=90 -XX:G1RSetUpdatingPauseTimePercent=5 -XX:SurvivorRatio=32 -XX:+PerfDisableSharedMem -XX:MaxTenuringThreshold=1 -XX:+OptimizeStringConcat -XX:+UseCompressedOops -XX:+DisableExplicitGC -XX:+AlwaysPreTouch -XX:+ParallelRefProcEnabled -XX:+UseNUMA -XX:ParallelGCThreads=6 -XX:ConcGCThreads=6 -XX:MaxGCPauseMillis=200 -Dusing.aikars.flags=https://mcflags.emc.gs -Daikars.new.flags=true -jar NameOfJar.jar --nogui
+    pause
+    ```
 
-![instrunctions step 12](https://www.toolsnexus.com/mc/comp.png)
+2. Adjust memory settings to suit your server. Replace `NameOfJar.jar` with your server's actual JAR file name.
 
-# A few additional notes to consider:
- 
-- The SkyGrid plugin requires a Bukkit or Spigot server for optimal performance and functionality. 
-- I would recommend paper since its more optimized a some features like the pregenerator will work best with it.
-- If you run into any issues or have feature request, make sure to submit them in the issues page of the [github](https://github.com/DavidS-Repo/SkyGridx/issues).
+    ![Create Batch File](https://www.toolsnexus.com/mc/1.png)
+
+3. Save the `.bat` file and run it to initialize the server.
+
+    ![Running Batch File](https://www.toolsnexus.com/mc/2.png)
+
+---
+
+### **2. Sign the EULA**
+1. After running the `.bat` file, locate and open the `eula.txt` file in the server directory.
+2. Change `eula=false` to `eula=true` and save the file.
+
+    ![EULA Edit](https://www.toolsnexus.com/mc/3.png)
+
+> **Do not restart the server yet.** Continue with the next steps.
+
+---
+
+### **3. Download and Set Up Plugin & Datapack**
+
+#### **Plugin Setup**
+1. Download the latest version of the SkyGridX plugin from [SkyGridX](https://modrinth.com/plugin/skygridx/versions).
+2. Place the downloaded `.jar` file into the `plugins` folder of your server.
+
+    ![Plugin Folder](https://www.toolsnexus.com/mc/4.png)
+    ![Plugin Placement](https://www.toolsnexus.com/mc/5.png)
+
+#### **Datapack Setup**
+1. In the server directory, create a folder named `world`.
+2. Inside the `world` folder, create a folder named `datapacks`.
+
+    ![Datapack Folder Structure](https://www.toolsnexus.com/mc/6.png)
+
+3. Choose and download one of the following datapacks:
+   - **Option 1: Skyblock Void Worldgen**
+     - **Features:** Biome data, structure bounding boxes, and some structures.
+     - **Performance Impact:** Higher server load due to additional data and features.
+     - **Download Link:** [Skyblock Void Worldgen](https://modrinth.com/datapack/skyblock-void-worldgen)
+   - **Option 2: Void-Biomes-1.21.03.zip**
+     - **Features:** Lightweight alternative with only biome data and the End dragon structure (portal and pillars).
+     - **Performance Impact:** Lower server load.
+     - **Download Link:** [Void-Biomes-1.21.03.zip](https://github.com/DavidS-Repo/SkyGridx/blob/main/Void-Biomes-1.21.03.zip)
+
+4. Place the downloaded datapack into the `datapacks` folder.
+
+    ![Datapack Placement](https://www.toolsnexus.com/mc/7.png)
+    ![Final Datapack Setup](https://www.toolsnexus.com/mc/8.png)
+
+> **Important:** Ensure the datapack is placed in the folder before starting the server to correctly generate the world.
+
+---
+
+### **4. Server Launch & World Generation**
+1. Re-run the `.bat` file to start the server and generate the necessary files.
+2. Monitor the console output and wait for messages indicating the server is ready.
+3. Be patient during world generation, as it may take some time depending on your datapack choice.
+
+    ![Server Console Output](https://www.toolsnexus.com/mc/pl.png)
+
+---
+
+### **5. Enjoy the SkyGrid World**
+1. Connect to your server to explore your custom SkyGrid world.
+2. Verify successful setup with a console message: `[INFO]: Chunks have been loaded. You can now connect!`
+
+    ![Server Ready Message](https://www.toolsnexus.com/mc/comp.png)
+
+---
+
+## **Additional Notes**
+- The SkyGrid plugin requires a Bukkit or Spigot-based server, for optimal performance use Paper or Purpur servers.
+- For issues or feature requests, visit the [GitHub Issues Page](https://github.com/DavidS-Repo/SkyGridx/issues).
+
+---
