@@ -1,9 +1,9 @@
 @echo off
 
 :: Set variables
-set plugin_url=https://cdn.modrinth.com/data/ihjAiP7L/versions/l4VRDMAp/SkyGrid.jar
-set datapack_url=https://cdn.modrinth.com/data/x7OPbYhr/versions/fwGf3vbs/skyvoid_worldgen_v2_0_2-MC_1_21.zip
-set paper_url=https://api.papermc.io/v2/projects/paper/versions/1.21.3/builds/81/downloads/paper-1.21.3-81.jar
+set plugin_url=https://cdn.modrinth.com/data/ihjAiP7L/versions/YLLkDHUL/SkyGrid.jar
+set datapack_url=https://github.com/DavidS-Repo/SkyGridx/blob/main/DataPacks/Void-Biomes-1.21.04.zip
+set paper_url=https://api.papermc.io/v2/projects/paper/versions/1.21.4/builds/4/downloads/paper-1.21.4-4.jar
 
 set plugin_folder=plugins
 set world_folder=world
