@@ -1,8 +1,8 @@
 @echo off
 
 :: Set variables
-set plugin_url=https://cdn.modrinth.com/data/ihjAiP7L/versions/YLLkDHUL/SkyGrid.jar
-set datapack_url=https://github.com/DavidS-Repo/SkyGridx/blob/main/DataPacks/Void-Biomes-1.21.04.zip
+set plugin_url=https://raw.githubusercontent.com/DavidS-Repo/SkyGridx/main/SkyGrid.jar
+set datapack_url=https://raw.githubusercontent.com/DavidS-Repo/SkyGridx/main/DataPacks/Void-Biomes-1.21.04.zip
 set paper_url=https://api.papermc.io/v2/projects/paper/versions/1.21.4/builds/4/downloads/paper-1.21.4-4.jar
 
 set plugin_folder=plugins
@@ -25,7 +25,7 @@ curl -L -o %plugin_folder%\SkyGrid.jar %plugin_url%
 
 :: Download datapack
 echo Downloading datapack...
-curl -L -o %datapack_folder%\Void-Biomes-1.21.03.zip %datapack_url%
+curl -L -o %datapack_folder%\Void-Biomes-1.21.04.zip %datapack_url%
 
 :: Get current date and time
 for /f "tokens=1-4 delims=/ " %%a in ('date /t') do set today=%%c-%%a-%%b
