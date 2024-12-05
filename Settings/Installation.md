@@ -9,7 +9,7 @@ Follow these steps to set up your SkyGridX plugin efficiently. This guide includ
 If you'd prefer an automated process, you can use the `install.bat` script. This script will:
 
 - Create the required folders (`plugins`, `world`, `datapacks`).
-- Download and place the latest versions of the plugin([SkyGridX](https://modrinth.com/plugin/skygridx/versions)), datapack([Skyblock Void Worldgen](https://modrinth.com/datapack/skyblock-void-worldgen)), and Paper server JAR([Paper Server](https://papermc.io/downloads/paper)).
+- Download and place the latest versions of the plugin([SkyGridX](https://modrinth.com/plugin/skygridx/versions)), datapack([Void-Biomes-1.21.04.zip](https://github.com/DavidS-Repo/SkyGridx/blob/main/DataPacks/Void-Biomes-1.21.04.zip)), and Paper server JAR([Paper Server](https://papermc.io/downloads/paper)).
 - Automatically sign the `eula.txt`.
 - Generate a `run.bat` file with default memory settings: `-Xms1G -Xmx4G`.
 
@@ -81,7 +81,7 @@ For those who prefer more control over the installation, follow the steps below:
    - **Option 2: Void-Biomes-1.21.03.zip**
      - **Features:** Lightweight alternative with only biome data and the End dragon structure (portal and pillars).
      - **Performance Impact:** Lower server load.
-     - **Download Link:** [Void-Biomes-1.21.03.zip](https://github.com/DavidS-Repo/SkyGridx/blob/main/Void-Biomes-1.21.03.zip)
+     - **Download Link:** [Void-Biomes-1.21.04.zip](https://github.com/DavidS-Repo/SkyGridx/blob/main/DataPacks/Void-Biomes-1.21.04.zip)
 
 4. Place the downloaded datapack into the `datapacks` folder.
 
