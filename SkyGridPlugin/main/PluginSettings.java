@@ -28,7 +28,7 @@ public class PluginSettings {
 
 	private void loadDefaults() {
 		// Generator Settings
-		config.addDefault("generator.processDelay", 10);
+		config.addDefault("generator.processDelay", 0);
 		config.addDefault("generator.nether.minY", 0);
 		config.addDefault("generator.nether.maxY", 128);
 		config.addDefault("generator.end.minY", 0);

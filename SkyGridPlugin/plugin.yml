@@ -1,5 +1,5 @@
 name: SkyGrid
-version: 1.21.3
+version: 1.21.4
 main: main.SkyGridPlugin
 author: Go0fy_Go0ber
 description: A plugin that generates a SkyGrid and more.
