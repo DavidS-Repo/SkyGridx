@@ -9,7 +9,7 @@ This plugin also includes a built-in random teleport command for each dimension,
 # **Key Features:**
 
 ## **Block Selection:**
-   - Create a unique SkyGrid with a variety of blocks from the [Bukkit Material page](https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/material.html).
+   - Create a unique SkyGrid with a variety of blocks from the [Bukkit Material page](https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Material.html).
    - Customize block types and percentages effortlessly.
 
 ## **Real-time Generation:**
@@ -24,7 +24,7 @@ This plugin also includes a built-in random teleport command for each dimension,
    - Fine-tune material distribution percentages for a distinct experience.
 
 ## **Biome-Specific Grids:**
-   - Customize grids in Overworld, Nether, and End with unique blocks at the [biome](https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/block/biome.html) level.
+   - Customize grids in Overworld, Nether, and End with unique blocks at the [biome](https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/block/Biome.html) level.
 
 ## **Ore Generation:**
    - Seamlessly integrated into the gameplay, this feature replaced generated stone, cobblestone or basalt with any blocks you want.
