@@ -48,15 +48,17 @@ public class CustomChest {
 		if (block != null && block.getState() instanceof Chest chest) {
 			Inventory chestInventory = chest.getInventory();
 			Biome biome = block.getBiome();
-			String biomeName = biome.toString();
-			IntSet chestKeys = chestBiomesMap.get(biomeName);
-			if (chestKeys != null) {
-				for (int chestKey : chestKeys) {
-					ItemsData itemsData = chestItemsMap.get(chestKey);
+			String biomeName = biome.toString().toUpperCase();
+			IntSet chestKeys = chestBiomesMap.getOrDefault(biomeName, IntSet.of());
+			if (!chestKeys.isEmpty()) {
+				int chestKey = chestKeys.iterator().nextInt();
+				ItemsData itemsData = chestItemsMap.get(chestKey);
+				if (itemsData != null) {
 					calculateItemsToPlace(itemsData, chestInventory)
 					.thenAccept(itemsToPlace -> plugin.getServer().getScheduler().runTask(plugin,
 							() -> placeItemsInChest(chestInventory, itemsToPlace)));
-					return;
+				} else {
+					Cc.logS(Cc.GOLD, "No items data found for key: " + chestKey);
 				}
 			} else {
 				Cc.logS(Cc.GOLD, "Biome-specific chest settings not found for biome: " + biomeName);
@@ -166,7 +168,6 @@ public class CustomChest {
 		int materialOrdinal;
 		double weight;
 		int maxAmount;
-
 		ItemSettings(int materialOrdinal, double weight, int maxAmount) {
 			this.materialOrdinal = materialOrdinal;
 			this.weight = weight;
@@ -178,32 +179,20 @@ public class CustomChest {
 		private final ItemSettings[] itemSettingsArray;
 		private final double[] cumulativeWeights;
 		private final double totalWeight;
-
 		ItemsData(Object2ReferenceMap<Integer, ItemSettings> itemsMap) {
-			int size = itemsMap.size();
-			itemSettingsArray = new ItemSettings[size];
-			cumulativeWeights = new double[size];
-			int index = 0;
+			itemSettingsArray = itemsMap.values().toArray(new ItemSettings[0]);
+			cumulativeWeights = new double[itemSettingsArray.length];
 			double cumulative = 0.0;
-			for (ItemSettings item : itemsMap.values()) {
-				itemSettingsArray[index] = item;
-				cumulative += item.weight;
-				cumulativeWeights[index] = cumulative;
-				index++;
+			for (int i = 0; i < itemSettingsArray.length; i++) {
+				cumulative += itemSettingsArray[i].weight;
+				cumulativeWeights[i] = cumulative;
 			}
 			totalWeight = cumulative;
 		}
-
 		public ItemSettings getRandomItemSettings() {
-			double randomValue = ThreadLocalRandom.current().nextDouble() * totalWeight;
+			double randomValue = ThreadLocalRandom.current().nextDouble(totalWeight);
 			int index = Arrays.binarySearch(cumulativeWeights, randomValue);
-			if (index < 0) {
-				index = -index - 1;
-			}
-			if (index >= itemSettingsArray.length) {
-				index = itemSettingsArray.length - 1;
-			}
-			return itemSettingsArray[index];
+			return index < 0 ? itemSettingsArray[-index - 1] : itemSettingsArray[index];
 		}
 	}
 }
