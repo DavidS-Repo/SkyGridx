@@ -27,13 +27,16 @@ public class EventControl implements Listener {
 	private static final String OFF_MESSAGE = Cc.logO(Cc.GREEN, "Event control logging disabled.");
 	private boolean loggingEnabled = false;
 	private static boolean 
-	BlockGrowEventToggle = PluginSettings.isBlockIgniteEvent(), BlockFadeEventToggle = PluginSettings.isBlockFadeEvent(), 
+	BlockGrowEventToggle = PluginSettings.isBlockGrowEvent(), BlockFadeEventToggle = PluginSettings.isBlockFadeEvent(), 
 	BlockFromToEventToggle = PluginSettings.isBlockFromToEvent(), StructureGrowEventToggle = PluginSettings.isStructureGrowEvent(),
 	BlockSpreadEventToggle = PluginSettings.isBlockSpreadEvent(), BlockIgniteEventToggle = PluginSettings.isBlockIgniteEvent(), 
 	BlockFormEventToggle = PluginSettings.isBlockFormEvent(), EntityChangeBlockEventToggle = PluginSettings.isEntityChangeBlockEvent();
 
 	private static final EnumSet<Material> GRAVITY_AFFECTED_BLOCKS= PluginSettings.getGravityAffectedBlocks();
 	private static final EnumSet<Material> IS_FLOATING = EnumSet.of(Material.AIR, Material.VOID_AIR);
+	private static final EnumSet<Material> FARMLAND_CROPS = EnumSet.of(Material.WHEAT, Material.CARROTS, Material.POTATOES, Material.BEETROOTS, Material.MELON_STEM, Material.PUMPKIN_STEM);
+	private static final EnumSet<Material> VINES = EnumSet.of(Material.CAVE_VINES, Material.CAVE_VINES_PLANT);
+
 
 	public EventControl(Plugin plugin) {
 		this.plugin = plugin;
@@ -56,11 +59,19 @@ public class EventControl implements Listener {
 
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onBlockGrow(BlockGrowEvent event) {
-		if (BlockGrowEventToggle){
+		if (BlockGrowEventToggle) {
 			Block block = event.getBlock();
-			Block Blockbelow = block.getRelative(0 , -2, 0);
-			if (IS_FLOATING.contains((Blockbelow.getType()))) {
-				event.setCancelled(true);
+			Material cropType = event.getNewState().getType();
+			if (FARMLAND_CROPS.contains(cropType)) {
+				Block blockBelow = block.getRelative(0, -1, 0);
+				if (blockBelow.getType() != Material.FARMLAND) {
+					event.setCancelled(true);
+				}
+			} else {
+				Block blockBelow = block.getRelative(0, -2, 0);
+				if (IS_FLOATING.contains(blockBelow.getType())) {
+					event.setCancelled(true);
+				}
 			}
 		}
 	}
@@ -82,13 +93,24 @@ public class EventControl implements Listener {
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onBlockSpread(BlockSpreadEvent event) {
 		if (BlockSpreadEventToggle) {
-			if (event.getSource().getType() == Material.BAMBOO_SAPLING) {
-				Block block = event.getBlock();
-				Block blockBelow = block.getRelative(0 , -2, 0);
+			Block sourceBlock = event.getSource();
+			Block targetBlock = event.getBlock();
+			Material sourceType = sourceBlock.getType();
+			if (sourceType == Material.BAMBOO_SAPLING) {
+				Block blockBelow = targetBlock.getRelative(0, -2, 0);
 				if (IS_FLOATING.contains(blockBelow.getType())) {
 					event.setCancelled(true);
 					if (loggingEnabled) {
-						Cc.logSB("Cancelled Bamboo sapling growth event at: " + block.getLocation());
+						Cc.logSB("Cancelled Bamboo sapling growth event at: " + targetBlock.getLocation());
+					}
+				}
+			}
+			else if (VINES.contains(sourceType)) {
+				Block attachmentBlock = targetBlock.getRelative(0, 2, 0);
+				if (IS_FLOATING.contains(attachmentBlock.getType())) {
+					event.setCancelled(true);
+					if (loggingEnabled) {
+						Cc.logSB("Cancelled Cave Vines growth event: No solid attachment block at " + targetBlock.getLocation());
 					}
 				}
 			}
