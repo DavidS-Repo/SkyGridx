@@ -19,15 +19,12 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.world.ChunkLoadEvent;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
 import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class Generator implements Listener {
@@ -37,7 +34,6 @@ public class Generator implements Listener {
 	private final Spawner spawner;
 	private final CustomChest chest;
 	private final Map<World.Environment, MinMaxSettings> environmentSettings;
-	private static boolean hasBiomeHeaders;
 	private static final Set<Material> CROP_MATERIALS;
 	private static final Set<Material> LEAVES;
 	private static final EnumSet<World.Environment> DIMENSIONS_TO_PROCESS;
@@ -85,8 +81,7 @@ public class Generator implements Listener {
 
 	public void initialize() {
 		registerEvents();
-		checkBiomeHeaders();
-		loadWorldMaterials();
+		loadWorldMaterialsAsync();
 		callOreGen();
 	}
 
@@ -94,36 +89,16 @@ public class Generator implements Listener {
 		plugin.getServer().getPluginManager().registerEvents(this, plugin);
 	}
 
-	private void loadWorldMaterials() {
-		if (hasBiomeHeaders) {
+	private void loadWorldMaterialsAsync() {
+		CompletableFuture.runAsync(() -> {
 			plugin.getLogger().info("Enabling Advanced material loader.");
-			materialManager.loadMaterialsForWorldMultiBiome("world.txt");
-			materialManager.loadMaterialsForWorldMultiBiome("world_nether.txt");
-			materialManager.loadMaterialsForWorldMultiBiome("world_the_end.txt");
-		} else {
-			plugin.getLogger().info("Enabling Basic material loader.");
-			materialManager.loadMaterialsForWorld("world.txt");
-			materialManager.loadMaterialsForWorld("world_nether.txt");
-			materialManager.loadMaterialsForWorld("world_the_end.txt");
-		}
-	}
-
-	public void checkBiomeHeaders() {
-		String[] fileNames = {"world.txt", "world_nether.txt", "world_the_end.txt"};
-		for (String fileName : fileNames) {
-			File file = new File(plugin.getDataFolder(), "SkygridBlocks/" + fileName);
-			if (file.exists()) {
-				try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-					if (reader.lines().anyMatch(line -> !line.trim().startsWith("#") && line.trim().startsWith("-"))) {
-						hasBiomeHeaders = true;
-						return;
-					}
-				} catch (IOException e) {
-					plugin.getLogger().severe("Error reading file " + fileName + ": " + e.getMessage());
-				}
-			}
-		}
-		hasBiomeHeaders = false;
+			materialManager.loadMaterialsForWorld("world.yml");
+			materialManager.loadMaterialsForWorld("world_nether.yml");
+			materialManager.loadMaterialsForWorld("world_the_end.yml");
+		}).exceptionally(throwable -> {
+			plugin.getLogger().severe("Failed to load materials: " + throwable.getMessage());
+			return null;
+		});
 	}
 
 	private void callOreGen() {

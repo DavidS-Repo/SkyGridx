@@ -17,9 +17,9 @@ public class FirstBootChecker {
     public boolean checkForFirstBoot() {
         boolean isFirstBoot = false;
 
-        isFirstBoot |= copyFileIfNotPresent("world.txt", "SkygridBlocks");
-        isFirstBoot |= copyFileIfNotPresent("world_nether.txt", "SkygridBlocks");
-        isFirstBoot |= copyFileIfNotPresent("world_the_end.txt", "SkygridBlocks");
+        isFirstBoot |= copyFileIfNotPresent("world.yml", "SkygridBlocks");
+        isFirstBoot |= copyFileIfNotPresent("world_nether.yml", "SkygridBlocks");
+        isFirstBoot |= copyFileIfNotPresent("world_the_end.yml", "SkygridBlocks");
         isFirstBoot |= copyFileIfNotPresent("ores.yml", "OreGenBlock");
         isFirstBoot |= copyFileIfNotPresent("ChestSettings.yml", "SkygridBlocks");
         isFirstBoot |= copyFileIfNotPresent("SpawnerSettings.yml", "SkygridBlocks");

@@ -1,0 +1,113 @@
+# SkyGrid Nether Block Selection Guide:
+#
+# This YAML configuration file defines the block distributions for different
+# biomes in the Nether dimension of your SkyGrid world. The configuration is
+# organized into two main sections:
+#
+# 1. biomes: Maps each biome (or group of biomes) to a specific distribution.
+# 2. distributions: Defines the block materials and their respective percentages.
+#
+# Important Notes:
+# - Each biome must be assigned a distribution.
+# - Percentages represent the relative chance of each block appearing.
+# - The total percentage for each distribution does not need to sum to 100%.
+#   The system will handle scaling as necessary.
+# - Ensure that all block names correspond to valid Bukkit `Material` enums.
+#   Reference: [Bukkit Material Documentation](https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Material.html)
+#
+# Example Usage:
+# - To assign the same distribution to multiple biomes, list the biomes separated by commas.
+# - You can define multiple distributions and assign them to different biomes as needed.
+#
+# Supported Biomes:
+# - Refer to [Bukkit Biome Documentation](https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/block/Biome.html) for a list of supported biomes.
+
+biomes:
+  # Single-biome entry with its own custom distribution. To assign multiple biomes to the same distribution use comma separation like "SAMPLE_BIOME, OTHER_BIOME".
+  SOUL_SAND_VALLEY:
+    distribution: custom_soul_sand_valley
+
+distributions:
+  # Distribution for SOUL_SAND_VALLEY
+  custom_soul_sand_valley:
+    ANCIENT_DEBRIS: 0.1
+    BASALT: 20
+    BLACKSTONE: 60
+    BONE_BLOCK: 5
+    CHEST: 0.05
+    CRYING_OBSIDIAN: 2
+    GILDED_BLACKSTONE: 4
+    GLOWSTONE: 3
+    GRAVEL: 30
+    LAVA: 50
+    MAGMA_BLOCK: 50
+    NETHER_BRICKS: 30
+    NETHER_GOLD_ORE: 6
+    NETHER_QUARTZ_ORE: 15
+    NETHER_SPROUTS: 7
+    NETHER_WART: 30
+    NETHERRACK: 60
+    OBSIDIAN: 5
+    OCHRE_FROGLIGHT: 4
+    PEARLESCENT_FROGLIGHT: 4
+    POLISHED_BLACKSTONE: 6
+    POLISHED_BLACKSTONE_BRICKS: 4
+    SHROOMLIGHT: 5
+    SOUL_FIRE: 5
+    SOUL_SAND: 150
+    SOUL_SOIL: 600
+    SPAWNER: 0.01
+    TWISTING_VINES: 5
+    VERDANT_FROGLIGHT: 4
+
+  # Additional distributions can be defined here.
+  # Example:
+  # alternate_distribution:
+  #   STONE: 40
+  #   DIRT: 40
+  #   SAND: 20
+
+# Optional default distribution for biomes not explicitly defined in the 'biomes' section.
+# This ensures that a fallback distribution is available.
+default_distribution:
+  ANCIENT_DEBRIS: 0.1
+  BASALT: 20
+  BLACKSTONE: 60
+  BONE_BLOCK: 5
+  CHEST: 0.05
+  CRIMSON_FUNGUS: 6
+  CRIMSON_HYPHAE: 6
+  CRIMSON_NYLIUM: 60
+  CRIMSON_ROOTS: 6
+  CRIMSON_STEM: 10
+  CRYING_OBSIDIAN: 2
+  GILDED_BLACKSTONE: 4
+  GLOWSTONE: 3
+  GRAVEL: 30
+  LAVA: 50
+  MAGMA_BLOCK: 50
+  NETHER_BRICKS: 30
+  NETHER_GOLD_ORE: 6
+  NETHER_QUARTZ_ORE: 15
+  NETHER_SPROUTS: 7
+  NETHER_WART: 30
+  NETHER_WART_BLOCK: 6
+  NETHERRACK: 600
+  OBSIDIAN: 5
+  OCHRE_FROGLIGHT: 4
+  PEARLESCENT_FROGLIGHT: 4
+  POLISHED_BLACKSTONE: 6
+  POLISHED_BLACKSTONE_BRICKS: 4
+  SHROOMLIGHT: 5
+  SOUL_FIRE: 5
+  SOUL_SAND: 10
+  SOUL_SOIL: 100
+  SPAWNER: 0.01
+  TWISTING_VINES: 5
+  VERDANT_FROGLIGHT: 4
+  WARPED_FUNGUS: 6
+  WARPED_HYPHAE: 6
+  WARPED_NYLIUM: 60
+  WARPED_ROOTS: 6
+  WARPED_STEM: 10
+  WARPED_WART_BLOCK: 10

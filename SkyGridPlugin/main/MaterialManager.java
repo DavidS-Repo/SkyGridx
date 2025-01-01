@@ -7,18 +7,14 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
-
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.concurrent.ThreadLocalRandom;
-import java.util.stream.Collectors;
-
 import org.bukkit.Material;
+import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
+
+import java.io.File;
+import java.util.Arrays;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class MaterialManager {
 	private final SkyGridPlugin plugin;
@@ -34,9 +30,9 @@ public class MaterialManager {
 	}
 
 	private void precomputeBiomeMappings() {
-		worldBiomeMappings.put("world.txt", new ObjectOpenHashSet<>(Arrays.stream(WorldBiomes.values()).map(Enum::name).collect(Collectors.toSet())));
-		worldBiomeMappings.put("world_nether.txt", new ObjectOpenHashSet<>(Arrays.stream(NetherBiomes.values()).map(Enum::name).collect(Collectors.toSet())));
-		worldBiomeMappings.put("world_the_end.txt", new ObjectOpenHashSet<>(Arrays.stream(EndBiomes.values()).map(Enum::name).collect(Collectors.toSet())));
+		worldBiomeMappings.put("world.yml", new ObjectOpenHashSet<>(Arrays.asList(Arrays.stream(WorldBiomes.values()).map(Enum::name).toArray(String[]::new))));
+		worldBiomeMappings.put("world_nether.yml", new ObjectOpenHashSet<>(Arrays.asList(Arrays.stream(NetherBiomes.values()).map(Enum::name).toArray(String[]::new))));
+		worldBiomeMappings.put("world_the_end.yml", new ObjectOpenHashSet<>(Arrays.asList(Arrays.stream(EndBiomes.values()).map(Enum::name).toArray(String[]::new))));
 	}
 
 	private void precomputeAllMaterialDistributions() {
@@ -45,7 +41,7 @@ public class MaterialManager {
 		}
 	}
 
-	private static enum WorldBiomes {
+	private enum WorldBiomes {
 		FROZEN_RIVER, FROZEN_OCEAN, DEEP_FROZEN_OCEAN, DEEP_LUKEWARM_OCEAN, LUKEWARM_OCEAN, COLD_OCEAN, DEEP_COLD_OCEAN,
 		OCEAN, DEEP_OCEAN, RIVER, WARM_OCEAN, SWAMP, MANGROVE_SWAMP, DESERT, DARK_FOREST, OLD_GROWTH_PINE_TAIGA,
 		OLD_GROWTH_SPRUCE_TAIGA, BEACH, SNOWY_BEACH, STONY_SHORE, JUNGLE, SPARSE_JUNGLE, BAMBOO_JUNGLE, JAGGED_PEAKS,
@@ -55,97 +51,105 @@ public class MaterialManager {
 		DEEP_DARK, LUSH_CAVES, DRIPSTONE_CAVES, BADLANDS, ERODED_BADLANDS, WOODED_BADLANDS, PALE_GARDEN
 	}
 
-	private static enum NetherBiomes {
+	private enum NetherBiomes {
 		BASALT_DELTAS, CRIMSON_FOREST, NETHER_WASTES, SOUL_SAND_VALLEY, WARPED_FOREST
 	}
 
-	private static enum EndBiomes {
+	private enum EndBiomes {
 		THE_END, END_BARRENS, END_HIGHLANDS, END_MIDLANDS, SMALL_END_ISLANDS
 	}
 
 	public void loadMaterialsForWorld(String fileName) {
-		Path filePath = Paths.get(plugin.getDataFolder().toString(), "SkygridBlocks", fileName);
-		try {
-			String fileContent = Files.readString(filePath, StandardCharsets.UTF_8);
-			Object2DoubleMap<Material> distribution = new Object2DoubleOpenHashMap<>();
-			String worldName = getWorldNameFromFileName(fileName);
-			for (String line : fileContent.split("\n")) {
-				processLine(line.trim(), distribution);
-			}
-			ObjectSet<String> biomes = worldBiomeMappings.get(fileName);
-			for (String biome : biomes) {
-				String alias = worldName + "-" + biome;
-				MaterialDistribution materialDistribution = new MaterialDistribution(distribution);
-				setMaterialDistribution(alias, materialDistribution);
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
+		File file = new File(plugin.getDataFolder(), "SkygridBlocks/" + fileName);
+		if (!file.exists()) {
+			plugin.getLogger().warning("File not found: " + file.getPath());
+			return;
 		}
-	}
-
-	private void processLine(String line, Object2DoubleMap<Material> distribution) {
-		if (!line.startsWith("#") && !line.isEmpty()) {
-			String[] parts = line.split(":");
-			Material material = Material.getMaterial(parts[0]);
-			if (material != null) {
-				double percentage = parts.length > 1 ? parsePercentage(parts[1]) : 1.0;
-				distribution.put(material, distribution.getOrDefault(material, 0.0) + percentage);
+		FileConfiguration config = YamlConfiguration.loadConfiguration(file);
+		String worldName = getWorldNameFromFileName(fileName);
+		boolean hasDefaultDistribution = config.contains("default_distribution");
+		ConfigurationSection distributionsSection = config.getConfigurationSection("distributions");
+		Object2ObjectOpenHashMap<String, MaterialDistribution> distributionCache = new Object2ObjectOpenHashMap<>();
+		if (distributionsSection == null) {
+			if (!hasDefaultDistribution) {
+				plugin.getLogger().warning("'distributions' section not found in " + fileName);
 			}
-		}
-	}
-
-	public void loadMaterialsForWorldMultiBiome(String fileName) {
-		Path filePath = Paths.get(plugin.getDataFolder().toString(), "SkygridBlocks", fileName);
-		try {
-			String fileContent = Files.readString(filePath, StandardCharsets.UTF_8);
-			ObjectSet<String> currentBiomes = new ObjectOpenHashSet<>();
-			Object2DoubleMap<Material> materialsMap = new Object2DoubleOpenHashMap<>();
-			String worldName = getWorldNameFromFileName(fileName);
-			for (String line : fileContent.split("\n")) {
-				line = line.trim();
-				if (line.startsWith("#")) {
+		} else {
+			for (String key : distributionsSection.getKeys(false)) {
+				ConfigurationSection distSection = distributionsSection.getConfigurationSection(key);
+				if (distSection == null) {
+					plugin.getLogger().warning("No section found for distribution key: " + key + " in file " + fileName);
 					continue;
 				}
-				if (line.startsWith("-")) {
-					if (!currentBiomes.isEmpty() && !materialsMap.isEmpty()) {
-						for (String biome : currentBiomes) {
-							String alias = worldName + "-" + biome;
-							MaterialDistribution materialDistribution = new MaterialDistribution(materialsMap);
-							setMaterialDistribution(alias, materialDistribution);
-						}
-						currentBiomes.clear();
-						materialsMap.clear();
-					}
-					String[] biomes = line.replace("-", "").split(",");
-					Collections.addAll(currentBiomes, biomes);
-					continue;
-				}
-				if (!line.isEmpty()) {
-					String[] parts = line.split(":");
-					Material material = Material.getMaterial(parts[0]);
+				Object2DoubleMap<Material> distributionMap = new Object2DoubleOpenHashMap<>();
+				for (String materialKey : distSection.getKeys(false)) {
+					double percentage = distSection.getDouble(materialKey);
+					Material material = Material.getMaterial(materialKey.trim().toUpperCase());
 					if (material != null) {
-						double percentage = parts.length > 1 ? parsePercentage(parts[1]) : 1.0;
-						materialsMap.put(material, materialsMap.getOrDefault(material, 0.0) + percentage);
+						distributionMap.put(material, percentage);
+					} else {
+						plugin.getLogger().warning("Invalid material '" + materialKey
+								+ "' in distribution '" + key + "' of file " + fileName);
 					}
 				}
+				if (distributionMap.isEmpty()) {
+					plugin.getLogger().warning("Empty distribution '" + key + "' in file " + fileName);
+					continue;
+				}
+				distributionCache.put(key, new MaterialDistribution(distributionMap));
 			}
-			if (!currentBiomes.isEmpty() && !materialsMap.isEmpty()) {
-				for (String biome : currentBiomes) {
-					String alias = worldName + "-" + biome;
-					MaterialDistribution materialDistribution = new MaterialDistribution(materialsMap);
-					setMaterialDistribution(alias, materialDistribution);
+		}
+		ConfigurationSection biomesSection = config.getConfigurationSection("biomes");
+		if (biomesSection == null) {
+			if (!hasDefaultDistribution) {
+				plugin.getLogger().warning("'biomes' section not found in " + fileName);
+			}
+		} else {
+			for (String biomeKey : biomesSection.getKeys(false)) {
+				String distributionKey = biomesSection.getString(biomeKey + ".distribution");
+				if (distributionKey == null) {
+					plugin.getLogger().warning("No distribution defined for biome '" + biomeKey + "' in file " + fileName);
+					continue;
+				}
+				MaterialDistribution distribution = distributionCache.get(distributionKey);
+				if (distribution == null) {
+					plugin.getLogger().warning("Distribution '" + distributionKey
+							+ "' not found for biome '" + biomeKey + "' in file " + fileName);
+					continue;
+				}
+				String[] biomes = biomeKey.split(",");
+				for (String biome : biomes) {
+					String trimmedBiome = biome.trim();
+					if (trimmedBiome.isEmpty()) {
+						plugin.getLogger().warning("Empty biome name in key: " + biomeKey + " in file " + fileName);
+						continue;
+					}
+					String alias = worldName + "-" + trimmedBiome;
+					setMaterialDistribution(alias, distribution);
 				}
 			}
-		} catch (IOException e) {
-			e.printStackTrace();
 		}
-	}
-
-	private double parsePercentage(String percentageString) {
-		try {
-			return Double.parseDouble(percentageString);
-		} catch (NumberFormatException e) {
-			return 1.0;
+		if (config.contains("default_distribution")) {
+			ConfigurationSection defaultDistSection = config.getConfigurationSection("default_distribution");
+			if (defaultDistSection != null) {
+				Object2DoubleMap<Material> defaultMap = new Object2DoubleOpenHashMap<>();
+				for (String materialKey : defaultDistSection.getKeys(false)) {
+					double percentage = defaultDistSection.getDouble(materialKey);
+					Material material = Material.getMaterial(materialKey.trim().toUpperCase());
+					if (material != null) {
+						defaultMap.put(material, percentage);
+					} else {
+						plugin.getLogger().warning("Invalid material '" + materialKey
+								+ "' in default_distribution of file " + fileName);
+					}
+				}
+				if (!defaultMap.isEmpty()) {
+					MaterialDistribution defaultDistribution = new MaterialDistribution(defaultMap);
+					setMaterialDistribution(worldName + "-DEFAULT", defaultDistribution);
+				} else {
+					plugin.getLogger().warning("Default distribution is empty in file " + fileName);
+				}
+			}
 		}
 	}
 
@@ -158,11 +162,16 @@ public class MaterialManager {
 	}
 
 	public Material getRandomMaterialForWorld(String worldName, String biomeName) {
-		String alias = worldName + "-" + biomeName;
-		MaterialDistribution materialDistribution = materialDistributions.get(alias);
+		MaterialDistribution materialDistribution = materialDistributions.get(worldName + "-" + biomeName);
 		if (materialDistribution != null) {
 			return materialDistribution.next();
 		}
+		materialDistribution = materialDistributions.get(worldName + "-DEFAULT");
+		if (materialDistribution != null) {
+			return materialDistribution.next();
+		}
+		plugin.getLogger().warning("No material distribution found for alias: " + worldName + "-" + biomeName
+				+ " and no default distribution available.");
 		return null;
 	}
 
@@ -171,67 +180,57 @@ public class MaterialManager {
 		private final double[] probabilities;
 		private final int[] alias;
 		private final int size;
-
 		public MaterialDistribution(Object2DoubleMap<Material> distribution) {
-			size = distribution.size();
-			materials = new Material[size];
-			probabilities = new double[size];
-			alias = new int[size];
-
-			IntArrayList small = new IntArrayList();
-			IntArrayList large = new IntArrayList();
-
-			double total = calculateTotal(distribution);
-			double[] normalized = new double[size];
+			this.size = distribution.size();
+			this.materials = new Material[size];
+			this.probabilities = new double[size];
+			this.alias = new int[size];
+			double total = 0.0;
 			int index = 0;
-
-			for (Object2DoubleMap.Entry<Material> entry : distribution.object2DoubleEntrySet()) {
-				materials[index] = entry.getKey();
+			Material[] tempMaterials = new Material[size];
+			double[] normalized = new double[size];
+			Object2DoubleMap.FastEntrySet<Material> entries =(Object2DoubleMap.FastEntrySet<Material>) distribution.object2DoubleEntrySet();
+			for (Object2DoubleMap.Entry<Material> entry : entries) {
+				total += entry.getDoubleValue();
+			}
+			for (Object2DoubleMap.Entry<Material> entry : entries) {
+				tempMaterials[index] = entry.getKey();
 				normalized[index] = (entry.getDoubleValue() / total) * size;
-				if (normalized[index] < 1.0) {
-					small.add(index);
-				} else {
-					large.add(index);
-				}
 				index++;
 			}
-
+			IntArrayList small = new IntArrayList();
+			IntArrayList large = new IntArrayList();
+			for (int i = 0; i < size; i++) {
+				if (normalized[i] < 1.0) {
+					small.add(i);
+				} else {
+					large.add(i);
+				}
+			}
 			while (!small.isEmpty() && !large.isEmpty()) {
 				int smallIndex = small.removeInt(small.size() - 1);
 				int largeIndex = large.removeInt(large.size() - 1);
-
 				probabilities[smallIndex] = normalized[smallIndex];
 				alias[smallIndex] = largeIndex;
-
 				normalized[largeIndex] = (normalized[largeIndex] + normalized[smallIndex]) - 1.0;
-
 				if (normalized[largeIndex] < 1.0) {
 					small.add(largeIndex);
 				} else {
 					large.add(largeIndex);
 				}
 			}
-
 			while (!small.isEmpty()) {
 				probabilities[small.removeInt(small.size() - 1)] = 1.0;
 			}
-
 			while (!large.isEmpty()) {
 				probabilities[large.removeInt(large.size() - 1)] = 1.0;
 			}
-		}
 
-		private double calculateTotal(Object2DoubleMap<Material> distribution) {
-			double total = 0.0;
-			for (double value : distribution.values()) {
-				total += value;
-			}
-			return total;
+			System.arraycopy(tempMaterials, 0, materials, 0, size);
 		}
-
 		public Material next() {
-			int column = ThreadLocalRandom.current().nextInt(size);
-			return ThreadLocalRandom.current().nextDouble() < probabilities[column] ? materials[column] : materials[alias[column]];
+			final int column = ThreadLocalRandom.current().nextInt(size);
+			return ThreadLocalRandom.current().nextDouble() < probabilities[column]? materials[column]: materials[alias[column]];
 		}
 	}
 }

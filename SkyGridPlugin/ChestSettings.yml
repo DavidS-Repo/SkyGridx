@@ -1,25 +1,50 @@
-# The available items for use can be found at https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Material.html
-# The available biomes can be found here: https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/block/Biome.html
+# ------------------------------------------------------------------------------
+#  Chest Settings
+#
+#  This file configures how chests are populated in specific biomes, using a
+#  weight-based system for random item selection. Each chest configuration
+#  also respects a global "MaxItemsPerSlot" to control the number of items that
+#  can appear in any single slot.
+# ------------------------------------------------------------------------------
+#
+#  1) MaxItemsPerSlot (Global)
+#     - Sets a hard limit on how many items of a single type can be placed in
+#       one slot, regardless of its maxAmount. Default: 2
+# 
+#  2) ChestSettings (Parent Key)
+#     - Under this, you create one or more named chest configs (e.g., "Chest1").
+#     - Each chest config has:
+#        a) Items: A list of item entries with the format:
+#           ITEM_NAME:weight:maxAmount
+#           - ITEM_NAME: Must be a valid Bukkit Material
+#           - weight: A numeric "likelihood" relative to other items
+#           - maxAmount: The total maximum items of that type allowed
+#        b) Biomes: A list of biomes where this chest config applies.
+#
+#  3) How the Code Chooses Items (Weight-Based):
+#     - The plugin sums all item 'weight' values in a chest config, then picks
+#       an item for each empty slot in proportion to those weights.
+#       Example: If you have four items each with weight 5, total weight is 20.
+#       Each item has a (5/20) = 25% chance per slot.
+# 
+#  4) Reducing Item Chance (Dummy Items):
+#     - If you want to lower the overall chance of getting a high-value item,
+#       you can add a large-weight "dummy" item, like 'AIR', to dilute the
+#       valuable item's share of total weight.
+#
+#  5) maxAmount vs. MaxItemsPerSlot
+#     - maxAmount = total max of that item in the entire chest.
+#     - MaxItemsPerSlot (here at the top) = how many of the item can appear
+#       in any individual slot.
+#
+#  6) YAML Tips:
+#     - Use standard YAML rules for naming chest configurations. 
+#       Alphanumeric, underscores, or quoted strings if you have spaces/special chars.
+#     - The plugin supports both "expanded" and "compact" YAML list styles.
+#
+# ------------------------------------------------------------------------------
 
-# In YAML, identifiers or keys (such as "Chest1" in your example) are subject to certain rules.
-
-# - Do's -
-# Alphanumeric Characters: Identifiers can contain letters (both uppercase and lowercase) and numbers. For example, "Chest1" is a valid identifier.
-# Underscores: You can use underscores (_) in identifiers. For instance, "my_chest" is a valid identifier.
-# Hyphens in Quoted Strings: If an identifier contains special characters or spaces, you can enclose it in single or double quotes. For example, "'Special Chest'" or "\"Special Chest\"" are valid.
-
-# - Don'ts -
-# Special Characters: Avoid using special characters like !, @, #, $, %, etc., in identifiers without enclosing them in quotes. For example, "Chest@123" should be written as "'Chest@123'" if you want to use special characters.
-# Leading Spaces: Identifiers should not have leading spaces. For instance, " MyChest" with a space at the beginning is not a valid identifier.
-# Trailing Spaces: Similarly, identifiers should not have trailing spaces. "MyChest " with a space at the end is not valid.
-# Spaces in the Middle: While you can use spaces within identifiers if they are enclosed in quotes, it's generally a good practice to avoid spaces within identifiers for clarity. For example, "My Chest" is valid, but "MyChest" is more commonly used.
-# Reserved Keywords: Avoid using YAML reserved keywords as identifiers. These keywords have special meaning in YAML and should not be used as keys. For example, "true," "false," and "null" are reserved keywords.
-# Case Sensitivity: YAML is case-sensitive. "myChest" and "MyChest" would be considered as two different identifiers.
-
-# ChestSettings: This is the top-level section of the YAML configuration and acts as the main container for all chest settings.
-# Chest1: This represents the first chest configuration, which we'll be using as an example. The code will look for a chest configuration with the key "Chest1." The key can be whatever you want; it serves as an identifier.
-# Items: Under the "Chest1" configuration, there is an "Items" section. The code will process the items listed here to determine what should be placed in the chest's inventory. Formatting: "- ITEM_NAME:PERCENTAGE:MAX_AMOUNT"
-# Biomes: This section lists the biomes in which the chest's item configuration will apply. Formatting: "- BIOME_NAME"
+MaxItemsPerSlot: 2
 
 ChestSettings:
   Chest1:
@@ -33,16 +58,27 @@ ChestSettings:
     Biomes:
       - MUSHROOM_FIELDS
 
-# The YAML above will be interpreted as follows:
+# Explanation of the example above:
+#   - 'Chest1' is a custom identifier for this chest configuration.
+#   - 'Items' are listed in "MATERIAL:weight:maxAmount" format.
+#       * MYCELIUM:30:5   => weight=30, maxAmount=5
+#       * RED_MUSHROOM:20:5   => weight=20, maxAmount=5
+#       etc.
+#
+#   The code will sum all item weights (30 + 20 + 20 + 10 + 10 + 10 = 100),
+#   so MYCELIUM is 30/100 = 30% chance per slot, RED_MUSHROOM is 20%, etc.
+#   Once an item exceeds its maxAmount (5 total in this example), it won't
+#   be chosen again.
+#
+#   MaxItemsPerSlot is a global setting at the top of this file (default 2),
+#   so even if maxAmount is 5, each slot can only hold up to 2 items.
+#
+#   'Biomes: [MUSHROOM_FIELDS]' indicates that this config is used whenever
+#   a chest is generated in the MUSHROOM_FIELDS biome.
 
-# For a chest located in the "MUSHROOM_FIELDS" biome, the code will use the specified item settings to randomly populate the chest's inventory. The percentage chances and amount ranges for each item will be considered when filling the chest.
-# MYCELIUM:30:5 - This line specifies an item with the name "MYCELIUM" with a chance of 30% (percentage) of being placed in the chest, and the max amount of this item is 5. The code will randomly select a value between 1 and 5 for the number of MYCELIUM to place in the chest.
+# Note: If you want to add more chest configs (like Chest2, Chest3, etc.),
+# just create another key under ChestSettings with its own Items/Biomes.
 
-
-# This is a more compact way of formatting the above. Both versions are valid.
-# How to format item entries: [ITEM_NAME:PERCENTAGE:MAX_AMOUNT]. If there is more than one item, you can do [ITEM_NAME:PERCENTAGE:MAX_AMOUNT, ITEM_NAME:PERCENTAGE:MAX_AMOUNT].
-# If you are doing multiple biomes, this is also a more compact way of formatting it.
-# How to format biome entries: [BIOME_NAME]. If there is more than one biome, you can do [BIOME_NAME, BIOME_NAME].
 
 #Overworld Biomes
 

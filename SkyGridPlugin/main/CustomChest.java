@@ -27,6 +27,7 @@ public class CustomChest {
 
 	private static CustomChest instance;
 	private static JavaPlugin plugin;
+	private static int maxPerSlot;
 	private final Int2ObjectMap<ItemsData> chestItemsMap;
 	private final Map<String, IntSet> chestBiomesMap;
 
@@ -49,6 +50,7 @@ public class CustomChest {
 			Inventory chestInventory = chest.getInventory();
 			Biome biome = block.getBiome();
 			String biomeName = biome.toString().toUpperCase();
+
 			IntSet chestKeys = chestBiomesMap.getOrDefault(biomeName, IntSet.of());
 			if (!chestKeys.isEmpty()) {
 				int chestKey = chestKeys.iterator().nextInt();
@@ -71,6 +73,7 @@ public class CustomChest {
 			ItemStack[] itemsToPlace = new ItemStack[chestInventory.getSize()];
 			int[] currentItemCounts = getCurrentItemCounts(chestInventory);
 			int[] emptySlots = getEmptySlots(chestInventory);
+
 			for (int slot : emptySlots) {
 				ItemSettings itemSettings = itemsData.getRandomItemSettings();
 				if (itemSettings != null) {
@@ -78,7 +81,9 @@ public class CustomChest {
 					int currentAmount = currentItemCounts[materialOrdinal];
 					int maxAddable = itemSettings.maxAmount - currentAmount;
 					if (maxAddable > 0) {
-						int amount = ThreadLocalRandom.current().nextInt(1, maxAddable + 1);
+						int maxSlotAdd = Math.min(maxAddable, maxPerSlot);
+						int amount = ThreadLocalRandom.current().nextInt(1, maxSlotAdd + 1);
+
 						itemsToPlace[slot] = new ItemStack(Material.values()[materialOrdinal], amount);
 						currentItemCounts[materialOrdinal] += amount;
 					}
@@ -127,6 +132,9 @@ public class CustomChest {
 				return;
 			}
 			FileConfiguration chestSettings = YamlConfiguration.loadConfiguration(chestSettingsFile);
+			if (chestSettings.contains("MaxItemsPerSlot")) {
+				maxPerSlot = chestSettings.getInt("MaxItemsPerSlot", 2);
+			}
 			if (chestSettings.isConfigurationSection("ChestSettings")) {
 				ConfigurationSection chestSettingsSection = chestSettings.getConfigurationSection("ChestSettings");
 				for (String chestKeyString : chestSettingsSection.getKeys(false)) {
@@ -168,6 +176,7 @@ public class CustomChest {
 		int materialOrdinal;
 		double weight;
 		int maxAmount;
+
 		ItemSettings(int materialOrdinal, double weight, int maxAmount) {
 			this.materialOrdinal = materialOrdinal;
 			this.weight = weight;
@@ -179,9 +188,11 @@ public class CustomChest {
 		private final ItemSettings[] itemSettingsArray;
 		private final double[] cumulativeWeights;
 		private final double totalWeight;
+
 		ItemsData(Object2ReferenceMap<Integer, ItemSettings> itemsMap) {
 			itemSettingsArray = itemsMap.values().toArray(new ItemSettings[0]);
 			cumulativeWeights = new double[itemSettingsArray.length];
+
 			double cumulative = 0.0;
 			for (int i = 0; i < itemSettingsArray.length; i++) {
 				cumulative += itemSettingsArray[i].weight;

@@ -1,0 +1,73 @@
+# SkyGrid End Block Selection Guide:
+#
+# This YAML configuration file defines the block distributions for different
+# biomes in The End dimension of your SkyGrid world. The configuration is
+# split into two main sections:
+# 
+# 1. biomes: Maps each biome to a specific distribution.
+# 2. distributions: Defines the block materials and their respective percentages.
+#
+# Important Notes:
+# - Each biome must be assigned a distribution.
+# - Percentages represent the relative chance of each block appearing.
+# - The total percentage for each distribution does not need to sum to 100%.
+#   The system will handle scaling as necessary.
+# - Ensure that all block names correspond to valid Bukkit `Material` enums.
+#   Reference: [Bukkit Material Documentation](https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Material.html)
+#
+# Example Usage:
+# - To assign the same distribution to multiple biomes, map each biome to the desired distribution.
+# - You can define multiple distributions and assign them to different biomes as needed.
+#
+# Supported Biomes:
+# - Refer to [Bukkit Biome Documentation](https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/block/Biome.html) for a list of supported biomes.
+
+biomes:
+  END_HIGHLANDS:
+    distribution: custom_end_highlands
+
+distributions:
+  custom_end_highlands:
+    # Each block and its chance of appearing.
+    # Format: BlockID:Percentage
+    # Example: "STONE:50" means a 50% chance of Stone appearing.
+    # The total percentage does not need to sum to 100%; the system will scale as needed.
+    BREWING_STAND: 0.1
+    CHEST: 0.1
+    CHORUS_FLOWER: 5
+    END_ROD: 20
+    END_STONE: 60
+    END_STONE_BRICKS: 5
+    ENDER_CHEST: 0.1
+    PURPLE_STAINED_GLASS: 15
+    PURPUR_BLOCK: 15
+    PURPUR_PILLAR: 15
+    PURPUR_STAIRS: 15
+    # You can define additional distributions here and assign them to different biomes.
+    # For example:
+    # alternate_distribution:
+    #   STONE: 40
+    #   DIRT: 40
+    #   SAND: 20
+    #
+    # To assign this distribution to a biome, add it under the 'biomes' section:
+    # biomes:
+    #   SOME_OTHER_BIOME:
+    #     distribution: alternate_distribution
+
+# Optional default distribution for biomes not explicitly defined in the 'biomes' section.
+# This ensures that a fallback distribution is available.
+default_distribution:
+  BREWING_STAND: 0.1
+  CHEST: 0.01
+  CHORUS_FLOWER: 5
+  END_ROD: 10
+  END_STONE: 60
+  END_STONE_BRICKS: 5
+  ENDER_CHEST: 0.01
+  OBSIDIAN: 10
+  PURPLE_STAINED_GLASS: 5
+  PURPUR_BLOCK: 5
+  PURPUR_PILLAR: 5
+  PURPUR_STAIRS: 5
+  SPAWNER: 0.0001
