@@ -3,7 +3,7 @@
 :: Set variables
 set plugin_url=https://raw.githubusercontent.com/DavidS-Repo/SkyGridx/main/SkyGrid.jar
 set datapack_url=https://raw.githubusercontent.com/DavidS-Repo/SkyGridx/main/DataPacks/Void-Biomes-1.21.04.zip
-set paper_url=https://api.papermc.io/v2/projects/paper/versions/1.21.4/builds/81/downloads/paper-1.21.4-81.jar
+set paper_url=https://api.papermc.io/v2/projects/paper/versions/1.21.4/builds/82/downloads/paper-1.21.4-82.jar
 
 set plugin_folder=plugins
 set world_folder=world
