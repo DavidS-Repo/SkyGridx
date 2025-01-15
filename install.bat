@@ -3,7 +3,7 @@
 :: Set variables
 set plugin_url=https://raw.githubusercontent.com/DavidS-Repo/SkyGridx/main/SkyGrid.jar
 set datapack_url=https://raw.githubusercontent.com/DavidS-Repo/SkyGridx/main/DataPacks/Void-Biomes-1.21.04.zip
-set paper_url=https://api.papermc.io/v2/projects/paper/versions/1.21.4/builds/113/downloads/paper-1.21.4-113.jar
+set paper_fetch_url=https://www.davids-repo.dev/fetch_latest_paper_build/
 
 set plugin_folder=plugins
 set world_folder=world
@@ -14,6 +14,16 @@ echo Creating necessary server folders...
 mkdir %plugin_folder%
 mkdir %world_folder%
 mkdir %datapack_folder%
+
+:: Fetch the latest PaperMC download URL
+echo Fetching latest PaperMC download URL...
+for /f "tokens=*" %%a in ('curl -s %paper_fetch_url%') do set paper_url=%%a
+
+:: Check if the paper_url variable was set correctly
+if "%paper_url%"=="" (
+    echo Failed to fetch PaperMC URL.
+    exit /b 1
+)
 
 :: Download Paper server jar
 echo Downloading Paper server jar...
