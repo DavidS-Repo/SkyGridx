@@ -137,6 +137,7 @@ tprCommand:
     - WHEAT
     - WHITE_TULIP
     - WITHER_ROSE
+    - PALE_HANGING_MOSS
 
 # Fog settings
 fog:
