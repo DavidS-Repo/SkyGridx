@@ -3,7 +3,7 @@ The SkyGrid Plugin offers access to the latest blocks (1.21.4) and empowers user
 
 This plugin also includes a built-in random teleport command for each dimension, ensuring that players can safely explore their chosen realm. Furthermore, it features an ore generator that can modify stone generation to create various blocks of your choice. While currently configured primarily for ores, the possibilities are virtually endless.
 
-![Skygrid](https://www.toolsnexus.com/mc/sg3.jpg)
+![Skygrid](https://www.davids-repo.dev/mc/sg3.webp)
 
  
 # **Key Features:**
@@ -83,16 +83,16 @@ This plugin also includes a built-in random teleport command for each dimension,
 - `sg.*`: Provides access to all SkyGrid commands.
 
 ## Installation Instructions
-For detailed installation instructions, [click here](Settings/Installation.md).
+For detailed installation instructions, [click here](https://www.davids-repo.dev/skygridx/installation/).
 
 ## Configuration Files
-- [Plugin Settings](Settings/settings.md)
-- [Ore Generator Settings](Settings/ores.md)
-- [Mob Spawner Settings](Settings/spawner_settings.md)
-- [Chest Settings](Settings/chest_settings.md)
-- [SkyGrid World Block Selection Guide](Settings/block_selection.md)
+- [Plugin Settings](https://www.davids-repo.dev/skygridx/settings)
+- [Ore Generator Settings](https://www.davids-repo.dev/skygridx/ores)
+- [Mob Spawner Settings](https://www.davids-repo.dev/skygridx/spawner_settings)
+- [Chest Settings](https://www.davids-repo.dev/skygridx/chest_settings)
+- [SkyGrid World Block Selection Guide](https://www.davids-repo.dev/skygridx/block_selection)
 ---
 
 ## Additional Mechanisms:
-- [Biome-Specific Block Generation Guide](Settings/biome_specific.md)
+- [Biome-Specific Block Generation Guide](https://www.davids-repo.dev/skygridx/biome_specific)
 ---
