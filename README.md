@@ -86,13 +86,13 @@ This plugin also includes a built-in random teleport command for each dimension,
 For detailed installation instructions, [click here](https://www.davids-repo.dev/skygridx/installation/).
 
 ## Configuration Files
-- [Plugin Settings](https://www.davids-repo.dev/skygridx/settings)
-- [Ore Generator Settings](https://www.davids-repo.dev/skygridx/ores)
-- [Mob Spawner Settings](https://www.davids-repo.dev/skygridx/spawner_settings)
-- [Chest Settings](https://www.davids-repo.dev/skygridx/chest_settings)
-- [SkyGrid World Block Selection Guide](https://www.davids-repo.dev/skygridx/block_selection)
+- [Plugin Settings](https://www.davids-repo.dev/skygridx/settings/)
+- [Ore Generator Settings](https://www.davids-repo.dev/skygridx/ores/)
+- [Mob Spawner Settings](https://www.davids-repo.dev/skygridx/spawner_settings/)
+- [Chest Settings](https://www.davids-repo.dev/skygridx/chest_settings/)
+- [SkyGrid World Block Selection Guide](https://www.davids-repo.dev/skygridx/block_selection/)
 ---
 
 ## Additional Mechanisms:
-- [Biome-Specific Block Generation Guide](https://www.davids-repo.dev/skygridx/biome_specific)
+- [Biome-Specific Block Generation Guide](https://www.davids-repo.dev/skygridx/biome_specific/)
 ---
