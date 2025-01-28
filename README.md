@@ -3,7 +3,7 @@ The SkyGrid Plugin offers access to the latest blocks (1.21.4) and empowers user
 
 This plugin also includes a built-in random teleport command for each dimension, ensuring that players can safely explore their chosen realm. Furthermore, it features an ore generator that can modify stone generation to create various blocks of your choice. While currently configured primarily for ores, the possibilities are virtually endless.
 
-![Skygrid](https://www.davids-repo.dev/mc/sg3.webp)
+![Skygrid](https://cdn.modrinth.com/data/ihjAiP7L/images/369966781464107b0a9554703b24cd1a34c98492.jpeg)
 
  
 # **Key Features:**
