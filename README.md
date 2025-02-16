@@ -46,7 +46,7 @@ This plugin also includes a built-in random teleport command for each dimension,
    - Customize spawners for specific biomes at the block level, adding a new layer of customization. For example, if you specify the biome as `DEEP_DARK,` you can configure spawners to spawn `WARDEN` entities exclusively in that biome.
 
 ## **Chest Loot Customization:**
-   - Tailor chest loot settings with precision, specifying items, percentages, and amounts.
+   - Tailor chest loot settings with precision, specifying items, percentages, amounts, custom names, Enchantments , lore colors and more.
    - Tiered loot distribution for added variety, each tier with its own set of items and probabilities.
    - Customize chest loot for specific biomes, allowing for a more immersive and thematic distribution of items based on the environment.
 
