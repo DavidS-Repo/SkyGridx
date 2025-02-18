@@ -1,0 +1,256 @@
+# ------------------------------------------------------------------------------
+#  Chest Settings
+#
+#  This file configures how chests are populated in specific biomes using a
+#  weight-based system for random item selection. Each chest configuration
+#  also respects a global "MaxItemsPerSlot" to control the number of items that
+#  can appear in any single slot.
+#
+#  New Settings:
+#    - CustomName:
+#         Allows you to set a custom display name for an item using Minecraft color codes. For example, "§6HolyDirt" will display the name in gold.
+#
+#    - LevelType (Item-wide):
+#           * Standard: Displays levels as numbers with a "lvl_" prefix (e.g., "Mending lvl_1", "Fortune lvl_2").
+#           * Roman: Displays levels as Roman numerals (e.g., "Mending I", "Fortune II"). Note: I have added roman numeral conversion that supports values up to 3999.
+#           * Default: If omitted or unrecognized, defaults to Roman.
+#
+#    - Enchantments:
+#         Each enchantment entry now supports:
+#           * Weight: The chance (in percent) for the enchantment to be applied.
+#           * MinLevel / MaxLevel: The range for the enchantment level.
+#           * LoreColor: The color used to display the enchantment in the item's lore. Valid colors include: BLACK, DARK_BLUE, DARK_GREEN, DARK_AQUA, DARK_RED, DARK_PURPLE, GOLD, GRAY, DARK_GRAY, BLUE, GREEN, AQUA, RED, LIGHT_PURPLE, YELLOW, WHITE.
+#
+#  Advanced Weighting: Filler Items & Rare Items
+#    - You can add "filler" items (for example, AIR) with a high weight to reduce the overall odds of rare items appearing. For example, setting AIR to a weight of 90 while giving DIAMOND a weight of 0.3 will make diamonds extremely rare.
+#
+# ------------------------------------------------------------------------------
+#
+#  1) MaxItemsPerSlot (Global)
+#     - Sets a hard limit on how many items of a single type can be placed in one
+#       slot, regardless of the item’s maxAmount. Default: 2
+#
+#  2) ChestSettings (Parent Key)
+#     - Under this key, create one or more named chest configurations (e.g., "Chest1").
+#
+#
+#        [Legacy (Compact) Format]
+#
+#         ChestSettings:
+#           ChestOld:
+#             Items: [ITEM_NAME:weight:maxAmount]
+#             Biomes: [BIOME_NAME]
+#
+#       [New Expanded Format]
+#
+#       ChestSettings:
+#         ChestNew:
+#           Items:
+#             -ITEM_NAME:                             # Use the exact item names from https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Material.html
+#               - Weight: <numeric value>
+#               - MaxAmount: <numeric value>
+#               - CustomName: <custom display name>  # Supports use of Minecraft color codes like "§0" for Black and so on.
+#               - LevelType: <Standard or Roman>     # Item-wide setting for enchantment display
+#               - Enchantments:
+#                   - ENCHANTMENT_NAME:              # Use exact enchantment names from https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/enchantments/Enchantment.html
+#                       - Weight: <numeric chance in percent>
+#                       - MinLevel: <minimum level>
+#                       - MaxLevel: <maximum level>
+#                       - LoreColor: <color>         # (Optional) Valid colors: BLACK, DARK_BLUE, DARK_GREEN,DARK_AQUA, DARK_RED, DARK_PURPLE, GOLD, GRAY,DARK_GRAY, BLUE, GREEN, AQUA, RED, LIGHT_PURPLE,YELLOW, WHITE.
+#           Biomes:
+#             - BIOME_NAME                          # Use the exact biome names from https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/block/Biome.html
+#
+#
+#  3) How the Code Chooses Items (Weight-Based):
+#     - The plugin sums all item 'weight' values in a chest config, then picks an item for each empty slot in proportion to those weights.
+#       Example: With four items each having weight 5, the total weight is 20, and each item has a 25% chance per slot.
+#
+#  4) Reducing Item Chance (Filler Items):
+#     - To lower the odds of high-value items appearing, you can add filler items (e.g., AIR) with a high weight to dilute the selection.
+#       For instance, AIR with weight 90 dilutes the chance of DIAMOND (e.g., weight 0.3) being chosen.
+#
+#  5) maxAmount vs. MaxItemsPerSlot:
+#     - maxAmount: The total maximum number of a given item allowed in the entire chest.
+#     - MaxItemsPerSlot: The maximum number of that item that can be placed in any one slot.
+#
+#  6) YAML Tips:
+#     - Use standard YAML naming rules for chest configurations (alphanumeric, underscores,
+#       or quoted strings for spaces/special characters).
+#     - Both "compact" and "expanded" list styles are supported.
+#
+# ------------------------------------------------------------------------------
+#
+MaxItemsPerSlot: 2
+
+ChestSettings:
+  Chest1:
+    Items:
+      - MYCELIUM:30:5
+      - RED_MUSHROOM:20:5
+      - BROWN_MUSHROOM:20:5
+      - RED_MUSHROOM_BLOCK:10:5
+      - BROWN_MUSHROOM_BLOCK:10:5
+      - MUSHROOM_STEM:10:5
+    Biomes:
+      - MUSHROOM_FIELDS
+
+# Explanation of the example above (Legacy Format):
+#   - 'Chest1' is the identifier for this chest configuration.
+#   - Items are listed using the "MATERIAL:weight:maxAmount" format.
+#       * MYCELIUM:30:5   => weight = 30, maxAmount = 5
+#       * RED_MUSHROOM:20:5   => weight = 20, maxAmount = 5
+#       etc.
+#
+#   The total weight is 30 + 20 + 20 + 10 + 10 + 10 = 100.
+#   Therefore, MYCELIUM has a 30% chance per slot, RED_MUSHROOM 20%, etc.
+#
+#   Once an item reaches its maxAmount (here, 5), it will no longer be selected.
+#
+#   MaxItemsPerSlot (global, default 2) limits how many of an item can appear in any one slot.
+#
+#   'Biomes: [MUSHROOM_FIELDS]' indicates that this configuration applies to chests
+#   generated in the MUSHROOM_FIELDS biome.
+#
+# ------------------------------------------------------------------------------
+#
+# New Expanded Format Example:
+#
+# The example below shows the new options in use.
+#
+#
+# ChestSettings:
+#   ChestNew:
+#     Items:
+#       - MYCELIUM:
+#           - Weight: 30
+#           - MaxAmount: 5
+#           - CustomName: §6HolyDirt
+#           - LevelType: Standard          # Options: Standard (shows levels as "lvl_1") or Roman (shows as "I"); defaults to Roman.
+#           - Enchantments:
+#               - FORTUNE:
+#                   - Weight: 100
+#                   - MinLevel: 1
+#                   - MaxLevel: 400
+#                   - LoreColor: RED
+#               - LOOTING:
+#                   - Weight: 30
+#                   - MinLevel: 1
+#                   - MaxLevel: 300
+#                   - LoreColor: BLUE
+#       - AIR:
+#           - Weight: 90
+#           - MaxAmount: 999                # Filler item to reduce the odds of rare items appearing.
+#     Biomes:
+#       - MUSHROOM_FIELDS
+#
+#
+# In this expanded example:
+#   - 'MYCELIUM' uses a custom name (displayed in gold) and an item-wide LevelType of Standard. All enchantments on this item will display levels as "lvl_x".
+#   - The FORTUNE enchantment is set to use a LoreColor of RED, while LOOTING uses BLUE.
+#   - 'AIR' is added as a filler item with a high weight (90) to reduce the chance that rare items (like DIAMOND, if present with a low weight) are chosen.
+#
+# ------------------------------------------------------------------------------
+#
+# You can define multiple chest configurations for different biome groups.
+#
+# Overworld Biomes:
+#
+  Chest2:
+    Items:
+      - WOODEN_AXE:
+        - Weight: 20
+        - MaxAmount: 1
+        - Enchantments:
+          - VANISHING_CURSE:
+            - Weight: 50
+            - MinLevel: 1
+            - MaxLevel: 1
+          - EFFICIENCY:
+            - Weight: 70
+            - MinLevel: 1
+            - MaxLevel: 4
+          - UNBREAKING:
+            - Weight: 30
+            - MinLevel: 1
+            - MaxLevel: 3
+      - WOODEN_PICKAXE:
+        - Weight: 20
+        - MaxAmount: 1
+        - Enchantments:
+          - VANISHING_CURSE:
+            - Weight: 50
+            - MinLevel: 1
+            - MaxLevel: 1
+          - EFFICIENCY:
+            - Weight: 40
+            - MinLevel: 1
+            - MaxLevel: 4
+          - FORTUNE:
+            - Weight: 30
+            - MinLevel: 1
+            - MaxLevel: 3
+          - UNBREAKING:
+            - Weight: 30
+            - MinLevel: 1
+            - MaxLevel: 3
+      - CROSSBOW:
+        - Weight: 20
+        - MaxAmount: 1
+        - Enchantments:
+          - VANISHING_CURSE:
+            - Weight: 50
+            - MinLevel: 1
+            - MaxLevel: 1
+          - MULTISHOT:
+            - Weight: 30
+            - MinLevel: 1
+            - MaxLevel: 1
+          - PIERCING:
+            - Weight: 30
+            - MinLevel: 1
+            - MaxLevel: 4
+          - QUICK_CHARGE:
+            - Weight: 30
+            - MinLevel: 1
+            - MaxLevel: 3
+          - UNBREAKING:
+            - Weight: 30
+            - MinLevel: 1
+            - MaxLevel: 3
+      - NAME_TAG:20:1
+      - GOLDEN_APPLE:20:1
+      - ENCHANTED_GOLDEN_APPLE:20:1
+      - APPLE:40:2, OAK_LOG:40:2
+      - DARK_OAK_LOG:40:2
+      - RAIL:40:2
+      - DIAMOND:40:2
+      - STRING:90:5
+      - ARROW:90:5
+      - STICK:90:5
+      - WHEAT:90:5
+      - IRON_INGOT:90:5
+      - TORCH:90:5
+      - ARMADILLO_SCUTE:10:2
+      - MACE:2:1
+      - OMINOUS_BOTTLE:10:2
+      - OMINOUS_TRIAL_KEY:2:1
+      - TRIAL_KEY:2:1
+      - BREEZE_ROD:10:2
+      - RESIN_CLUMP:10:2
+    Biomes: [BADLANDS, BAMBOO_JUNGLE, BIRCH_FOREST, CHERRY_GROVE, DARK_FOREST, DESERT, DRIPSTONE_CAVES, ERODED_BADLANDS, FLOWER_FOREST, FOREST, GROVE, JAGGED_PEAKS, JUNGLE, LUSH_CAVES, MANGROVE_SWAMP, MEADOW, OLD_GROWTH_BIRCH_FOREST, OLD_GROWTH_PINE_TAIGA, OLD_GROWTH_SPRUCE_TAIGA, PLAINS, SAVANNA, SAVANNA_PLATEAU, SPARSE_JUNGLE, STONY_PEAKS, STONY_SHORE, SUNFLOWER_PLAINS, SWAMP, TAIGA, WINDSWEPT_FOREST, WINDSWEPT_GRAVELLY_HILLS, WINDSWEPT_HILLS, WINDSWEPT_SAVANNA, WOODED_BADLANDS, OCEAN, WARM_OCEAN, LUKEWARM_OCEAN, FROZEN_OCEAN, DEEP_FROZEN_OCEAN, DEEP_LUKEWARM_OCEAN, DEEP_OCEAN, DEEP_COLD_OCEAN, COLD_OCEAN, FROZEN_RIVER, RIVER, BEACH, SNOWY_BEACH, SNOWY_PLAINS, SNOWY_SLOPES, SNOWY_TAIGA, FROZEN_PEAKS, ICE_SPIKES, DEEP_DARK, PALE_GARDEN]
+#
+#Nether Biomes:
+#
+  Chest3:
+    Items: [GOLDEN_APPLE:20:1, ENCHANTED_GOLDEN_APPLE:20:1, GOLD_BLOCK:20:1, GOLDEN_AXE:20:1, IRON_BLOCK:20:1, SNOUT_ARMOR_TRIM_SMITHING_TEMPLATE:20:1, NETHERITE_UPGRADE_SMITHING_TEMPLATE:20:1, IRON_SWORD:20:1, GOLDEN_HELMET:20:1, MUSIC_DISC_PIGSTEP:20:1, DIAMOND:40:2, ANCIENT_DEBRIS:40:2, BONE_BLOCK:40:2, GOLDEN_CARROT:40:2, OBSIDIAN:40:2, CRYING_OBSIDIAN:40:2, IRON_INGOT:90:5, GILDED_BLACKSTONE:90:5, CHAIN:90:5, GOLD_INGOT:90:5, MAGMA_CREAM:90:5, GOLD_NUGGET:90:5, SPECTRAL_ARROW:90:5, STRING:90:5, IRON_NUGGET:90:5, ARROW:90:5, COOKED_PORKCHOP:90:5]
+    Biomes: [BASALT_DELTAS, NETHER_WASTES, CRIMSON_FOREST, SOUL_SAND_VALLEY, WARPED_FOREST]
+#
+# End Biomes Example:
+#
+  Chest4:
+    Items: [ELYTRA:20:1, DRAGON_HEAD:20:1, DRAGON_EGG:20:1, END_CRYSTAL:20:1, ENDER_CHEST:20:1, SHULKER_SHELL:40:2, DIAMOND:40:2, END_ROD:90:5, PURPUR_BLOCK:90:5, MAGENTA_STAINED_GLASS:90:5, GOLD_INGOT:90:5, IRON_INGOT:90:5, OBSIDIAN:90:5]
+    Biomes: [THE_END, END_BARRENS, END_HIGHLANDS, END_MIDLANDS, SMALL_END_ISLANDS]
+#
+# Note: To add additional chest configurations (e.g., Chest5, Chest6, etc.),
+# simply create a new key under ChestSettings with its own Items and Biomes.
+#

@@ -1,0 +1,66 @@
+# Ore Replacement Chances
+
+# This file specifies the chances of different ores replacing generated blocks.
+# When lava or water generates stone, cobblestone, or basalt, they can be replaced
+# with any valid block from the Bukkit Material list:
+# https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Material.html
+
+# Format:
+# Block_Type:
+#   Material_Name: Percentage
+#
+# Block_Type:
+#   - The block that is generated (STONE, COBBLESTONE, or BASALT).
+# Material_Name: Percentage
+#   - Each material name corresponds to the replacement block.
+#   - The percentage is the likelihood of that material being chosen.
+
+# Notes:
+# - Percentages are adjusted proportionally if the total exceeds 100.
+# - Comments starting with '#' are ignored.
+
+# Example:
+# If the configuration is:
+# STONE:
+#   STONE: 50
+#   COAL_ORE: 50
+# Then every time a stone block is generated, there is:
+# - 50% chance it remains as STONE
+# - 50% chance it is replaced with COAL_ORE.
+
+# Replaceable Blocks
+
+# When STONE is generated
+STONE:
+  STONE: 98.00
+  COAL_ORE: 0.3
+  COPPER_ORE: 0.4
+  DIAMOND_ORE: 0.1
+  EMERALD_ORE: 0.1
+  GOLD_ORE: 0.2
+  IRON_ORE: 0.4
+  LAPIS_ORE: 0.2
+  REDSTONE_ORE: 0.3
+
+# When COBBLESTONE is generated
+COBBLESTONE:
+  DEEPSLATE: 98
+  DEEPSLATE_COAL_ORE: 0.3
+  DEEPSLATE_COPPER_ORE: 0.4
+  DEEPSLATE_DIAMOND_ORE: 0.1
+  DEEPSLATE_EMERALD_ORE: 0.1
+  DEEPSLATE_GOLD_ORE: 0.2
+  DEEPSLATE_IRON_ORE: 0.4
+  DEEPSLATE_LAPIS_ORE: 0.2
+  DEEPSLATE_REDSTONE_ORE: 0.3
+
+# When BASALT is generated
+BASALT:
+  ANCIENT_DEBRIS: 0.1
+  BASALT: 44.9
+  BLACKSTONE: 20
+  GILDED_BLACKSTONE: 3.0
+  NETHER_GOLD_ORE: 3.0
+  NETHER_QUARTZ_ORE: 5.0
+  POLISHED_BASALT: 12
+  POLISHED_BLACKSTONE: 12
