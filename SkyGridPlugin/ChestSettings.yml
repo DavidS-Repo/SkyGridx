@@ -1,89 +1,133 @@
 # ------------------------------------------------------------------------------
-#  Chest Settings
+# Chest Settings Documentation
 #
-#  This file configures how chests are populated in specific biomes using a
-#  weight-based system for random item selection. Each chest configuration
-#  also respects a global "MaxItemsPerSlot" to control the number of items that
-#  can appear in any single slot.
+# This file configures how chests are populated in specific biomes using a
+# weight-based system. Each chest configuration respects a global "MaxItemsPerSlot"
+# setting which limits the number of items that can appear in any one slot.(Does not apply to Minecraft-based Loot Tables)
 #
-#  New Settings:
-#    - CustomName:
-#         Allows you to set a custom display name for an item using Minecraft color codes. For example, "§6HolyDirt" will display the name in gold.
+# The plugin supports two modes:
 #
-#    - LevelType (Item-wide):
-#           * Standard: Displays levels as numbers with a "lvl_" prefix (e.g., "Mending lvl_1", "Fortune lvl_2").
-#           * Roman: Displays levels as Roman numerals (e.g., "Mending I", "Fortune II"). Note: I have added roman numeral conversion that supports values up to 3999.
-#           * Default: If omitted or unrecognized, defaults to Roman.
+# 1) Custom Loot Tables:
 #
-#    - Enchantments:
-#         Each enchantment entry now supports:
-#           * Weight: The chance (in percent) for the enchantment to be applied.
-#           * MinLevel / MaxLevel: The range for the enchantment level.
-#           * LoreColor: The color used to display the enchantment in the item's lore. Valid colors include: BLACK, DARK_BLUE, DARK_GREEN, DARK_AQUA, DARK_RED, DARK_PURPLE, GOLD, GRAY, DARK_GRAY, BLUE, GREEN, AQUA, RED, LIGHT_PURPLE, YELLOW, WHITE.
+#    In Custom Loot Tables mode you explicitly define which items appear in a chest.
+#    Two formats are supported:
 #
-#  Advanced Weighting: Filler Items & Rare Items
-#    - You can add "filler" items (for example, AIR) with a high weight to reduce the overall odds of rare items appearing. For example, setting AIR to a weight of 90 while giving DIAMOND a weight of 0.3 will make diamonds extremely rare.
+#    [Legacy (Compact) Format]
+#
+#    ChestSettings:
+#      ChestOld:
+#        Items: [MATERIAL_ENUM:weight:maxAmount]
+#        Biomes: [BIOME_ENUM]
+#
+#    [New Expanded Format]
+#
+#     ChestSettings:                                     # ChestSettings (Parent Key) Under this key, create one or more named chest configurations (e.g., "Chest1").
+#       ChestNew:
+#         Items:
+#           - MATERIAL_ENUM:                            # Use the exact item names from https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Material.html
+#             - Weight: <numeric value>                 # The chance (in percent) for the material to be placed in the chest.
+#             - MaxAmount: <numeric value>              # The max amount of that material that will be allowed chest wide.
+#             - CustomName: <custom display name>       # Supports use of Minecraft color codes like "§0" for Black and so on.
+#             - LevelType: <Standard or Roman>          # Item-wide setting for enchantment display
+#             - Enchantments:
+#                 - ENCHANTMENT_ENUM:                   # Use exact enchantment names from https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/enchantments/Enchantment.html
+#                     - Weight: <numeric chance in percent>
+#                     - MinLevel: <minimum level>
+#                     - MaxLevel: <maximum level>
+#                     - LoreColor: <color>             # (Optional) Valid colors: BLACK, DARK_BLUE, DARK_GREEN,DARK_AQUA, DARK_RED, DARK_PURPLE, GOLD, GRAY,DARK_GRAY, BLUE, GREEN, AQUA, RED, LIGHT_PURPLE,YELLOW, WHITE.
+#         Biomes:
+#           - BIOME_ENUM                               # Use the exact biome names from https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/block/Biome.html
+#
+#      This format offers additional customization:
+#
+#        - CustomName: Set a custom display name (supports Minecraft color codes, e.g., "§6HolyDirt").
+#        - LevelType: Item-wide setting for how enchantment levels are displayed.
+#                     Options:
+#                        * Standard – e.g., "lvl_1", "lvl_2".
+#                        * Roman – e.g., "I", "II" (defaults to Roman if omitted or unrecognized).
+#        - Enchantments: For each enchantment, specify:
+#                         * Weight: Chance (in percent) for the enchantment to be applied.
+#                         * MinLevel and MaxLevel: Range for the enchantment level.
+#                         * LoreColor: Color used for the enchantment display in the item's lore.
+#                           Valid colors include: BLACK, DARK_BLUE, DARK_GREEN, DARK_AQUA, DARK_RED,DARK_PURPLE, GOLD, GRAY, DARK_GRAY, BLUE, GREEN, AQUA, RED, LIGHT_PURPLE, YELLOW, WHITE.
+#
+#      Example (provided in comments):
+#
+#      # ChestSettings:
+#      #   ChestExpanded:
+#      #     Items:
+#      #       - MYCELIUM:
+#      #           - Weight: 30
+#      #           - MaxAmount: 5
+#      #           - CustomName: §6HolyDirt
+#      #           - LevelType: Standard
+#      #           - Enchantments:
+#      #               - FORTUNE:
+#      #                   - Weight: 100
+#      #                   - MinLevel: 1
+#      #                   - MaxLevel: 400
+#      #                   - LoreColor: RED
+#      #       - AIR:
+#      #           - Weight: 90
+#      #           - MaxAmount: 999
+#      #     Biomes:
+#      #       - MUSHROOM_FIELDS
+#
+# 2) Minecraft-based Loot Tables:
+#
+#    In this mode vanilla Minecraft loot generation is used. Instead of an "Items" section,
+#    you define a "LootTables" section with one or more loot table entries.
+#
+#    Formatting:
+#
+#      Each loot table entry is defined as a map where the key is a loot table enum (from
+#      Bukkit’s LootTables, such as SIMPLE_DUNGEON, ABANDONED_MINESHAFT, etc.) and the value
+#      is a list containing a "Weight" property.
+#      Bukkit LootTables: https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/loot/LootTables.html
+#
+#      Example (provided in comments):
+#
+#      # ChestSettings:
+#      #   ChestVanilla:
+#      #     LootTables:
+#      #       - ABANDONED_MINESHAFT:
+#      #           - Weight: 100
+#      #     Biomes: [BIRCH_FOREST, DRIPSTONE_CAVES, LUSH_CAVES]
+#
+#      Another Example:
+#
+#      # ChestSettings:
+#      #   ChestMulti:
+#      #     LootTables:
+#      #       - SIMPLE_DUNGEON:
+#      #           - Weight: 80.6
+#      #       - VILLAGE_ARMORER:
+#      #           - Weight: 19.4
+#      #     Biomes: [DESERT, FOREST, PLAINS]
+#
+# Additional Notes:
+#
+#   - Advanced Weighting: In Custom Loot Tables mode, you can use filler items (such as AIR)
+#     with high weight values to lower the odds of rare items appearing.
+#
+#   - maxAmount vs. MaxItemsPerSlot:
+#       * maxAmount: Maximum total number of a given item allowed in the chest.
+#       * MaxItemsPerSlot: Maximum number of that item that can appear in any one slot.(Not needed if using Minecraft-based Loot Tables)
+#
+#   - YAML Tips:
+#       * Both the compact and expanded formats are supported for custom loot tables.
+#       * For vanilla loot tables, use the enum names from Bukkit’s LootTables.
 #
 # ------------------------------------------------------------------------------
 #
-#  1) MaxItemsPerSlot (Global)
-#     - Sets a hard limit on how many items of a single type can be placed in one
-#       slot, regardless of the item’s maxAmount. Default: 2
+# You can define multiple chest configurations for different biome groups.
 #
-#  2) ChestSettings (Parent Key)
-#     - Under this key, create one or more named chest configurations (e.g., "Chest1").
-#
-#
-#        [Legacy (Compact) Format]
-#
-#         ChestSettings:
-#           ChestOld:
-#             Items: [ITEM_NAME:weight:maxAmount]
-#             Biomes: [BIOME_NAME]
-#
-#       [New Expanded Format]
-#
-#       ChestSettings:
-#         ChestNew:
-#           Items:
-#             -ITEM_NAME:                             # Use the exact item names from https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Material.html
-#               - Weight: <numeric value>
-#               - MaxAmount: <numeric value>
-#               - CustomName: <custom display name>  # Supports use of Minecraft color codes like "§0" for Black and so on.
-#               - LevelType: <Standard or Roman>     # Item-wide setting for enchantment display
-#               - Enchantments:
-#                   - ENCHANTMENT_NAME:              # Use exact enchantment names from https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/enchantments/Enchantment.html
-#                       - Weight: <numeric chance in percent>
-#                       - MinLevel: <minimum level>
-#                       - MaxLevel: <maximum level>
-#                       - LoreColor: <color>         # (Optional) Valid colors: BLACK, DARK_BLUE, DARK_GREEN,DARK_AQUA, DARK_RED, DARK_PURPLE, GOLD, GRAY,DARK_GRAY, BLUE, GREEN, AQUA, RED, LIGHT_PURPLE,YELLOW, WHITE.
-#           Biomes:
-#             - BIOME_NAME                          # Use the exact biome names from https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/block/Biome.html
-#
-#
-#  3) How the Code Chooses Items (Weight-Based):
-#     - The plugin sums all item 'weight' values in a chest config, then picks an item for each empty slot in proportion to those weights.
-#       Example: With four items each having weight 5, the total weight is 20, and each item has a 25% chance per slot.
-#
-#  4) Reducing Item Chance (Filler Items):
-#     - To lower the odds of high-value items appearing, you can add filler items (e.g., AIR) with a high weight to dilute the selection.
-#       For instance, AIR with weight 90 dilutes the chance of DIAMOND (e.g., weight 0.3) being chosen.
-#
-#  5) maxAmount vs. MaxItemsPerSlot:
-#     - maxAmount: The total maximum number of a given item allowed in the entire chest.
-#     - MaxItemsPerSlot: The maximum number of that item that can be placed in any one slot.
-#
-#  6) YAML Tips:
-#     - Use standard YAML naming rules for chest configurations (alphanumeric, underscores,
-#       or quoted strings for spaces/special characters).
-#     - Both "compact" and "expanded" list styles are supported.
-#
-# ------------------------------------------------------------------------------
+# Overworld Biomes:
 #
 MaxItemsPerSlot: 2
 
 ChestSettings:
-  Chest1:
+  CustomChest1:
     Items:
       - MYCELIUM:30:5
       - RED_MUSHROOM:20:5
@@ -93,69 +137,7 @@ ChestSettings:
       - MUSHROOM_STEM:10:5
     Biomes:
       - MUSHROOM_FIELDS
-
-# Explanation of the example above (Legacy Format):
-#   - 'Chest1' is the identifier for this chest configuration.
-#   - Items are listed using the "MATERIAL:weight:maxAmount" format.
-#       * MYCELIUM:30:5   => weight = 30, maxAmount = 5
-#       * RED_MUSHROOM:20:5   => weight = 20, maxAmount = 5
-#       etc.
-#
-#   The total weight is 30 + 20 + 20 + 10 + 10 + 10 = 100.
-#   Therefore, MYCELIUM has a 30% chance per slot, RED_MUSHROOM 20%, etc.
-#
-#   Once an item reaches its maxAmount (here, 5), it will no longer be selected.
-#
-#   MaxItemsPerSlot (global, default 2) limits how many of an item can appear in any one slot.
-#
-#   'Biomes: [MUSHROOM_FIELDS]' indicates that this configuration applies to chests
-#   generated in the MUSHROOM_FIELDS biome.
-#
-# ------------------------------------------------------------------------------
-#
-# New Expanded Format Example:
-#
-# The example below shows the new options in use.
-#
-#
-# ChestSettings:
-#   ChestNew:
-#     Items:
-#       - MYCELIUM:
-#           - Weight: 30
-#           - MaxAmount: 5
-#           - CustomName: §6HolyDirt
-#           - LevelType: Standard          # Options: Standard (shows levels as "lvl_1") or Roman (shows as "I"); defaults to Roman.
-#           - Enchantments:
-#               - FORTUNE:
-#                   - Weight: 100
-#                   - MinLevel: 1
-#                   - MaxLevel: 400
-#                   - LoreColor: RED
-#               - LOOTING:
-#                   - Weight: 30
-#                   - MinLevel: 1
-#                   - MaxLevel: 300
-#                   - LoreColor: BLUE
-#       - AIR:
-#           - Weight: 90
-#           - MaxAmount: 999                # Filler item to reduce the odds of rare items appearing.
-#     Biomes:
-#       - MUSHROOM_FIELDS
-#
-#
-# In this expanded example:
-#   - 'MYCELIUM' uses a custom name (displayed in gold) and an item-wide LevelType of Standard. All enchantments on this item will display levels as "lvl_x".
-#   - The FORTUNE enchantment is set to use a LoreColor of RED, while LOOTING uses BLUE.
-#   - 'AIR' is added as a filler item with a high weight (90) to reduce the chance that rare items (like DIAMOND, if present with a low weight) are chosen.
-#
-# ------------------------------------------------------------------------------
-#
-# You can define multiple chest configurations for different biome groups.
-#
-# Overworld Biomes:
-#
-  Chest2:
+  CustomChest2:
     Items:
       - WOODEN_AXE:
         - Weight: 20
@@ -237,7 +219,15 @@ ChestSettings:
       - TRIAL_KEY:2:1
       - BREEZE_ROD:10:2
       - RESIN_CLUMP:10:2
-    Biomes: [BADLANDS, BAMBOO_JUNGLE, BIRCH_FOREST, CHERRY_GROVE, DARK_FOREST, DESERT, DRIPSTONE_CAVES, ERODED_BADLANDS, FLOWER_FOREST, FOREST, GROVE, JAGGED_PEAKS, JUNGLE, LUSH_CAVES, MANGROVE_SWAMP, MEADOW, OLD_GROWTH_BIRCH_FOREST, OLD_GROWTH_PINE_TAIGA, OLD_GROWTH_SPRUCE_TAIGA, PLAINS, SAVANNA, SAVANNA_PLATEAU, SPARSE_JUNGLE, STONY_PEAKS, STONY_SHORE, SUNFLOWER_PLAINS, SWAMP, TAIGA, WINDSWEPT_FOREST, WINDSWEPT_GRAVELLY_HILLS, WINDSWEPT_HILLS, WINDSWEPT_SAVANNA, WOODED_BADLANDS, OCEAN, WARM_OCEAN, LUKEWARM_OCEAN, FROZEN_OCEAN, DEEP_FROZEN_OCEAN, DEEP_LUKEWARM_OCEAN, DEEP_OCEAN, DEEP_COLD_OCEAN, COLD_OCEAN, FROZEN_RIVER, RIVER, BEACH, SNOWY_BEACH, SNOWY_PLAINS, SNOWY_SLOPES, SNOWY_TAIGA, FROZEN_PEAKS, ICE_SPIKES, DEEP_DARK, PALE_GARDEN]
+    Biomes: [BADLANDS, BAMBOO_JUNGLE, BIRCH_FOREST, CHERRY_GROVE, DARK_FOREST, DESERT, DRIPSTONE_CAVES, ERODED_BADLANDS, FLOWER_FOREST, FOREST, GROVE, JAGGED_PEAKS, JUNGLE, LUSH_CAVES, MANGROVE_SWAMP, MEADOW, OLD_GROWTH_BIRCH_FOREST, OLD_GROWTH_PINE_TAIGA, OLD_GROWTH_SPRUCE_TAIGA, PLAINS, SAVANNA, SAVANNA_PLATEAU, SPARSE_JUNGLE, STONY_PEAKS, STONY_SHORE, SUNFLOWER_PLAINS, SWAMP, TAIGA, WINDSWEPT_FOREST, WINDSWEPT_GRAVELLY_HILLS, WINDSWEPT_HILLS, WINDSWEPT_SAVANNA, WOODED_BADLANDS, OCEAN, WARM_OCEAN, LUKEWARM_OCEAN, FROZEN_OCEAN, DEEP_FROZEN_OCEAN, DEEP_LUKEWARM_OCEAN, DEEP_OCEAN, DEEP_COLD_OCEAN, COLD_OCEAN, FROZEN_RIVER, RIVER, BEACH, SNOWY_BEACH, SNOWY_PLAINS, SNOWY_SLOPES, SNOWY_TAIGA, FROZEN_PEAKS, ICE_SPIKES, PALE_GARDEN]
+  VanillaChest1:
+    LootTables:
+      - ANCIENT_CITY:
+          - Weight: 100
+      - ANCIENT_CITY_ICE_BOX:
+          - Weight: 100
+    Biomes:
+     - DEEP_DARK
 #
 #Nether Biomes:
 #
