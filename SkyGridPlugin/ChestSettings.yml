@@ -53,25 +53,25 @@
 #
 #      Example (provided in comments):
 #
-#      # ChestSettings:
-#      #   ChestExpanded:
-#      #     Items:
-#      #       - MYCELIUM:
-#      #           - Weight: 30
-#      #           - MaxAmount: 5
-#      #           - CustomName: §6HolyDirt
-#      #           - LevelType: Standard
-#      #           - Enchantments:
-#      #               - FORTUNE:
-#      #                   - Weight: 100
-#      #                   - MinLevel: 1
-#      #                   - MaxLevel: 400
-#      #                   - LoreColor: RED
-#      #       - AIR:
-#      #           - Weight: 90
-#      #           - MaxAmount: 999
-#      #     Biomes:
-#      #       - MUSHROOM_FIELDS
+#      ChestSettings:
+#        ChestExpanded:
+#          Items:
+#            - MYCELIUM:
+#                - Weight: 30
+#                - MaxAmount: 5
+#                - CustomName: §6HolyDirt
+#                - LevelType: Standard
+#                - Enchantments:
+#                    - FORTUNE:
+#                        - Weight: 100
+#                        - MinLevel: 1
+#                        - MaxLevel: 400
+#                        - LoreColor: RED
+#            - AIR:
+#                - Weight: 90
+#                - MaxAmount: 999
+#          Biomes:
+#            - MUSHROOM_FIELDS
 #
 # 2) Minecraft-based Loot Tables:
 #
@@ -87,23 +87,23 @@
 #
 #      Example (provided in comments):
 #
-#      # ChestSettings:
-#      #   ChestVanilla:
-#      #     LootTables:
-#      #       - ABANDONED_MINESHAFT:
-#      #           - Weight: 100
-#      #     Biomes: [BIRCH_FOREST, DRIPSTONE_CAVES, LUSH_CAVES]
+#      ChestSettings:
+#        ChestVanilla:
+#          LootTables:
+#            - ABANDONED_MINESHAFT:
+#                - Weight: 100
+#          Biomes: [BIRCH_FOREST, DRIPSTONE_CAVES, LUSH_CAVES]
 #
 #      Another Example:
 #
-#      # ChestSettings:
-#      #   ChestMulti:
-#      #     LootTables:
-#      #       - SIMPLE_DUNGEON:
-#      #           - Weight: 80.6
-#      #       - VILLAGE_ARMORER:
-#      #           - Weight: 19.4
-#      #     Biomes: [DESERT, FOREST, PLAINS]
+#      ChestSettings:
+#        ChestMulti:
+#          LootTables:
+#            - SIMPLE_DUNGEON:
+#                - Weight: 80.6
+#            - VILLAGE_ARMORER:
+#                - Weight: 19.4
+#          Biomes: [DESERT, FOREST, PLAINS]
 #
 # Additional Notes:
 #
