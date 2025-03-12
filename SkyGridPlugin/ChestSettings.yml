@@ -21,8 +21,8 @@
 #
 #    [New Expanded Format]
 #
-#     ChestSettings:                                     # ChestSettings (Parent Key) Under this key, create one or more named chest configurations (e.g., "Chest1").
-#       ChestNew:
+#     ChestSettings:                                    # ChestSettings (Parent Key) Under this key, create one or more named chest configurations (e.g., "Chest1").
+#       ChestNew:                                       # Chest key can be anything, really. If you use special characters, make sure to put them inside parentheses like this: "N@me". It is used as a unique identifier for each chest (there should not be two that are the same).
 #         Items:
 #           - MATERIAL_ENUM:                            # Use the exact item names from https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Material.html
 #             - Weight: <numeric value>                 # The chance (in percent) for the material to be placed in the chest.
@@ -85,7 +85,7 @@
 #      is a list containing a "Weight" property.
 #      Bukkit LootTables: https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/loot/LootTables.html
 #
-#      Example (provided in comments):
+#      Example:
 #
 #      ChestSettings:
 #        ChestVanilla:
@@ -112,7 +112,7 @@
 #
 #   - maxAmount vs. MaxItemsPerSlot:
 #       * maxAmount: Maximum total number of a given item allowed in the chest.
-#       * MaxItemsPerSlot: Maximum number of that item that can appear in any one slot.(Not needed if using Minecraft-based Loot Tables)
+#       * MaxItemsPerSlot: Maximum number of that item that can appear in any one slot.(Not needed if using Minecraft-based Loot Tables only)
 #
 #   - YAML Tips:
 #       * Both the compact and expanded formats are supported for custom loot tables.
@@ -124,123 +124,398 @@
 #
 # Overworld Biomes:
 #
-MaxItemsPerSlot: 2
+
+MaxItemsPerSlot: 3 # Does not apply to Minecraft loot table chest types, just needed for custom chest.
 
 ChestSettings:
-  CustomChest1:
+  Custom_Chest1:
     Items:
-      - MYCELIUM:30:5
-      - RED_MUSHROOM:20:5
       - BROWN_MUSHROOM:20:5
-      - RED_MUSHROOM_BLOCK:10:5
       - BROWN_MUSHROOM_BLOCK:10:5
       - MUSHROOM_STEM:10:5
+      - MYCELIUM:30:5
+      - RED_MUSHROOM:20:5
+      - RED_MUSHROOM_BLOCK:10:5
     Biomes:
       - MUSHROOM_FIELDS
-  CustomChest2:
-    Items:
-      - WOODEN_AXE:
-        - Weight: 20
-        - MaxAmount: 1
-        - Enchantments:
-          - VANISHING_CURSE:
-            - Weight: 50
-            - MinLevel: 1
-            - MaxLevel: 1
-          - EFFICIENCY:
-            - Weight: 70
-            - MinLevel: 1
-            - MaxLevel: 4
-          - UNBREAKING:
-            - Weight: 30
-            - MinLevel: 1
-            - MaxLevel: 3
-      - WOODEN_PICKAXE:
-        - Weight: 20
-        - MaxAmount: 1
-        - Enchantments:
-          - VANISHING_CURSE:
-            - Weight: 50
-            - MinLevel: 1
-            - MaxLevel: 1
-          - EFFICIENCY:
-            - Weight: 40
-            - MinLevel: 1
-            - MaxLevel: 4
-          - FORTUNE:
-            - Weight: 30
-            - MinLevel: 1
-            - MaxLevel: 3
-          - UNBREAKING:
-            - Weight: 30
-            - MinLevel: 1
-            - MaxLevel: 3
-      - CROSSBOW:
-        - Weight: 20
-        - MaxAmount: 1
-        - Enchantments:
-          - VANISHING_CURSE:
-            - Weight: 50
-            - MinLevel: 1
-            - MaxLevel: 1
-          - MULTISHOT:
-            - Weight: 30
-            - MinLevel: 1
-            - MaxLevel: 1
-          - PIERCING:
-            - Weight: 30
-            - MinLevel: 1
-            - MaxLevel: 4
-          - QUICK_CHARGE:
-            - Weight: 30
-            - MinLevel: 1
-            - MaxLevel: 3
-          - UNBREAKING:
-            - Weight: 30
-            - MinLevel: 1
-            - MaxLevel: 3
-      - NAME_TAG:20:1
-      - GOLDEN_APPLE:20:1
-      - ENCHANTED_GOLDEN_APPLE:20:1
-      - APPLE:40:2, OAK_LOG:40:2
-      - DARK_OAK_LOG:40:2
-      - RAIL:40:2
-      - DIAMOND:40:2
-      - STRING:90:5
-      - ARROW:90:5
-      - STICK:90:5
-      - WHEAT:90:5
-      - IRON_INGOT:90:5
-      - TORCH:90:5
-      - ARMADILLO_SCUTE:10:2
-      - MACE:2:1
-      - OMINOUS_BOTTLE:10:2
-      - OMINOUS_TRIAL_KEY:2:1
-      - TRIAL_KEY:2:1
-      - BREEZE_ROD:10:2
-      - RESIN_CLUMP:10:2
-    Biomes: [BADLANDS, BAMBOO_JUNGLE, BIRCH_FOREST, CHERRY_GROVE, DARK_FOREST, DESERT, DRIPSTONE_CAVES, ERODED_BADLANDS, FLOWER_FOREST, FOREST, GROVE, JAGGED_PEAKS, JUNGLE, LUSH_CAVES, MANGROVE_SWAMP, MEADOW, OLD_GROWTH_BIRCH_FOREST, OLD_GROWTH_PINE_TAIGA, OLD_GROWTH_SPRUCE_TAIGA, PLAINS, SAVANNA, SAVANNA_PLATEAU, SPARSE_JUNGLE, STONY_PEAKS, STONY_SHORE, SUNFLOWER_PLAINS, SWAMP, TAIGA, WINDSWEPT_FOREST, WINDSWEPT_GRAVELLY_HILLS, WINDSWEPT_HILLS, WINDSWEPT_SAVANNA, WOODED_BADLANDS, OCEAN, WARM_OCEAN, LUKEWARM_OCEAN, FROZEN_OCEAN, DEEP_FROZEN_OCEAN, DEEP_LUKEWARM_OCEAN, DEEP_OCEAN, DEEP_COLD_OCEAN, COLD_OCEAN, FROZEN_RIVER, RIVER, BEACH, SNOWY_BEACH, SNOWY_PLAINS, SNOWY_SLOPES, SNOWY_TAIGA, FROZEN_PEAKS, ICE_SPIKES, PALE_GARDEN]
-  VanillaChest1:
+  Vanilla_Overworld_Desert:
+    LootTables:
+      - DESERT_PYRAMID:
+          - Weight: 100
+      - DESERT_PYRAMID_ARCHAEOLOGY:
+          - Weight: 100
+      - DESERT_WELL_ARCHAEOLOGY:
+          - Weight: 100
+      - VILLAGE_DESERT_HOUSE:
+          - Weight: 100
+    Biomes:
+      - DESERT
+
+  Vanilla_Overworld_Jungle:
+    LootTables:
+      - JUNGLE_TEMPLE:
+          - Weight: 100
+      - JUNGLE_TEMPLE_DISPENSER:
+          - Weight: 100
+    Biomes:
+      - BAMBOO_JUNGLE
+      - JUNGLE
+      - SPARSE_JUNGLE
+
+  Vanilla_Overworld_DarkForest:
+    LootTables:
+      - WOODLAND_MANSION:
+          - Weight: 100
+    Biomes:
+      - DARK_FOREST
+
+  Vanilla_Overworld_DeepDark:
     LootTables:
       - ANCIENT_CITY:
           - Weight: 100
       - ANCIENT_CITY_ICE_BOX:
           - Weight: 100
     Biomes:
-     - DEEP_DARK
+      - DEEP_DARK
+
+  Vanilla_Overworld_Village_Plains:
+    LootTables:
+      - VILLAGE_PLAINS_HOUSE:
+          - Weight: 100
+    Biomes:
+      - PLAINS
+
+  Vanilla_Overworld_Village_Snowy:
+    LootTables:
+      - VILLAGE_SNOWY_HOUSE:
+          - Weight: 100
+    Biomes:
+      - SNOWY_PLAINS
+
+  Vanilla_Overworld_Village_Taiga:
+    LootTables:
+      - VILLAGE_TAIGA_HOUSE:
+          - Weight: 100
+    Biomes:
+      - TAIGA
+
+  Vanilla_Overworld_Village_Savanna:
+    LootTables:
+      - VILLAGE_SAVANNA_HOUSE:
+          - Weight: 100
+    Biomes:
+      - SAVANNA
+
+  Vanilla_Overworld_Generic:
+    LootTables:
+      - ABANDONED_MINESHAFT:
+          - Weight: 100
+      - ELDER_GUARDIAN:
+          - Weight: 100
+      - PILLAGER_OUTPOST:
+          - Weight: 100
+      - RUINED_PORTAL:
+          - Weight: 100
+      - SHIPWRECK_MAP:
+          - Weight: 100
+      - SHIPWRECK_SUPPLY:
+          - Weight: 100
+      - SHIPWRECK_TREASURE:
+          - Weight: 100
+      - SIMPLE_DUNGEON:
+          - Weight: 100
+      - STRONGHOLD_CORRIDOR:
+          - Weight: 100
+      - STRONGHOLD_CROSSING:
+          - Weight: 100
+      - STRONGHOLD_LIBRARY:
+          - Weight: 100
+      - TRIAL_CHAMBERS_REWARD:
+          - Weight: 100
+      - TRIAL_CHAMBERS_REWARD_OMINOUS:
+          - Weight: 100
+      - TRIAL_CHAMBERS_REWARD_OMINOUS_RARE:
+          - Weight: 100
+      - TRIAL_CHAMBERS_REWARD_OMINOUS_UNIQUE:
+          - Weight: 100
+      - TRIAL_CHAMBERS_REWARD_RARE:
+          - Weight: 100
+      - TRIAL_CHAMBERS_REWARD_UNIQUE:
+          - Weight: 100
+      - UNDERWATER_RUIN_BIG:
+          - Weight: 100
+      - UNDERWATER_RUIN_SMALL:
+          - Weight: 100
+      - VILLAGE_ARMORER:
+          - Weight: 100
+    Biomes:
+      - BADLANDS
+      - BIRCH_FOREST
+      - CHERRY_GROVE
+      - DRIPSTONE_CAVES
+      - ERODED_BADLANDS
+      - FLOWER_FOREST
+      - FOREST
+      - GROVE
+      - JAGGED_PEAKS
+      - LUSH_CAVES
+      - MANGROVE_SWAMP
+      - MEADOW
+      - OLD_GROWTH_BIRCH_FOREST
+      - OLD_GROWTH_PINE_TAIGA
+      - OLD_GROWTH_SPRUCE_TAIGA
+      - SAVANNA_PLATEAU
+      - STONY_PEAKS
+      - STONY_SHORE
+      - SUNFLOWER_PLAINS
+      - SWAMP
+  CustomChest2:
+    Items:
+      - APPLE:140:6
+      - ARMADILLO_SCUTE:5:2
+      - ARROW:100:16
+      - BOLT_ARMOR_TRIM_SMITHING_TEMPLATE:1:1
+      - BREAD:60:3
+      - BREEZE_ROD:5:2
+      - COAST_ARMOR_TRIM_SMITHING_TEMPLATE:1:1
+      - COOKED_BEEF:60:4
+      - COOKED_CHICKEN:60:4
+      - COOKED_PORKCHOP:60:4
+      - CROSSBOW:
+          - Weight: 20
+          - MaxAmount: 1
+          - Enchantments:
+              - VANISHING_CURSE:
+                  - Weight: 50
+                  - MinLevel: 1
+                  - MaxLevel: 1
+              - MULTISHOT:
+                  - Weight: 30
+                  - MinLevel: 1
+                  - MaxLevel: 1
+              - PIERCING:
+                  - Weight: 30
+                  - MinLevel: 1
+                  - MaxLevel: 4
+              - QUICK_CHARGE:
+                  - Weight: 30
+                  - MinLevel: 1
+                  - MaxLevel: 3
+              - UNBREAKING:
+                  - Weight: 30
+                  - MinLevel: 1
+                  - MaxLevel: 3
+      - DARK_OAK_LOG:140:8
+      - DIAMOND:10:2
+      - DUNE_ARMOR_TRIM_SMITHING_TEMPLATE:1:1
+      - EYE_ARMOR_TRIM_SMITHING_TEMPLATE:1:1
+      - ENCHANTED_GOLDEN_APPLE:5:1
+      - FLOW_ARMOR_TRIM_SMITHING_TEMPLATE:1:1
+      - GOLDEN_APPLE:5:1
+      - GOLDEN_AXE:
+          - Weight: 20
+          - MaxAmount: 1
+          - Enchantments:
+              - VANISHING_CURSE:
+                  - Weight: 50
+                  - MinLevel: 1
+                  - MaxLevel: 1
+              - EFFICIENCY:
+                  - Weight: 70
+                  - MinLevel: 1
+                  - MaxLevel: 4
+              - UNBREAKING:
+                  - Weight: 30
+                  - MinLevel: 1
+                  - MaxLevel: 3
+              - FORTUNE:
+                  - Weight: 30
+                  - MinLevel: 1
+                  - MaxLevel: 3
+              - MENDING:
+                  - Weight: 5
+                  - MinLevel: 1
+                  - MaxLevel: 1
+      - GOLDEN_HOE:
+          - Weight: 20
+          - MaxAmount: 1
+          - Enchantments:
+              - VANISHING_CURSE:
+                  - Weight: 50
+                  - MinLevel: 1
+                  - MaxLevel: 1
+              - EFFICIENCY:
+                  - Weight: 40
+                  - MinLevel: 1
+                  - MaxLevel: 4
+              - FORTUNE:
+                  - Weight: 30
+                  - MinLevel: 1
+                  - MaxLevel: 3
+              - UNBREAKING:
+                  - Weight: 30
+                  - MinLevel: 1
+                  - MaxLevel: 3
+              - MENDING:
+                  - Weight: 5
+                  - MinLevel: 1
+                  - MaxLevel: 1
+      - GOLDEN_PICKAXE:
+          - Weight: 20
+          - MaxAmount: 1
+          - Enchantments:
+              - VANISHING_CURSE:
+                  - Weight: 50
+                  - MinLevel: 1
+                  - MaxLevel: 1
+              - EFFICIENCY:
+                  - Weight: 40
+                  - MinLevel: 1
+                  - MaxLevel: 4
+              - FORTUNE:
+                  - Weight: 30
+                  - MinLevel: 1
+                  - MaxLevel: 3
+              - UNBREAKING:
+                  - Weight: 30
+                  - MinLevel: 1
+                  - MaxLevel: 3
+              - SILK_TOUCH:
+                  - Weight: 5
+                  - MinLevel: 1
+                  - MaxLevel: 1
+              - MENDING:
+                  - Weight: 5
+                  - MinLevel: 1
+                  - MaxLevel: 1
+      - GOLDEN_SHOVEL:
+          - Weight: 20
+          - MaxAmount: 1
+          - Enchantments:
+              - VANISHING_CURSE:
+                  - Weight: 50
+                  - MinLevel: 1
+                  - MaxLevel: 1
+              - EFFICIENCY:
+                  - Weight: 40
+                  - MinLevel: 1
+                  - MaxLevel: 4
+              - FORTUNE:
+                  - Weight: 30
+                  - MinLevel: 1
+                  - MaxLevel: 3
+              - UNBREAKING:
+                  - Weight: 30
+                  - MinLevel: 1
+                  - MaxLevel: 3
+              - SILK_TOUCH:
+                  - Weight: 5
+                  - MinLevel: 1
+                  - MaxLevel: 1
+              - MENDING:
+                  - Weight: 5
+                  - MinLevel: 1
+                  - MaxLevel: 1
+      - GOLDEN_SWORD:
+          - Weight: 20
+          - MaxAmount: 1
+          - Enchantments:
+              - VANISHING_CURSE:
+                  - Weight: 50
+                  - MinLevel: 1
+                  - MaxLevel: 1
+              - SHARPNESS:
+                  - Weight: 40
+                  - MinLevel: 1
+                  - MaxLevel: 5
+              - UNBREAKING:
+                  - Weight: 30
+                  - MinLevel: 1
+                  - MaxLevel: 3
+              - FIRE_ASPECT:
+                  - Weight: 20
+                  - MinLevel: 1
+                  - MaxLevel: 2
+              - LOOTING:
+                  - Weight: 10
+                  - MinLevel: 1
+                  - MaxLevel: 3
+              - KNOCKBACK:
+                  - Weight: 10
+                  - MinLevel: 1
+                  - MaxLevel: 2
+              - SMITE:
+                  - Weight: 10
+                  - MinLevel: 1
+                  - MaxLevel: 5
+              - SWEEPING_EDGE:
+                  - Weight: 10
+                  - MinLevel: 1
+                  - MaxLevel: 3
+              - WIND_BURST:
+                  - Weight: 10
+                  - MinLevel: 1
+                  - MaxLevel: 3
+              - MENDING:
+                  - Weight: 5
+                  - MinLevel: 1
+                  - MaxLevel: 1
+      - HOST_ARMOR_TRIM_SMITHING_TEMPLATE:1:1
+      - IRON_INGOT:190:8
+      - MACE:1:1
+      - NAME_TAG:10:1
+      - OAK_LOG:140:8
+      - OMINOUS_BOTTLE:1:2
+      - OMINOUS_TRIAL_KEY:1:1
+      - RAISER_ARMOR_TRIM_SMITHING_TEMPLATE:1:1
+      - RAIL:140:2
+      - RESIN_CLUMP:5:2
+      - SHAPER_ARMOR_TRIM_SMITHING_TEMPLATE:1:1
+      - SENTRY_ARMOR_TRIM_SMITHING_TEMPLATE:1:1
+      - STICK:190:6
+      - STRING:100:5
+      - TORCH:190:5
+      - TRIAL_KEY:1:1
+      - TIDE_ARMOR_TRIM_SMITHING_TEMPLATE:1:1
+      - VEX_ARMOR_TRIM_SMITHING_TEMPLATE:1:1
+      - WARD_ARMOR_TRIM_SMITHING_TEMPLATE:1:1
+      - WAYFINDER_ARMOR_TRIM_SMITHING_TEMPLATE:1:1
+      - WILD_ARMOR_TRIM_SMITHING_TEMPLATE:1:1
+      - WHEAT:190:6
+    Biomes: [BEACH, COLD_OCEAN, DEEP_COLD_OCEAN, DEEP_FROZEN_OCEAN, DEEP_LUKEWARM_OCEAN, DEEP_OCEAN, FROZEN_OCEAN, FROZEN_PEAKS, FROZEN_RIVER, ICE_SPIKES, LUKEWARM_OCEAN, OCEAN, PALE_GARDEN, RIVER, SNOWY_BEACH, SNOWY_SLOPES, SNOWY_TAIGA, WARM_OCEAN, WINDSWEPT_FOREST, WINDSWEPT_GRAVELLY_HILLS, WINDSWEPT_HILLS, WINDSWEPT_SAVANNA, WOODED_BADLANDS]
 #
 #Nether Biomes:
 #
-  Chest3:
-    Items: [GOLDEN_APPLE:20:1, ENCHANTED_GOLDEN_APPLE:20:1, GOLD_BLOCK:20:1, GOLDEN_AXE:20:1, IRON_BLOCK:20:1, SNOUT_ARMOR_TRIM_SMITHING_TEMPLATE:20:1, NETHERITE_UPGRADE_SMITHING_TEMPLATE:20:1, IRON_SWORD:20:1, GOLDEN_HELMET:20:1, MUSIC_DISC_PIGSTEP:20:1, DIAMOND:40:2, ANCIENT_DEBRIS:40:2, BONE_BLOCK:40:2, GOLDEN_CARROT:40:2, OBSIDIAN:40:2, CRYING_OBSIDIAN:40:2, IRON_INGOT:90:5, GILDED_BLACKSTONE:90:5, CHAIN:90:5, GOLD_INGOT:90:5, MAGMA_CREAM:90:5, GOLD_NUGGET:90:5, SPECTRAL_ARROW:90:5, STRING:90:5, IRON_NUGGET:90:5, ARROW:90:5, COOKED_PORKCHOP:90:5]
-    Biomes: [BASALT_DELTAS, NETHER_WASTES, CRIMSON_FOREST, SOUL_SAND_VALLEY, WARPED_FOREST]
+  Custom_Chest3:
+    Items: [ANCIENT_DEBRIS:40:2, ARROW:90:5, CHAIN:90:5, COOKED_PORKCHOP:90:5, CRYING_OBSIDIAN:40:2, DIAMOND:40:2, ENCHANTED_GOLDEN_APPLE:20:1, GILDED_BLACKSTONE:90:5, GOLD_BLOCK:20:1, GOLDEN_APPLE:20:1, GOLDEN_AXE:20:1, GOLDEN_HELMET:20:1, GOLDEN_CARROT:40:2, GOLD_NUGGET:90:5, GOLD_INGOT:90:5, IRON_BLOCK:20:1, IRON_INGOT:90:5, IRON_NUGGET:90:5, IRON_SWORD:20:1, MAGMA_CREAM:90:5, MUSIC_DISC_PIGSTEP:20:1, NETHERITE_UPGRADE_SMITHING_TEMPLATE:20:1, OBSIDIAN:40:2, SNOUT_ARMOR_TRIM_SMITHING_TEMPLATE:20:1, SPECTRAL_ARROW:90:5, STRING:90:5]
+    Biomes: [BASALT_DELTAS]
+  Vanilla_Nether:
+    LootTables:
+      - BASTION_BRIDGE:
+          - Weight: 100
+      - BASTION_HOGLIN_STABLE:
+          - Weight: 100
+      - BASTION_OTHER:
+          - Weight: 100
+      - BASTION_TREASURE:
+          - Weight: 100
+      - NETHER_BRIDGE:
+          - Weight: 100
+    Biomes:
+      - CRIMSON_FOREST
+      - NETHER_WASTES
+      - SOUL_SAND_VALLEY
+      - WARPED_FOREST
 #
 # End Biomes Example:
 #
-  Chest4:
-    Items: [ELYTRA:20:1, DRAGON_HEAD:20:1, DRAGON_EGG:20:1, END_CRYSTAL:20:1, ENDER_CHEST:20:1, SHULKER_SHELL:40:2, DIAMOND:40:2, END_ROD:90:5, PURPUR_BLOCK:90:5, MAGENTA_STAINED_GLASS:90:5, GOLD_INGOT:90:5, IRON_INGOT:90:5, OBSIDIAN:90:5]
-    Biomes: [THE_END, END_BARRENS, END_HIGHLANDS, END_MIDLANDS, SMALL_END_ISLANDS]
-#
-# Note: To add additional chest configurations (e.g., Chest5, Chest6, etc.),
-# simply create a new key under ChestSettings with its own Items and Biomes.
-#
+  Custom_Chest4:
+    Items: [DIAMOND:40:2, DRAGON_EGG:20:1, DRAGON_HEAD:20:1, ELYTRA:20:1, END_CRYSTAL:20:1, ENDER_CHEST:20:1, END_ROD:90:5, GOLD_INGOT:90:5, IRON_INGOT:90:5, MAGENTA_STAINED_GLASS:90:5, OBSIDIAN:90:5]
+    Biomes: [END_BARRENS, SMALL_END_ISLANDS, THE_END]
+  Vanilla_End:
+    LootTables:
+      - END_CITY_TREASURE:
+          - Weight: 100
+    Biomes:
+      - END_HIGHLANDS
+      - END_MIDLANDS
