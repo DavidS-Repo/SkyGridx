@@ -1,8 +1,8 @@
 @echo off
 
 :: Set variables
-set plugin_url=https://raw.githubusercontent.com/DavidS-Repo/SkyGridx/main/SkyGrid.jar
-set datapack_url=https://raw.githubusercontent.com/DavidS-Repo/SkyGridx/main/DataPacks/Void-Biomes-1.21.04.zip
+set plugin_url=https://www.davids-repo.dev/skygridx/assets/SkyGrid.jar
+set datapack_url=https://www.davids-repo.dev/skygridx/assets/Void-Biomes-1.21.04.zip
 set paper_fetch_url=https://www.davids-repo.dev/fetch_latest_paper_build/
 
 set plugin_folder=plugins
