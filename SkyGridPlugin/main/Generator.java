@@ -6,6 +6,8 @@ import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Beehive;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockState;
+import org.bukkit.block.TileState;
 import org.bukkit.block.data.Ageable;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.type.Bamboo;
@@ -143,10 +145,8 @@ public class Generator implements Listener {
 		String worldName = chunk.getWorld().getName();
 		World.Environment environment = chunk.getWorld().getEnvironment();
 		MinMaxSettings minMax = environmentSettings.get(environment);
-
-		int minY = minMax.minY();
-		int maxY = minMax.maxY();
-
+		int minY = minMax.minY;
+		int maxY = minMax.maxY;
 		for (int xOffset = 1; xOffset <= 15; xOffset += 4) {
 			for (int zOffset = 1; zOffset <= 15; zOffset += 4) {
 				for (int y = minY; y <= maxY; y += 4) {
@@ -161,7 +161,27 @@ public class Generator implements Listener {
 		}
 	}
 
+	public void regenerateMiniChunk(Chunk chunk, MaterialManager.MaterialDistribution distribution) {
+		World.Environment environment = chunk.getWorld().getEnvironment();
+		MinMaxSettings minMax = environmentSettings.get(environment);
+		int minY = minMax.minY;
+		int maxY = minMax.maxY;
+		for (int xOffset = 1; xOffset <= 15; xOffset += 4) {
+			for (int zOffset = 1; zOffset <= 15; zOffset += 4) {
+				for (int y = minY; y <= maxY; y += 4) {
+					Block block = chunk.getBlock(xOffset, y, zOffset);
+					Material material = distribution.next();
+					setBlockTypeAndHandle(block, material);
+				}
+			}
+		}
+	}
+
 	private void setBlockTypeAndHandle(Block block, Material material) {
+		BlockState state = block.getState();
+		if (state instanceof TileState) {
+			block.setType(Material.AIR, false);
+		}
 		block.setType(material, false);
 		if (LEAVES.contains(material)) {
 			handleLeaves(block);
@@ -179,6 +199,9 @@ public class Generator implements Listener {
 			handleBeehive(block);
 		} else if (material == Material.TRIAL_SPAWNER || material == Material.VAULT) {
 			handleTrial(block);
+		}
+		if (material == Material.END_PORTAL_FRAME || material == Material.END_PORTAL) {
+			plugin.getPortalManager().addPortal(block.getLocation());
 		}
 	}
 

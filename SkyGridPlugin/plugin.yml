@@ -1,5 +1,5 @@
 name: SkyGrid
-version: 1.21.4
+version: 1.21.5
 main: main.SkyGridPlugin
 author: Go0fy_Go0ber
 description: A plugin that generates a SkyGrid and more.
@@ -47,6 +47,10 @@ commands:
     description: Regenerate all loaded chunks
     permission: sg.regen
     usage: /regen
+  miniregen:
+    description: Add or remove the current chunk from mini regeneration scheduling.
+    permission: sg.miniregen
+    usage: /miniregen <add|remove> [interval in seconds] [distribution]
 permissions:
   sg.tpr:
     description: Allows teleportation to overworld, nether and end using the /tpr command
@@ -86,6 +90,9 @@ permissions:
   sg.regen:
     description: Grants permission to regenerate all loaded chunks using the /regen command
     default: op
+  sg.miniregen:
+    description: Grants permission to manage mini chunk regeneration using the /miniregen command
+    default: op
   sg.*:
     description: Provides access to all SkyGrid commands
     default: op
@@ -100,3 +107,4 @@ permissions:
       sg.eclogsoff: true
       sg.patch: true
       sg.regen: true
+      sg.miniregen: true

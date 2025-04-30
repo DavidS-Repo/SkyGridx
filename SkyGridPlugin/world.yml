@@ -39,7 +39,7 @@ distributions:
     MUSHROOM_STEM: 
     MYCELIUM: 50
     STONE: 25
-    CHEST: 1
+    CHEST: 10
     SPAWNER: 1
 
   # You can define additional distributions here and assign them to different biomes.
@@ -84,7 +84,7 @@ default_distribution:
   CARROTS: 1
   CAVE_VINES: 0.5
   CHERRY_LEAVES: 3
-  CHEST: 1
+  CHEST: 2.5
   CHISELED_COPPER: 0.1
   CHISELED_STONE_BRICKS: 0.5
   CLAY: 20
@@ -117,6 +117,7 @@ default_distribution:
   DIORITE: 20
   DIRT: 70
   DRIPSTONE_BLOCK: 3
+  END_PORTAL: 0.005
   FERN: 1
   FIRE_CORAL_BLOCK: 0.5
   FLOWERING_AZALEA: 0.5
@@ -200,8 +201,8 @@ default_distribution:
   SMALL_DRIPLEAF: 0.5
   SMOOTH_BASALT: 2
   SNOW_BLOCK: 10
-  SPAWNER: 0.001
-  SPONGE: 0.05
+  SPAWNER: 0.05
+  SPONGE: 0.08
   SPORE_BLOSSOM: 0.5
   SPRUCE_LEAVES: 3
   SPRUCE_LOG: 1
@@ -210,7 +211,7 @@ default_distribution:
   STONE_BRICKS: 2
   SUGAR_CANE: 5
   SUNFLOWER: 0.5
-  SUSPICIOUS_GRAVEL: 5
+  SUSPICIOUS_GRAVEL: 10
   SWEET_BERRY_BUSH: 0.5
   TALL_GRASS: 0.5
   TARGET: 0.05

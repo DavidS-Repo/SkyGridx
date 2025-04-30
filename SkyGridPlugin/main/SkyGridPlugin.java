@@ -1,5 +1,6 @@
 package main;
 
+import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -18,11 +19,13 @@ public class SkyGridPlugin extends JavaPlugin implements Listener {
 	private FirstBootChecker bootChecker;
 	private PluginSettings settings;
 	private Generator generator;
+	private MiniRegenManager miniRegenManager;
+	private PortalLocationManager portalManager;
 
 	@Override
 	public void onEnable() {
-		// Register this class as a listener
-		getServer().getPluginManager().registerEvents(this, this);
+		Bukkit.getPluginManager().registerEvents(new ChestOpenListener(this), this);
+		Bukkit.getPluginManager().registerEvents(this, this);
 
 		// Create an instance of ResourcePackManager
 		ResourcePackManager manager = new ResourcePackManager();
@@ -74,7 +77,30 @@ public class SkyGridPlugin extends JavaPlugin implements Listener {
 		// Register PatchCommand as command executor for /patch
 		getCommand("patch").setExecutor(new PatchCommand(this));
 
+		// generation logic (only trigger ChunkLoader on first boot)
 		handleGeneration();
+
+		// Register miniregen as command executor and tab completer for /miniregen
+		miniRegenManager = new MiniRegenManager(this, generator);
+		miniRegenManager.initialize();
+		getCommand("miniregen").setExecutor(new MiniRegenCommand(miniRegenManager));
+		getCommand("miniregen").setTabCompleter(new MiniRegenTabCompleter(miniRegenManager));
+
+		// Register portal handling and pass events
+		portalManager = new PortalLocationManager(this);
+		portalManager.initialize();
+		Bukkit.getPluginManager().registerEvents(new EyeThrowListener(this), this);
+	}
+
+	@Override
+	public void onDisable() {
+		if (miniRegenManager != null) {
+			miniRegenManager.shutdown();
+		}
+	}
+
+	public PortalLocationManager getPortalManager() {
+		return portalManager;
 	}
 
 	public boolean isFirstBoot() {
@@ -124,6 +150,7 @@ public class SkyGridPlugin extends JavaPlugin implements Listener {
 				@Override
 				public void run() {
 					generator.regenerateAllLoadedChunks();
+					portalManager.clearAllPortals();
 				}
 			}.runTaskLater(this, 40);
 		}

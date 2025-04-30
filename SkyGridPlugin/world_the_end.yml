@@ -33,7 +33,7 @@ distributions:
     # Example: "STONE:50" means a 50% chance of Stone appearing.
     # The total percentage does not need to sum to 100%; the system will scale as needed.
     BREWING_STAND: 0.1
-    CHEST: 0.1
+    CHEST: 0.2
     CHORUS_FLOWER: 5
     END_ROD: 20
     END_STONE: 60
@@ -59,7 +59,7 @@ distributions:
 # This ensures that a fallback distribution is available.
 default_distribution:
   BREWING_STAND: 0.1
-  CHEST: 0.01
+  CHEST: 0.2
   CHORUS_FLOWER: 5
   END_ROD: 10
   END_STONE: 60
@@ -70,4 +70,4 @@ default_distribution:
   PURPUR_BLOCK: 5
   PURPUR_PILLAR: 5
   PURPUR_STAIRS: 5
-  SPAWNER: 0.0001
+  SPAWNER: 0.005

@@ -1,0 +1,34 @@
+# mini_regen_materials.yml
+#
+# Define one or more “distributions” for mini‐chunk regeneration.
+# Each distribution is a map of MATERIAL_NAME → percentage.
+#  - MATERIAL_NAME must match a Bukkit Material enum (UPPERCASE, underscores).
+#  - Percentages are doubles; they should sum to 100.0 per distribution (or use relative values—internally they’ll be normalized).
+#
+# Structure:
+# distributions:
+#   <distribution_key>:
+#     <MATERIAL_NAME>: <percentage>
+#     <MATERIAL_NAME>: <percentage>
+#   another_distribution:
+#     ...
+
+distributions:
+  # Example: a mining‐style mix of stone and ores
+  mining_distribution:
+    STONE: 70.0   # 70% chance to place STONE
+    COAL_ORE: 15.0   # 15% chance to place COAL_ORE
+    IRON_ORE: 10.0   # 10% chance to place IRON_ORE
+    GOLD_ORE: 5.0   #  5% chance to place GOLD_ORE
+
+  # Example: pure stone chunk
+  stone_distribution:
+    STONE: 100.0   # 100% stone
+
+  # You can add your own distributions below.
+  # Just choose a unique key and list MATERIAL_NAME: percentage pairs.
+  # For instance:
+  # frosty_distribution:
+  #   PACKED_ICE:   60.0
+  #   SNOW_BLOCK:   30.0
+  #   ICE:          10.0

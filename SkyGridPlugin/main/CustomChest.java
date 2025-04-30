@@ -2,9 +2,9 @@ package main;
 
 import main.EnchantmentNameSupport.ChosenEnchantment;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.block.Block;
 import org.bukkit.block.Chest;
-import org.bukkit.block.Biome;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -12,6 +12,8 @@ import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.loot.LootTable;
+import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
@@ -30,15 +32,23 @@ public class CustomChest {
 
 	private static CustomChest instance;
 	private static JavaPlugin plugin;
+
+	// The maximum items we can place in a slot
 	private static int maxPerSlot;
+
+	// Key used to mark chests that haven't been populated yet (for custom loot).
+	public static NamespacedKey UNPOPULATED_KEY;
+
 	private static final Material[] MATERIALS = Material.values();
-	private final Int2ObjectMap<ItemsData> chestItemsMap;
-	private final Map<String, IntSet> chestBiomesMap;
+
+	// Map from a chest configuration key to its ChestConfig data
+	private final Int2ObjectMap<ChestConfig> chestConfigs = new Int2ObjectOpenHashMap<>();
+	// Maps biome names (uppercase) to a set of chest config keys
+	private final Map<String, IntSet> chestBiomesMap = new HashMap<>();
 
 	private CustomChest(JavaPlugin plugin) {
 		CustomChest.plugin = plugin;
-		this.chestItemsMap = new Int2ObjectOpenHashMap<>();
-		this.chestBiomesMap = new HashMap<>();
+		UNPOPULATED_KEY = new NamespacedKey(plugin, "custom_loot_unpopulated");
 		loadChestSettingsAsync();
 	}
 
@@ -49,29 +59,82 @@ public class CustomChest {
 		return instance;
 	}
 
+	/**
+	 * Called during world/chunk generation for each chest block.
+	 * If the config contains loot tables, we assign them immediately.
+	 * If the config contains custom items, we mark the chest unpopulated.
+	 */
 	public void loadChest(Block block) {
-		if (block != null && block.getState() instanceof Chest chest) {
-			Inventory chestInventory = chest.getInventory();
-			Biome biome = block.getBiome();
-			String biomeName = biome.toString().toUpperCase();
+		if (block == null || !(block.getState() instanceof Chest chest)) {
+			return;
+		}
+		Inventory chestInventory = chest.getInventory();
+		String biomeName = block.getBiome().toString().toUpperCase();
 
-			IntSet chestKeys = chestBiomesMap.getOrDefault(biomeName, new IntOpenHashSet());
-			if (!chestKeys.isEmpty()) {
-				int chestKey = chestKeys.iterator().nextInt();
-				ItemsData itemsData = chestItemsMap.get(chestKey);
-				if (itemsData != null) {
-					calculateItemsToPlace(itemsData, chestInventory)
-					.thenAccept(itemsToPlace -> plugin.getServer().getScheduler().runTask(plugin,
-							() -> placeItemsInChest(chestInventory, itemsToPlace)));
-				} else {
-					Cc.logS(Cc.GOLD, "No items data found for key: " + chestKey);
-				}
+		IntSet chestKeys = chestBiomesMap.getOrDefault(biomeName, new IntOpenHashSet());
+		if (chestKeys.isEmpty()) {
+			// No config found for this biome, do nothing
+			return;
+		}
+
+		int chestKey = chestKeys.iterator().nextInt();
+		ChestConfig chestConfig = chestConfigs.get(chestKey);
+		if (chestConfig == null) {
+			// No valid config found, do nothing
+			return;
+		}
+
+		// If lootTables are present, treat as vanilla loot chest.
+		if (chestConfig.lootTablesConfig != null) {
+			LootTable chosenLootTable = LootTableSelector.chooseWeightedLootTable(chestConfig.lootTablesConfig);
+			if (chosenLootTable != null) {
+				chest.setLootTable(chosenLootTable);
+				// Vanilla loot is populated on first open automatically
+				chest.update();
 			} else {
-				Cc.logS(Cc.GOLD, "Biome-specific chest settings not found for biome: " + biomeName);
+				// No valid loot table found, do nothing
 			}
+		}
+		// Otherwise, if custom items were defined...
+		else if (chestConfig.itemsData != null) {
+			// Mark the chest as unpopulated
+			chest.getPersistentDataContainer().set(UNPOPULATED_KEY, PersistentDataType.BYTE, (byte) 1);
+			// Clear any existing items to ensure it's empty
+			chestInventory.clear();
+			// Save changes
+			chest.update();
 		}
 	}
 
+	/**
+	 * Called when a player opens a chest marked unpopulated.
+	 */
+	public void populateChestOnOpen(Chest chest) {
+		String biomeName = chest.getBlock().getBiome().toString().toUpperCase();
+		IntSet chestKeys = chestBiomesMap.getOrDefault(biomeName, new IntOpenHashSet());
+		if (chestKeys.isEmpty()) {
+			// No config for this biome
+			return;
+		}
+
+		int chestKey = chestKeys.iterator().nextInt();
+		ChestConfig chestConfig = chestConfigs.get(chestKey);
+		if (chestConfig == null || chestConfig.itemsData == null) {
+			// No valid custom loot data
+			return;
+		}
+
+		calculateItemsToPlace(chestConfig.itemsData, chest.getInventory())
+		.thenAccept(itemsToPlace ->
+		plugin.getServer().getScheduler().runTask(plugin, () ->
+		placeItemsInChest(chest.getInventory(), itemsToPlace)
+				)
+				);
+	}
+
+	/**
+	 * Generate items off-thread.
+	 */
 	@SuppressWarnings("deprecation")
 	private CompletableFuture<ItemStack[]> calculateItemsToPlace(ItemsData itemsData, Inventory chestInventory) {
 		return CompletableFuture.supplyAsync(() -> {
@@ -79,6 +142,7 @@ public class CustomChest {
 			ItemStack[] itemsToPlace = new ItemStack[chestInventory.getSize()];
 			int[] currentItemCounts = getCurrentItemCounts(chestInventory);
 			int[] emptySlots = getEmptySlots(chestInventory);
+
 			for (int slot : emptySlots) {
 				ItemSettings itemSettings = itemsData.getRandomItemSettings();
 				if (itemSettings != null) {
@@ -90,14 +154,17 @@ public class CustomChest {
 						int amount = random.nextInt(1, maxSlotAdd + 1);
 						ItemStack stack = new ItemStack(MATERIALS[matOrdinal], amount);
 						ItemMeta meta = stack.getItemMeta();
+
 						if (itemSettings.customName != null && !itemSettings.customName.isEmpty()) {
 							meta.setDisplayName(itemSettings.customName);
 						}
 						stack.setItemMeta(meta);
+
 						List<ChosenEnchantment> chosenEnchants = new ArrayList<>();
 						if (itemSettings.enchantments != null && !itemSettings.enchantments.isEmpty()) {
 							String rawLevelType = (itemSettings.levelType != null) ? itemSettings.levelType.trim() : "";
 							String itemLevelType = rawLevelType.equalsIgnoreCase("standard") ? "Standard" : "Roman";
+
 							for (EnchantmentSetting enchSetting : itemSettings.enchantments) {
 								if (random.nextDouble(100.0) < enchSetting.weight) {
 									int level = random.nextInt(enchSetting.minLevel, enchSetting.maxLevel + 1);
@@ -119,7 +186,7 @@ public class CustomChest {
 				}
 			}
 			return itemsToPlace;
-		}, ExecutorServiceProvider.getExecutorService());
+		});
 	}
 
 	private void placeItemsInChest(Inventory chestInventory, ItemStack[] itemsToPlace) {
@@ -153,161 +220,178 @@ public class CustomChest {
 		return currentItemCounts;
 	}
 
+	/**
+	 * Loads the chest configuration from the ChestSettings.yml file asynchronously.
+	 */
 	private void loadChestSettingsAsync() {
 		CompletableFuture.runAsync(() -> {
 			File chestSettingsFile = new File(plugin.getDataFolder(), "SkygridBlocks/ChestSettings.yml");
 			if (!chestSettingsFile.exists()) {
-				Cc.logS(Cc.RED, "ChestSettings.yml not found.");
+				plugin.getLogger().severe("ChestSettings.yml not found.");
 				return;
 			}
 			FileConfiguration chestSettings = YamlConfiguration.loadConfiguration(chestSettingsFile);
-			if (chestSettings.contains("MaxItemsPerSlot")) {
-				maxPerSlot = chestSettings.getInt("MaxItemsPerSlot", 2);
-			}
+			maxPerSlot = chestSettings.getInt("MaxItemsPerSlot", 2);
+
+			// Clear previous data
+			chestConfigs.clear();
+			chestBiomesMap.clear();
+
 			if (chestSettings.isConfigurationSection("ChestSettings")) {
 				ConfigurationSection chestSettingsSection = chestSettings.getConfigurationSection("ChestSettings");
 				for (String chestKeyString : chestSettingsSection.getKeys(false)) {
 					int chestKey = chestKeyString.hashCode();
-					Object2ReferenceMap<Integer, ItemSettings> itemsMap = new Object2ReferenceOpenHashMap<>();
-					List<String> biomeNames = chestSettingsSection.getStringList(chestKeyString + ".Biomes");
-					for (String biomeName : biomeNames) {
-						chestBiomesMap.computeIfAbsent(biomeName.toUpperCase(), k -> new IntOpenHashSet()).add(chestKey);
+					ChestConfig config = new ChestConfig();
+
+					// If a LootTables section is present, treat as vanilla loot chest.
+					if (chestSettingsSection.contains(chestKeyString + ".LootTables")) {
+						config.lootTablesConfig = chestSettingsSection.getMapList(chestKeyString + ".LootTables");
 					}
-					Object itemsObj = chestSettingsSection.get(chestKeyString + ".Items");
-					if (itemsObj instanceof List<?> itemsList) {
-						for (Object itemObj : itemsList) {
-							// Old format: "MATERIAL:WEIGHT:MAXAMOUNT"
-							if (itemObj instanceof String itemString) {
-								String[] parts = itemString.split(":");
-								if (parts.length == 3) {
-									Material material = Material.matchMaterial(parts[0]);
-									if (material != null) {
-										try {
-											double weight = Double.parseDouble(parts[1]);
-											int maxAmount = Integer.parseInt(parts[2]);
-											itemsMap.put(material.ordinal(), new ItemSettings(material.ordinal(), weight, maxAmount));
-										} catch (NumberFormatException e) {
-											Cc.logS(Cc.RED, "Invalid number format in item settings: " + itemString);
+					// Otherwise, if an Items section is present, load custom loot items.
+					else if (chestSettingsSection.contains(chestKeyString + ".Items")) {
+						Object itemsObj = chestSettingsSection.get(chestKeyString + ".Items");
+						Object2ReferenceMap<Integer, ItemSettings> itemsMap = new Object2ReferenceOpenHashMap<>();
+						if (itemsObj instanceof List<?> itemsList) {
+							for (Object itemObj : itemsList) {
+								// Legacy format: "MATERIAL:WEIGHT:MAXAMOUNT"
+								if (itemObj instanceof String itemString) {
+									String[] parts = itemString.split(":");
+									if (parts.length == 3) {
+										Material material = Material.matchMaterial(parts[0]);
+										if (material != null) {
+											try {
+												double weight = Double.parseDouble(parts[1]);
+												int maxAmount = Integer.parseInt(parts[2]);
+												itemsMap.put(material.ordinal(), new ItemSettings(material.ordinal(), weight, maxAmount));
+											} catch (NumberFormatException e) {
+												plugin.getLogger().severe("Invalid number format in item settings: " + itemString);
+											}
+										} else {
+											plugin.getLogger().severe("Invalid material name: " + parts[0]);
 										}
-									} else {
-										Cc.logS(Cc.RED, "Invalid material name: " + parts[0]);
 									}
 								}
-							}
-							// New format: map structure with custom name, item-level LevelType, and enchantments
-							else if (itemObj instanceof Map<?, ?> itemMap) {
-								if (itemMap.size() == 1) {
-									Map.Entry<?, ?> entry = itemMap.entrySet().iterator().next();
-									String materialName = entry.getKey().toString();
-									Material material = Material.matchMaterial(materialName);
-									if (material == null) {
-										Cc.logS(Cc.RED, "Invalid material name: " + materialName);
-										continue;
-									}
-									double weight = 1.0;
-									int maxAmount = 1;
-									String customName = null;
-									String levelType = null;
-									List<EnchantmentSetting> enchantments = new ArrayList<>();
-									Object propertiesObj = entry.getValue();
-									if (propertiesObj instanceof List<?> propList) {
-										for (Object propObj : propList) {
-											if (propObj instanceof Map<?, ?> propMap) {
-												for (Map.Entry<?, ?> propEntry : propMap.entrySet()) {
-													String key = propEntry.getKey().toString();
-													Object value = propEntry.getValue();
-													switch (key) {
-													case "Weight" -> {
-														try {
-															weight = Double.parseDouble(value.toString());
-														} catch (NumberFormatException e) {
-															Cc.logS(Cc.RED, "Invalid Weight for " + materialName);
+								// New expanded format
+								else if (itemObj instanceof Map<?, ?> itemMap) {
+									if (itemMap.size() == 1) {
+										Map.Entry<?, ?> entry = itemMap.entrySet().iterator().next();
+										String materialName = entry.getKey().toString();
+										Material material = Material.matchMaterial(materialName);
+										if (material == null) {
+											plugin.getLogger().severe("Invalid material name: " + materialName);
+											continue;
+										}
+										double weight = 1.0;
+										int maxAmount = 1;
+										String customName = null;
+										String levelType = null;
+										List<EnchantmentSetting> enchantments = new ArrayList<>();
+										Object propertiesObj = entry.getValue();
+										if (propertiesObj instanceof List<?> propList) {
+											for (Object propObj : propList) {
+												if (propObj instanceof Map<?, ?> propMap) {
+													for (Map.Entry<?, ?> propEntry : propMap.entrySet()) {
+														String key = propEntry.getKey().toString();
+														Object value = propEntry.getValue();
+														switch (key) {
+														case "Weight" -> {
+															try {
+																weight = Double.parseDouble(value.toString());
+															} catch (NumberFormatException ex) {
+																plugin.getLogger().severe("Invalid Weight for " + materialName);
+															}
 														}
-													}
-													case "MaxAmount" -> {
-														try {
-															maxAmount = Integer.parseInt(value.toString());
-														} catch (NumberFormatException e) {
-															Cc.logS(Cc.RED, "Invalid MaxAmount for " + materialName);
+														case "MaxAmount" -> {
+															try {
+																maxAmount = Integer.parseInt(value.toString());
+															} catch (NumberFormatException ex) {
+																plugin.getLogger().severe("Invalid MaxAmount for " + materialName);
+															}
 														}
-													}
-													case "CustomName" -> customName = value.toString();
-													case "LevelType" -> levelType = value.toString();
-													case "Enchantments" -> {
-														if (value instanceof List<?> enchList) {
-															for (Object enchObj : enchList) {
-																if (enchObj instanceof Map<?, ?> enchMap) {
-																	if (enchMap.size() == 1) {
-																		Map.Entry<?, ?> enchEntry = enchMap.entrySet().iterator().next();
-																		String enchName = enchEntry.getKey().toString();
-																		double enchWeight = 0.0;
-																		int minLevel = 0;
-																		int maxLevel = 0;
-																		String enchLoreColor = null;
-																		Object enchPropsObj = enchEntry.getValue();
-																		if (enchPropsObj instanceof List<?> enchPropsList) {
-																			for (Object enchPropObj : enchPropsList) {
-																				if (enchPropObj instanceof Map<?, ?> enchPropMap) {
-																					for (Map.Entry<?, ?> eProp : enchPropMap.entrySet()) {
-																						String propKey = eProp.getKey().toString();
-																						Object propValue = eProp.getValue();
-																						switch (propKey) {
-																						case "Weight" -> {
-																							try {
-																								enchWeight = Double.parseDouble(propValue.toString());
-																							} catch (NumberFormatException ex) {
-																								Cc.logS(Cc.RED, "Invalid enchantment Weight for " + enchName);
+														case "CustomName" -> customName = value.toString();
+														case "LevelType" -> levelType = value.toString();
+														case "Enchantments" -> {
+															if (value instanceof List<?> enchList) {
+																for (Object enchObj : enchList) {
+																	if (enchObj instanceof Map<?, ?> enchMap) {
+																		if (enchMap.size() == 1) {
+																			Map.Entry<?, ?> enchEntry = enchMap.entrySet().iterator().next();
+																			String enchName = enchEntry.getKey().toString();
+																			double enchWeight = 0.0;
+																			int minLevel = 0;
+																			int maxLevel = 0;
+																			String enchLoreColor = null;
+																			Object enchPropsObj = enchEntry.getValue();
+																			if (enchPropsObj instanceof List<?> enchPropsList) {
+																				for (Object enchPropObj : enchPropsList) {
+																					if (enchPropObj instanceof Map<?, ?> enchPropMap) {
+																						for (Map.Entry<?, ?> eProp : enchPropMap.entrySet()) {
+																							String propKey = eProp.getKey().toString();
+																							Object propValue = eProp.getValue();
+																							switch (propKey) {
+																							case "Weight" -> {
+																								try {
+																									enchWeight = Double.parseDouble(propValue.toString());
+																								} catch (NumberFormatException ignored) { }
 																							}
-																						}
-																						case "MinLevel" -> {
-																							try {
-																								minLevel = Integer.parseInt(propValue.toString());
-																							} catch (NumberFormatException ex) {
-																								Cc.logS(Cc.RED, "Invalid enchantment MinLevel for " + enchName);
+																							case "MinLevel" -> {
+																								try {
+																									minLevel = Integer.parseInt(propValue.toString());
+																								} catch (NumberFormatException ignored) { }
 																							}
-																						}
-																						case "MaxLevel" -> {
-																							try {
-																								maxLevel = Integer.parseInt(propValue.toString());
-																							} catch (NumberFormatException ex) {
-																								Cc.logS(Cc.RED, "Invalid enchantment MaxLevel for " + enchName);
+																							case "MaxLevel" -> {
+																								try {
+																									maxLevel = Integer.parseInt(propValue.toString());
+																								} catch (NumberFormatException ignored) { }
 																							}
-																						}
-																						case "LoreColor" -> enchLoreColor = propValue.toString();
-																						default -> { }
+																							case "LoreColor" -> enchLoreColor = propValue.toString();
+																							}
 																						}
 																					}
 																				}
 																			}
+																			enchantments.add(new EnchantmentSetting(enchName, enchWeight, minLevel, maxLevel, enchLoreColor));
 																		}
-																		enchantments.add(new EnchantmentSetting(enchName, enchWeight, minLevel, maxLevel, enchLoreColor));
 																	}
 																}
 															}
 														}
-													}
-													default -> Cc.logS(Cc.GOLD, "Unknown property: " + key + " for " + materialName);
+														default -> plugin.getLogger().warning("Unknown property: " + key + " for " + materialName);
+														}
 													}
 												}
 											}
 										}
+										itemsMap.put(material.ordinal(), new ItemSettings(material.ordinal(), weight, maxAmount, customName, enchantments, levelType));
 									}
-									ItemSettings settings = new ItemSettings(material.ordinal(), weight, maxAmount, customName, enchantments, levelType);
-									itemsMap.put(material.ordinal(), settings);
+								} else {
+									plugin.getLogger().severe("Unknown item format in ChestSettings for chest: " + chestKeyString);
 								}
-							} else {
-								Cc.logS(Cc.RED, "Unknown item format in ChestSettings for chest: " + chestKeyString);
 							}
 						}
+						config.itemsData = new ItemsData(itemsMap);
 					}
-					ItemsData itemsData = new ItemsData(itemsMap);
-					chestItemsMap.put(chestKey, itemsData);
+					chestConfigs.put(chestKey, config);
+
+					// Load biomes list
+					List<String> biomeNames = chestSettingsSection.getStringList(chestKeyString + ".Biomes");
+					for (String bName : biomeNames) {
+						chestBiomesMap.computeIfAbsent(bName.toUpperCase(), k -> new IntOpenHashSet()).add(chestKey);
+					}
 				}
-				Cc.logSB("ChestSettings Loaded");
 			} else {
-				Cc.logS(Cc.RED, "Invalid ChestSettings.yml format.");
+				plugin.getLogger().severe("Invalid ChestSettings.yml format.");
 			}
-		}, ExecutorServiceProvider.getExecutorService());
+		});
+	}
+
+	/* --- Data Classes --- */
+
+	static class ChestConfig {
+		// If present, holds the vanilla loot table configuration.
+		List<Map<?, ?>> lootTablesConfig;
+		// For custom item generation.
+		ItemsData itemsData;
 	}
 
 	static class ItemSettings {
@@ -322,7 +406,8 @@ public class CustomChest {
 			this(materialOrdinal, weight, maxAmount, null, new ArrayList<>(), null);
 		}
 
-		ItemSettings(int materialOrdinal, double weight, int maxAmount, String customName, List<EnchantmentSetting> enchantments, String levelType) {
+		ItemSettings(int materialOrdinal, double weight, int maxAmount,
+				String customName, List<EnchantmentSetting> enchantments, String levelType) {
 			this.materialOrdinal = materialOrdinal;
 			this.weight = weight;
 			this.maxAmount = maxAmount;

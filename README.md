@@ -1,9 +1,8 @@
-
-The SkyGrid Plugin offers access to the latest blocks (1.21.4) and empowers users to fully customize the grids in the Overworld, Nether, and End dimensions. The initial generation process, which typically takes ~1 minute, adapts to the server's capabilities. Subsequently, all generation activities occur efficiently in real-time.
+The SkyGrid Plugin offers access to the latest blocks (1.21.5) and empowers users to fully customize the grids in the Overworld, Nether, and End dimensions. The initial generation process, which typically takes ~1 minute, adapts to the server's capabilities. Subsequently, all generation activities occur efficiently in real-time.
 
 This plugin also includes a built-in random teleport command for each dimension, ensuring that players can safely explore their chosen realm. Furthermore, it features an ore generator that can modify stone generation to create various blocks of your choice. While currently configured primarily for ores, the possibilities are virtually endless.
 
-![Skygrid](https://cdn.modrinth.com/data/ihjAiP7L/images/369966781464107b0a9554703b24cd1a34c98492.jpeg)
+![Skygrid](https://www.davids-repo.dev/mc/sg3.webp)
 
  
 # **Key Features:**
@@ -50,6 +49,17 @@ This plugin also includes a built-in random teleport command for each dimension,
    - Tiered loot distribution for added variety, each tier with its own set of items and probabilities.
    - Customize chest loot for specific biomes, allowing for a more immersive and thematic distribution of items based on the environment.
 
+## **Mini Chunk Regeneration**
+   - Periodically regenerate selected chunks on a timer without touching the surrounding world.
+   - Configure with `/miniregen` or `MiniRegen/mini_regen_settings.yml` once chunks have been chosen.
+   - Supports custom material distributions and grouping for bulk removal.
+
+## **Enhanced Eye of Ender**
+   - Eyes follow a smooth arc to the nearest registered portal, hover for 5 s with particles, then refund the eye.
+   - If no portal exists, they pop instantly with a small explosion and refund.
+   - Portal coordinates stored in an efficient binary file (`portals.dat`).
+   - This is only for `END_PORTAL` materials used in the grid, and serves as a replacement for the missing stronghold structure.
+
 ---
 
 ## Commands:
@@ -63,6 +73,9 @@ This plugin also includes a built-in random teleport command for each dimension,
 - `/eclogson`: Enable Event Control logging.
 - `/eclogsoff`: Disable Event Control logging.
 - `/patch`: Patch files to update materials and entities to the newest version.
+- `/miniregen add [interval in seconds] [alias] [distribution] [group(optional)]`: Schedule mini chunk regeneration for your current chunk.
+- `/miniregen remove [alias]`: Remove a mini chunk regeneration setting by alias.
+- `/miniregen remove group [groupName]`: Remove all mini regeneration settings in a given group.
 
 ## Permissions:
 
@@ -80,6 +93,7 @@ This plugin also includes a built-in random teleport command for each dimension,
 - `sg.eclogsoff`: Grants permission to disable Event Control logging using `/eclogsoff`.
 - `sg.patch`: Allows patching files to update materials and entities to another version.
 - `sg.regen`: Grants permission to regenerate all loaded chunks using the `/regen` command.
+- `sg.miniregen`: Grants permission to manage mini chunk regeneration using the `/miniregen` command.
 - `sg.*`: Provides access to all SkyGrid commands.
 
 ## Installation Instructions
@@ -91,6 +105,7 @@ For detailed installation instructions, [click here](https://www.davids-repo.dev
 - [Mob Spawner Settings](https://www.davids-repo.dev/skygridx/spawner_settings/)
 - [Chest Settings](https://www.davids-repo.dev/skygridx/chest_settings/)
 - [SkyGrid World Block Selection Guide](https://www.davids-repo.dev/skygridx/block_selection/)
+
 ---
 
 ## Additional Mechanisms:

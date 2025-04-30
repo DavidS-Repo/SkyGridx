@@ -4,13 +4,13 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>SkyGrid</groupId>
 	<artifactId>SkyGrid</artifactId>
-	<version>1.21.4</version>
+	<version>1.21.5</version>
 	<name>SkyGrid</name>
 	<description>A plugin that generates a SkyGrid in Minecraft worlds and more.</description>
 	<repositories>
 		<repository>
-			<id>papermc-repo</id>
-			<url>https://papermc.io/repo/repository/maven-public/</url>
+			<id>papermc</id>
+			<url>https://repo.papermc.io/repository/maven-public/</url>
 		</repository>
 		<repository>
 			<id>spigot-repo</id>
@@ -29,13 +29,13 @@
 		<dependency>
 			<groupId>io.papermc.paper</groupId>
 			<artifactId>paper-api</artifactId>
-			<version>1.21.4-R0.1-SNAPSHOT</version>
+			<version>1.21.5-R0.1-SNAPSHOT</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.spigotmc</groupId>
 			<artifactId>spigot-api</artifactId>
-			<version>1.21.4-R0.1-SNAPSHOT</version>
+			<version>1.21.5-R0.1-SNAPSHOT</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
@@ -59,6 +59,9 @@
 					<include>ores.yml</include>
 					<include>ChestSettings.yml</include>
 					<include>main/**</include>
+					<include>mini_regen_materials.yml</include>
+					<include>mini_regen_settings.yml</include>
+					<include>LICENSE.txt</include>
 				</includes>
 			</resource>
 		</resources>
