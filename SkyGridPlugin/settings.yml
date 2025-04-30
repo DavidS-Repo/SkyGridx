@@ -75,7 +75,9 @@ tprCommand:
     - BIG_DRIPLEAF
     - BLUE_ORCHID
     - BROWN_MUSHROOM
+    - BUSH
     - CACTUS
+    - CACTUS_FLOWER
     - CAMPFIRE
     - CARROTS
     - CAVE_VINES_PLANT
@@ -86,6 +88,7 @@ tprCommand:
     - DANDELION
     - DEAD_BUSH
     - FERN
+    - FIREFLY_BUSH
     - FIRE
     - GLOW_LICHEN
     - HANGING_ROOTS
@@ -94,6 +97,7 @@ tprCommand:
     - LARGE_FERN
     - LAVA
     - LAVA_CAULDRON
+    - LEAF_LITTER
     - LILAC
     - LILY_OF_THE_VALLEY
     - MAGMA_BLOCK
@@ -102,6 +106,7 @@ tprCommand:
     - NETHER_WART
     - ORANGE_TULIP
     - OXEYE_DAISY
+    - PALE_HANGING_MOSS
     - PEONY
     - PINK_TULIP
     - PITCHER_PLANT
@@ -115,6 +120,7 @@ tprCommand:
     - ROSE_BUSH
     - SCULK_VEIN
     - SEAGRASS
+    - SHORT_DRY_GRASS
     - SHORT_GRASS
     - SMALL_DRIPLEAF
     - SNOW
@@ -137,7 +143,7 @@ tprCommand:
     - WHEAT
     - WHITE_TULIP
     - WITHER_ROSE
-    - PALE_HANGING_MOSS
+    - WILDFLOWERS
 
 # Fog settings
 fog:
