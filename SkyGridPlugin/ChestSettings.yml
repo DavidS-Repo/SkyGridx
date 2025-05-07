@@ -3,7 +3,8 @@
 #
 # This file configures how chests are populated in specific biomes using a
 # weight-based system. Each chest configuration respects a global "MaxItemsPerSlot"
-# setting which limits the number of items that can appear in any one slot.(Does not apply to Minecraft-based Loot Tables)
+# setting which limits the number of items that can appear in any one slot.
+# (Does not apply to Minecraft-based Loot Tables)
 #
 # The plugin supports two modes:
 #
@@ -17,61 +18,56 @@
 #    ChestSettings:
 #      ChestOld:
 #        Items: [MATERIAL_ENUM:weight:maxAmount]
+#               [MATERIAL_ENUM:weight:minAmount-maxAmount]
+#               # - weight: chance in percent that the material is chosen
+#               # - maxAmount: maximum total of that material in the chest
+#               # - minAmount (optional): minimum total of that material in the chest, if omitted, defaults to 0 (preserves existing behavior)
 #        Biomes: [BIOME_ENUM]
+#
+#      Example Compact Entries:
+#        - DIAMOND:10:1-3     # 10% chance, between 1 and 3 diamonds total
+#        - STICK:50:5         # 50% chance, up to 5 sticks (min defaults to 0)
 #
 #    [New Expanded Format]
 #
-#     ChestSettings:                                    # ChestSettings (Parent Key) Under this key, create one or more named chest configurations (e.g., "Chest1").
-#       ChestNew:                                       # Chest key can be anything, really. If you use special characters, make sure to put them inside parentheses like this: "N@me". It is used as a unique identifier for each chest (there should not be two that are the same).
+#     ChestSettings:                                    # Top-level key
+#       ChestNew:                                       # Unique chest name
 #         Items:
-#           - MATERIAL_ENUM:                            # Use the exact item names from https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Material.html
-#             - Weight: <numeric value>                 # The chance (in percent) for the material to be placed in the chest.
-#             - MaxAmount: <numeric value>              # The max amount of that material that will be allowed chest wide.
-#             - CustomName: <custom display name>       # Supports use of Minecraft color codes like "§0" for Black and so on.
-#             - LevelType: <Standard or Roman>          # Item-wide setting for enchantment display
+#           - MATERIAL_ENUM:                            # Exact names from Bukkit’s Material enum
+#             - Weight: <numeric value>                 # Chance in percent to include
+#             - MinAmount: <numeric value>              # OPTIONAL: minimum total amount (defaults to 0)
+#             - MaxAmount: <numeric value>              # Maximum total amount in the chest
+#             - CustomName: <custom display name>       # Supports Minecraft color codes
+#             - LevelType: <Standard or Roman>          # Enchantment display style
 #             - Enchantments:
-#                 - ENCHANTMENT_ENUM:                   # Use exact enchantment names from https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/enchantments/Enchantment.html
+#                 - ENCHANTMENT_ENUM:                   # Exact names from Bukkit’s Enchantment enum
 #                     - Weight: <numeric chance in percent>
 #                     - MinLevel: <minimum level>
 #                     - MaxLevel: <maximum level>
-#                     - LoreColor: <color>             # (Optional) Valid colors: BLACK, DARK_BLUE, DARK_GREEN,DARK_AQUA, DARK_RED, DARK_PURPLE, GOLD, GRAY,DARK_GRAY, BLUE, GREEN, AQUA, RED, LIGHT_PURPLE,YELLOW, WHITE.
+#                     - LoreColor: <color>               # Optional, see valid colors below
 #         Biomes:
-#           - BIOME_ENUM                               # Use the exact biome names from https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/block/Biome.html
+#           - BIOME_ENUM                               # Exact names from Bukkit’s Biome enum
 #
 #      This format offers additional customization:
+#        • MinAmount: explicitly set the minimum number of that item chest-wide.
+#        • MaxAmount: upper cap on that item in the chest.
+#        • CustomName: display name with color codes (e.g., "§6HolyDirt").
+#        • LevelType: how enchant levels render (Standard or Roman).
+#        • Enchantments: specify weight, level range, and lore color per enchant.
 #
-#        - CustomName: Set a custom display name (supports Minecraft color codes, e.g., "§6HolyDirt").
-#        - LevelType: Item-wide setting for how enchantment levels are displayed.
-#                     Options:
-#                        * Standard – e.g., "lvl_1", "lvl_2".
-#                        * Roman – e.g., "I", "II" (defaults to Roman if omitted or unrecognized).
-#        - Enchantments: For each enchantment, specify:
-#                         * Weight: Chance (in percent) for the enchantment to be applied.
-#                         * MinLevel and MaxLevel: Range for the enchantment level.
-#                         * LoreColor: Color used for the enchantment display in the item's lore.
-#                           Valid colors include: BLACK, DARK_BLUE, DARK_GREEN, DARK_AQUA, DARK_RED,DARK_PURPLE, GOLD, GRAY, DARK_GRAY, BLUE, GREEN, AQUA, RED, LIGHT_PURPLE, YELLOW, WHITE.
-#
-#      Example (provided in comments):
-#
-#      ChestSettings:
-#        ChestExpanded:
-#          Items:
-#            - MYCELIUM:
-#                - Weight: 30
-#                - MaxAmount: 5
-#                - CustomName: §6HolyDirt
-#                - LevelType: Standard
-#                - Enchantments:
-#                    - FORTUNE:
-#                        - Weight: 100
-#                        - MinLevel: 1
-#                        - MaxLevel: 400
-#                        - LoreColor: RED
-#            - AIR:
-#                - Weight: 90
-#                - MaxAmount: 999
-#          Biomes:
-#            - MUSHROOM_FIELDS
+#      Example Expanded Entry:
+#        - MYCELIUM:
+#            - Weight: 30
+#            - MinAmount: 2
+#            - MaxAmount: 5
+#            - CustomName: §6HolyDirt
+#            - LevelType: Standard
+#            - Enchantments:
+#                - FORTUNE:
+#                    - Weight: 100
+#                    - MinLevel: 1
+#                    - MaxLevel: 3
+#                    - LoreColor: RED
 #
 # 2) Minecraft-based Loot Tables:
 #
@@ -113,6 +109,8 @@
 #   - maxAmount vs. MaxItemsPerSlot:
 #       * maxAmount: Maximum total number of a given item allowed in the chest.
 #       * MaxItemsPerSlot: Maximum number of that item that can appear in any one slot.(Not needed if using Minecraft-based Loot Tables only)
+#
+#   - MinAmount only applies in Custom Loot Tables mode; if omitted, it’s treated as 0.
 #
 #   - YAML Tips:
 #       * Both the compact and expanded formats are supported for custom loot tables.
