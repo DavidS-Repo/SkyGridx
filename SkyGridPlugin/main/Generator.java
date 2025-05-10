@@ -36,6 +36,14 @@ public class Generator implements Listener {
 	private final Spawner spawner;
 	private final CustomChest chest;
 	private final Map<World.Environment, MinMaxSettings> environmentSettings;
+
+	// worlds we actually want to touch
+	private static final Set<String> ALLOWED_WORLD_NAMES = Set.of(
+			"world",
+			"world_nether",
+			"world_the_end"
+			);
+
 	private static final Set<Material> CROP_MATERIALS;
 	private static final Set<Material> LEAVES;
 	private static final EnumSet<World.Environment> DIMENSIONS_TO_PROCESS;
@@ -143,10 +151,17 @@ public class Generator implements Listener {
 
 	public void processChunk(Chunk chunk) {
 		String worldName = chunk.getWorld().getName();
+
+		// Skip worlds we don't care about
+		if (!ALLOWED_WORLD_NAMES.contains(worldName)) {
+			return;
+		}
+
 		World.Environment environment = chunk.getWorld().getEnvironment();
 		MinMaxSettings minMax = environmentSettings.get(environment);
 		int minY = minMax.minY;
 		int maxY = minMax.maxY;
+
 		for (int xOffset = 1; xOffset <= 15; xOffset += 4) {
 			for (int zOffset = 1; zOffset <= 15; zOffset += 4) {
 				for (int y = minY; y <= maxY; y += 4) {
