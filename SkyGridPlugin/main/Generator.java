@@ -37,7 +37,6 @@ public class Generator implements Listener {
 	private final CustomChest chest;
 	private final Map<World.Environment, MinMaxSettings> environmentSettings;
 
-	// worlds we actually want to touch
 	private static final Set<String> ALLOWED_WORLD_NAMES = Set.of(
 			"world",
 			"world_nether",
@@ -75,10 +74,10 @@ public class Generator implements Listener {
 		this.spawner = Spawner.getInstance(plugin);
 		this.chest = CustomChest.getInstance(plugin);
 		this.environmentSettings = new EnumMap<>(World.Environment.class);
-		initializeEnvironmentSettings();
+		initEnvSettings();
 	}
 
-	private void initializeEnvironmentSettings() {
+	private void initEnvSettings() {
 		environmentSettings.put(World.Environment.NORMAL,
 				new MinMaxSettings(PluginSettings.normalMinY(), PluginSettings.normalMaxY()));
 		environmentSettings.put(World.Environment.NETHER,
@@ -90,13 +89,9 @@ public class Generator implements Listener {
 	}
 
 	public void initialize() {
-		registerEvents();
-		loadWorldMaterialsAsync();
-		callOreGen();
-	}
-
-	private void registerEvents() {
 		plugin.getServer().getPluginManager().registerEvents(this, plugin);
+		loadWorldMaterialsAsync();
+		registerOreGen();
 	}
 
 	private void loadWorldMaterialsAsync() {
@@ -105,151 +100,156 @@ public class Generator implements Listener {
 			materialManager.loadMaterialsForWorld("world.yml");
 			materialManager.loadMaterialsForWorld("world_nether.yml");
 			materialManager.loadMaterialsForWorld("world_the_end.yml");
-		}).exceptionally(throwable -> {
-			plugin.getLogger().severe("Failed to load materials: " + throwable.getMessage());
+		}).exceptionally(th -> {
+			plugin.getLogger().severe("Failed to load materials: " + th.getMessage());
 			return null;
 		});
 	}
 
-	private void callOreGen() {
+	private void registerOreGen() {
 		OreGen oreGen = new OreGen(plugin);
 		plugin.getServer().getPluginManager().registerEvents(oreGen, plugin);
 	}
 
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onChunkLoad(ChunkLoadEvent event) {
+		World world = event.getWorld();
+		String worldName = world.getName();
+
+		if (!ALLOWED_WORLD_NAMES.contains(worldName)) {
+			return; // custom world, ignore
+		}
+
 		if (event.isNewChunk()) {
-			Bukkit.getScheduler().runTaskLater(plugin,
-					() -> processChunk(event.getChunk()),
-					PluginSettings.getProcessDelay());
+			Bukkit.getScheduler().runTaskLater(
+					plugin,
+					() -> processChunk(event.getChunk(), world, worldName),
+					PluginSettings.getProcessDelay()
+					);
 		}
 	}
 
 	public void processLoadedChunks() {
-		for (World.Environment dimension : DIMENSIONS_TO_PROCESS) {
-			processDimensionChunks(dimension);
-		}
-	}
-
-	private void processDimensionChunks(World.Environment dimension) {
-		Set<Chunk> chunksToProcess = new HashSet<>();
-		for (World world : Bukkit.getWorlds()) {
-			if (world.getEnvironment() == dimension) {
-				for (Chunk chunk : world.getLoadedChunks()) {
-					chunksToProcess.add(chunk);
+		for (World.Environment dim : DIMENSIONS_TO_PROCESS) {
+			Set<Chunk> toProcess = new HashSet<>();
+			for (World world : Bukkit.getWorlds()) {
+				if (world.getEnvironment() == dim && ALLOWED_WORLD_NAMES.contains(world.getName())) {
+					for (Chunk chunk : world.getLoadedChunks()) {
+						toProcess.add(chunk);
+					}
 				}
 			}
-		}
-		processChunksBatch(chunksToProcess);
-	}
-
-	private void processChunksBatch(Set<Chunk> chunksToProcess) {
-		for (Chunk chunk : chunksToProcess) {
-			processChunk(chunk);
+			for (Chunk chunk : toProcess) {
+				processChunk(chunk, chunk.getWorld(), chunk.getWorld().getName());
+			}
 		}
 	}
 
-	public void processChunk(Chunk chunk) {
-		String worldName = chunk.getWorld().getName();
-
-		// Skip worlds we don't care about
-		if (!ALLOWED_WORLD_NAMES.contains(worldName)) {
-			return;
+	public void regenerateAllLoadedChunks() {
+		for (World world : Bukkit.getWorlds()) {
+			String name = world.getName();
+			if (!ALLOWED_WORLD_NAMES.contains(name)) continue;
+			for (Chunk chunk : world.getLoadedChunks()) {
+				processChunk(chunk, world, name);
+			}
 		}
+	}
 
-		World.Environment environment = chunk.getWorld().getEnvironment();
-		MinMaxSettings minMax = environmentSettings.get(environment);
-		int minY = minMax.minY;
-		int maxY = minMax.maxY;
+	private void processChunk(Chunk chunk, World world, String worldName) {
+		World.Environment env = world.getEnvironment();
+		MinMaxSettings mm = environmentSettings.get(env);
+		int minY = mm.minY;
+		int maxY = mm.maxY;
 
-		for (int xOffset = 1; xOffset <= 15; xOffset += 4) {
-			for (int zOffset = 1; zOffset <= 15; zOffset += 4) {
+		for (int x = 1; x <= 15; x += 4) {
+			for (int z = 1; z <= 15; z += 4) {
 				for (int y = minY; y <= maxY; y += 4) {
-					Block block = chunk.getBlock(xOffset, y, zOffset);
-					String biomeName = block.getBiome().toString();
-					Material material = materialManager.getRandomMaterialForWorld(worldName, biomeName);
-					if (material != null) {
-						setBlockTypeAndHandle(block, material);
+					Block block = chunk.getBlock(x, y, z);
+					String biome = block.getBiome().toString();
+					Material mat = materialManager.getRandomMaterialForWorld(worldName, biome);
+					if (mat != null) {
+						setBlockTypeAndHandle(block, mat);
 					}
 				}
 			}
 		}
 	}
 
-	public void regenerateMiniChunk(Chunk chunk, MaterialManager.MaterialDistribution distribution) {
-		World.Environment environment = chunk.getWorld().getEnvironment();
-		MinMaxSettings minMax = environmentSettings.get(environment);
-		int minY = minMax.minY;
-		int maxY = minMax.maxY;
-		for (int xOffset = 1; xOffset <= 15; xOffset += 4) {
-			for (int zOffset = 1; zOffset <= 15; zOffset += 4) {
+	public void regenerateMiniChunk(Chunk chunk, MaterialManager.MaterialDistribution dist) {
+		World world = chunk.getWorld();
+		MinMaxSettings mm = environmentSettings.get(world.getEnvironment());
+		int minY = mm.minY;
+		int maxY = mm.maxY;
+
+		for (int x = 1; x <= 15; x += 4) {
+			for (int z = 1; z <= 15; z += 4) {
 				for (int y = minY; y <= maxY; y += 4) {
-					Block block = chunk.getBlock(xOffset, y, zOffset);
-					Material material = distribution.next();
-					setBlockTypeAndHandle(block, material);
+					Block block = chunk.getBlock(x, y, z);
+					setBlockTypeAndHandle(block, dist.next());
 				}
 			}
 		}
 	}
 
-	private void setBlockTypeAndHandle(Block block, Material material) {
+	private void setBlockTypeAndHandle(Block block, Material mat) {
 		BlockState state = block.getState();
 		if (state instanceof TileState) {
 			block.setType(Material.AIR, false);
 		}
-		block.setType(material, false);
-		if (LEAVES.contains(material)) {
+		block.setType(mat, false);
+
+		if (LEAVES.contains(mat)) {
 			handleLeaves(block);
-		} else if (CROP_MATERIALS.contains(material)) {
+		} else if (CROP_MATERIALS.contains(mat)) {
 			handleCrop(block);
-		} else if (material == Material.CHORUS_FLOWER) {
+		} else if (mat == Material.CHORUS_FLOWER) {
 			handleChorusFlower(block);
-		} else if (material == Material.BAMBOO) {
+		} else if (mat == Material.BAMBOO) {
 			handleBamboo(block);
-		} else if (material == Material.SPAWNER) {
+		} else if (mat == Material.SPAWNER) {
 			spawner.BlockInfo(block);
-		} else if (material == Material.CHEST) {
+		} else if (mat == Material.CHEST) {
 			chest.loadChest(block);
-		} else if (material == Material.BEE_NEST || material == Material.BEEHIVE) {
+		} else if (mat == Material.BEE_NEST || mat == Material.BEEHIVE) {
 			handleBeehive(block);
-		} else if (material == Material.TRIAL_SPAWNER || material == Material.VAULT) {
+		} else if (mat == Material.TRIAL_SPAWNER || mat == Material.VAULT) {
 			handleTrial(block);
 		}
-		if (material == Material.END_PORTAL_FRAME || material == Material.END_PORTAL) {
+		if (mat == Material.END_PORTAL_FRAME || mat == Material.END_PORTAL) {
 			plugin.getPortalManager().addPortal(block.getLocation());
 		}
 	}
 
 	private void handleLeaves(Block block) {
-		BlockData blockData = block.getBlockData();
-		if (blockData instanceof Leaves leaves) {
+		BlockData data = block.getBlockData();
+		if (data instanceof Leaves leaves) {
 			leaves.setPersistent(true);
 			block.setBlockData(leaves, false);
 		}
 	}
 
 	private void handleCrop(Block block) {
-		BlockData blockData = block.getBlockData();
-		if (blockData instanceof CaveVines caveVines) {
-			caveVines.setBerries(true);
-			block.setBlockData(caveVines, true);
-		} else if (blockData instanceof Ageable ageable) {
-			ageable.setAge(ageable.getMaximumAge());
-			block.setBlockData(ageable, false);
+		BlockData data = block.getBlockData();
+		if (data instanceof CaveVines vines) {
+			vines.setBerries(true);
+			block.setBlockData(vines, true);
+		} else if (data instanceof Ageable age) {
+			age.setAge(age.getMaximumAge());
+			block.setBlockData(age, false);
 		}
 	}
 
 	private void handleChorusFlower(Block block) {
-		BlockData blockData = block.getBlockData();
-		if (blockData instanceof Ageable ageable) {
-			ageable.setAge(Math.min(5, ageable.getMaximumAge()));
-			block.setBlockData(ageable, false);
+		BlockData data = block.getBlockData();
+		if (data instanceof Ageable age) {
+			age.setAge(Math.min(5, age.getMaximumAge()));
+			block.setBlockData(age, false);
 		}
 	}
 
 	private void handleBamboo(Block block) {
-		BlockData blockData = block.getBlockData();
-		if (blockData instanceof Bamboo bamboo) {
+		BlockData data = block.getBlockData();
+		if (data instanceof Bamboo bamboo) {
 			bamboo.setStage(1);
 			bamboo.setLeaves(getRandomLeafSize());
 			block.setBlockData(bamboo, false);
@@ -257,41 +257,32 @@ public class Generator implements Listener {
 	}
 
 	private Bamboo.Leaves getRandomLeafSize() {
-		Bamboo.Leaves[] values = Bamboo.Leaves.values();
-		return values[random.nextInt(values.length)];
+		Bamboo.Leaves[] vals = Bamboo.Leaves.values();
+		return vals[random.nextInt(vals.length)];
 	}
 
 	private void handleBeehive(Block block) {
-		Beehive beehive = (Beehive) block.getState();
-		if (!beehive.isFull()) {
+		Beehive hive = (Beehive) block.getState();
+		if (!hive.isFull()) {
 			for (int i = 0; i < 3; i++) {
-				Bee newBee = beehive.getWorld().createEntity(block.getLocation(), Bee.class);
-				beehive.addEntity(newBee);
+				Bee bee = hive.getWorld().createEntity(block.getLocation(), Bee.class);
+				hive.addEntity(bee);
 			}
 		}
-		beehive.update();
+		hive.update();
 	}
 
 	private void handleTrial(Block block) {
-		BlockData blockData = block.getBlockData();
-		boolean setOminous = random.nextBoolean();
-		if (blockData instanceof TrialSpawner trialSpawner) {
-			trialSpawner.setOminous(setOminous);
-			block.setBlockData(trialSpawner, false);
-		} else if (blockData instanceof Vault vault) {
-			vault.setOminous(setOminous);
-			block.setBlockData(vault, false);
+		BlockData data = block.getBlockData();
+		boolean ominous = random.nextBoolean();
+		if (data instanceof TrialSpawner ts) {
+			ts.setOminous(ominous);
+			block.setBlockData(ts, false);
+		} else if (data instanceof Vault v) {
+			v.setOminous(ominous);
+			block.setBlockData(v, false);
 		}
 	}
 
-	public void regenerateAllLoadedChunks() {
-		for (World world : Bukkit.getWorlds()) {
-			for (Chunk chunk : world.getLoadedChunks()) {
-				processChunk(chunk);
-			}
-		}
-	}
-
-	private record MinMaxSettings(int minY, int maxY) {
-	}
+	private record MinMaxSettings(int minY, int maxY) {}
 }
