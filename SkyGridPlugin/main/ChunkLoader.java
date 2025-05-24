@@ -8,6 +8,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 public class ChunkLoader {
 
@@ -33,7 +34,7 @@ public class ChunkLoader {
 			}
 		}.runTask(plugin);
 
-		List<World> worlds = Bukkit.getWorlds();
+		List<World> worlds = Bukkit.getWorlds().stream().filter(world -> world.getName().startsWith(WorldManager.PREFIX)).collect(Collectors.toList());
 		int centerX = 0;
 		int centerZ = 0;
 		int chunkRange = 4; // 4 chunks in each direction

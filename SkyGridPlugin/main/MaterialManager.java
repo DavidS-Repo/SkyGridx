@@ -162,16 +162,41 @@ public class MaterialManager {
 	}
 
 	public Material getRandomMaterialForWorld(String worldName, String biomeName) {
-		MaterialDistribution materialDistribution = materialDistributions.get(worldName + "-" + biomeName);
-		if (materialDistribution != null) {
-			return materialDistribution.next();
+		// 1) exact match: skygridx_world_THE_BIOME
+		String key = worldName + "-" + biomeName;
+		MaterialDistribution dist = materialDistributions.get(key);
+		if (dist != null) {
+			return dist.next();
 		}
-		materialDistribution = materialDistributions.get(worldName + "-DEFAULT");
-		if (materialDistribution != null) {
-			return materialDistribution.next();
+
+		// 2) if prefixed, try without prefix: world_THE_BIOME
+		String base = worldName.startsWith("skygridx_")
+				? worldName.substring("skygridx_".length())
+						: worldName;
+		String baseKey = base + "-" + biomeName;
+		dist = materialDistributions.get(baseKey);
+		if (dist != null) {
+			return dist.next();
 		}
-		plugin.getLogger().warning("No material distribution found for alias: " + worldName + "-" + biomeName
-				+ " and no default distribution available.");
+
+		// 3) exact default for prefixed
+		String defaultKey = worldName + "-DEFAULT";
+		dist = materialDistributions.get(defaultKey);
+		if (dist != null) {
+			return dist.next();
+		}
+
+		// 4) base default
+		String baseDefaultKey = base + "-DEFAULT";
+		dist = materialDistributions.get(baseDefaultKey);
+		if (dist != null) {
+			return dist.next();
+		}
+
+		plugin.getLogger().warning(
+				"No material distribution found for alias: " + key +
+				" and no default distribution available."
+				);
 		return null;
 	}
 
@@ -180,6 +205,7 @@ public class MaterialManager {
 		private final double[] probabilities;
 		private final int[] alias;
 		private final int size;
+
 		public MaterialDistribution(Object2DoubleMap<Material> distribution) {
 			this.size = distribution.size();
 			this.materials = new Material[size];
@@ -189,35 +215,33 @@ public class MaterialManager {
 			int index = 0;
 			Material[] tempMaterials = new Material[size];
 			double[] normalized = new double[size];
-			Object2DoubleMap.FastEntrySet<Material> entries =(Object2DoubleMap.FastEntrySet<Material>) distribution.object2DoubleEntrySet();
-			for (Object2DoubleMap.Entry<Material> entry : entries) {
+
+			for (Object2DoubleMap.Entry<Material> entry :
+				((Object2DoubleMap.FastEntrySet<Material>)distribution.object2DoubleEntrySet())) {
 				total += entry.getDoubleValue();
 			}
-			for (Object2DoubleMap.Entry<Material> entry : entries) {
+			for (Object2DoubleMap.Entry<Material> entry :
+				((Object2DoubleMap.FastEntrySet<Material>)distribution.object2DoubleEntrySet())) {
 				tempMaterials[index] = entry.getKey();
 				normalized[index] = (entry.getDoubleValue() / total) * size;
 				index++;
 			}
+
 			IntArrayList small = new IntArrayList();
 			IntArrayList large = new IntArrayList();
 			for (int i = 0; i < size; i++) {
-				if (normalized[i] < 1.0) {
-					small.add(i);
-				} else {
-					large.add(i);
-				}
+				if (normalized[i] < 1.0) small.add(i);
+				else large.add(i);
 			}
+
 			while (!small.isEmpty() && !large.isEmpty()) {
 				int smallIndex = small.removeInt(small.size() - 1);
 				int largeIndex = large.removeInt(large.size() - 1);
 				probabilities[smallIndex] = normalized[smallIndex];
 				alias[smallIndex] = largeIndex;
 				normalized[largeIndex] = (normalized[largeIndex] + normalized[smallIndex]) - 1.0;
-				if (normalized[largeIndex] < 1.0) {
-					small.add(largeIndex);
-				} else {
-					large.add(largeIndex);
-				}
+				if (normalized[largeIndex] < 1.0) small.add(largeIndex);
+				else large.add(largeIndex);
 			}
 			while (!small.isEmpty()) {
 				probabilities[small.removeInt(small.size() - 1)] = 1.0;
@@ -228,9 +252,12 @@ public class MaterialManager {
 
 			System.arraycopy(tempMaterials, 0, materials, 0, size);
 		}
+
 		public Material next() {
-			final int column = ThreadLocalRandom.current().nextInt(size);
-			return ThreadLocalRandom.current().nextDouble() < probabilities[column]? materials[column]: materials[alias[column]];
+			int column = ThreadLocalRandom.current().nextInt(size);
+			return ThreadLocalRandom.current().nextDouble() < probabilities[column]
+					? materials[column]
+							: materials[alias[column]];
 		}
 	}
 }

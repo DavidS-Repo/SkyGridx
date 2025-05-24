@@ -1,40 +1,43 @@
 package main;
 
-import java.util.EnumSet;
-import java.util.UUID;
-import java.util.concurrent.ThreadLocalRandom;
-
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitRunnable;
+
+import java.util.EnumSet;
+import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class TPRCommand implements CommandExecutor {
 	private final JavaPlugin plugin;
 	private final Object2ObjectOpenHashMap<UUID, Object2LongOpenHashMap<World.Environment>> lastTeleportTimes = new Object2ObjectOpenHashMap<>();
 	private final Object2LongOpenHashMap<UUID> lastCommandTimes = new Object2LongOpenHashMap<>();
 	private static final String ERROR_MESSAGE = "Only players can use this command.";
-	private static final World netherWorld = Bukkit.getWorld("world_nether");
-	private static final World endWorld = Bukkit.getWorld("world_the_end");
-	private static final World overworld = Bukkit.getWorld("world");
 	private static final EnumSet<Material> DANGEROUSBLOCKS;
 	private static final int Lx, Sx, Lz, Sz, Y, b2b, tprN, tprE, tprO;
-	
+
 	public TPRCommand(JavaPlugin plugin) {
 		this.plugin = plugin;
 	}
 
 	static {
 		DANGEROUSBLOCKS = PluginSettings.getDangerousBlocks();
-		Lx = PluginSettings.getMaxX(); Sx = PluginSettings.getMinX(); Lz = PluginSettings.getMaxZ(); Sz = PluginSettings.getMinZ(); Y = PluginSettings.getDestinationY();
-		b2b = PluginSettings.getb2bDelay(); tprN = PluginSettings.getTprNetherDelay(); tprE = PluginSettings.getTprEndDelay(); tprO = PluginSettings.getTprDelay();
+		Lx = PluginSettings.getMaxX(); 
+		Sx = PluginSettings.getMinX(); 
+		Lz = PluginSettings.getMaxZ(); 
+		Sz = PluginSettings.getMinZ(); 
+		Y = PluginSettings.getDestinationY();
+		b2b = PluginSettings.getb2bDelay(); 
+		tprN = PluginSettings.getTprNetherDelay(); 
+		tprE = PluginSettings.getTprEndDelay(); 
+		tprO = PluginSettings.getTprDelay();
 	}
 
 	@Override
@@ -45,19 +48,14 @@ public class TPRCommand implements CommandExecutor {
 		}
 		Player player = (Player) sender;
 		World world = getWorldByLabel(label, args);
+		if (world == null) {
+			Cc.sendS(player, Cc.RED, "Target world not found!");
+			return true;
+		}
 		if (canTeleport(player, world)) {
 			teleportPlayer(player, world);
 		} else {
-			long regularCooldown = getRemainingCooldown(player, world);
-			long b2bCooldown = getRemainingB2BCooldown(player);
-			if (regularCooldown > 0 && b2bCooldown > 0) {
-				Cc.sendS(player, Cc.RED, "Wait " + regularCooldown + "s before this command.");
-				Cc.sendS(player, Cc.RED, "Or, " + b2bCooldown + "s before any other tpr commands.");
-			} else if (regularCooldown > 0) {
-				Cc.sendS(player, Cc.RED, "Wait " + regularCooldown + "s before this command.");
-			} else if (b2bCooldown > 0) {
-				Cc.sendS(player, Cc.RED, "Wait " + b2bCooldown + "s before any other tpr commands.");
-			}
+			handleCooldownMessages(player, world);
 		}
 		return true;
 	}
@@ -66,28 +64,50 @@ public class TPRCommand implements CommandExecutor {
 		if (args.length > 0) {
 			return getWorldByName(args[0]);
 		}
+		return getWorldForEnvironment(getEnvironmentFromLabel(label));
+	}
+
+	private World.Environment getEnvironmentFromLabel(String label) {
 		switch (label.toLowerCase()) {
 		case "tprn":
-			return netherWorld;
+			return World.Environment.NETHER;
 		case "tpre":
-			return endWorld;
-		case "tpro":
-			return overworld;
+			return World.Environment.THE_END;
 		default:
-			return overworld;
+			return World.Environment.NORMAL;
 		}
 	}
 
-	private World getWorldByName(String worldName) {
-		switch (worldName.toLowerCase()) {
-		case "nether":
-			return netherWorld;
-		case "end":
-			return endWorld;
-		case "overworld":
-		default:
-			return overworld;
+	private World getWorldForEnvironment(World.Environment env) {
+		String worldName = WorldManager.PREFIX + switch (env) {
+		case NETHER -> "world_nether";
+		case THE_END -> "world_the_end";
+		default -> "world";
+		};
+		return Bukkit.getWorld(worldName);
+	}
+
+	private void handleCooldownMessages(Player player, World world) {
+		long regularCooldown = getRemainingCooldown(player, world);
+		long b2bCooldown = getRemainingB2BCooldown(player);
+
+		if (regularCooldown > 0 && b2bCooldown > 0) {
+			Cc.sendS(player, Cc.RED, "Wait " + regularCooldown + "s before this command.");
+			Cc.sendS(player, Cc.RED, "Or, " + b2bCooldown + "s before any other tpr commands.");
+		} else if (regularCooldown > 0) {
+			Cc.sendS(player, Cc.RED, "Wait " + regularCooldown + "s before this command.");
+		} else if (b2bCooldown > 0) {
+			Cc.sendS(player, Cc.RED, "Wait " + b2bCooldown + "s before any other tpr commands.");
 		}
+	}
+
+	private World getWorldByName(String worldNameArg) {
+		World.Environment env = switch (worldNameArg.toLowerCase()) {
+		case "nether" -> World.Environment.NETHER;
+		case "end" -> World.Environment.THE_END;
+		default -> World.Environment.NORMAL;
+		};
+		return getWorldForEnvironment(env);
 	}
 
 	private boolean canTeleport(Player player, World world) {

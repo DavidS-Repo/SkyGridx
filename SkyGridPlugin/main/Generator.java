@@ -30,6 +30,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class Generator implements Listener {
+	private static final String PREFIX = "skygridx_";
+
 	private final SkyGridPlugin plugin;
 	private final ThreadLocalRandom random;
 	private final MaterialManager materialManager;
@@ -37,15 +39,9 @@ public class Generator implements Listener {
 	private final CustomChest chest;
 	private final Map<World.Environment, MinMaxSettings> environmentSettings;
 
-	private static final Set<String> ALLOWED_WORLD_NAMES = Set.of(
-			"world",
-			"world_nether",
-			"world_the_end"
-			);
-
+	private static final EnumSet<World.Environment> DIMENSIONS_TO_PROCESS;
 	private static final Set<Material> CROP_MATERIALS;
 	private static final Set<Material> LEAVES;
-	private static final EnumSet<World.Environment> DIMENSIONS_TO_PROCESS;
 
 	static {
 		DIMENSIONS_TO_PROCESS = EnumSet.of(
@@ -89,6 +85,7 @@ public class Generator implements Listener {
 	}
 
 	public void initialize() {
+		WorldManager.setupWorlds(plugin);
 		plugin.getServer().getPluginManager().registerEvents(this, plugin);
 		loadWorldMaterialsAsync();
 		registerOreGen();
@@ -111,13 +108,17 @@ public class Generator implements Listener {
 		plugin.getServer().getPluginManager().registerEvents(oreGen, plugin);
 	}
 
+	private boolean isSkygridWorld(String name) {
+		return name.startsWith(PREFIX);
+	}
+
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onChunkLoad(ChunkLoadEvent event) {
 		World world = event.getWorld();
 		String worldName = world.getName();
 
-		if (!ALLOWED_WORLD_NAMES.contains(worldName)) {
-			return; // custom world, ignore
+		if (!isSkygridWorld(worldName)) {
+			return;
 		}
 
 		if (event.isNewChunk()) {
@@ -133,7 +134,7 @@ public class Generator implements Listener {
 		for (World.Environment dim : DIMENSIONS_TO_PROCESS) {
 			Set<Chunk> toProcess = new HashSet<>();
 			for (World world : Bukkit.getWorlds()) {
-				if (world.getEnvironment() == dim && ALLOWED_WORLD_NAMES.contains(world.getName())) {
+				if (world.getEnvironment() == dim && isSkygridWorld(world.getName())) {
 					for (Chunk chunk : world.getLoadedChunks()) {
 						toProcess.add(chunk);
 					}
@@ -147,10 +148,25 @@ public class Generator implements Listener {
 
 	public void regenerateAllLoadedChunks() {
 		for (World world : Bukkit.getWorlds()) {
-			String name = world.getName();
-			if (!ALLOWED_WORLD_NAMES.contains(name)) continue;
+			if (!isSkygridWorld(world.getName())) continue;
 			for (Chunk chunk : world.getLoadedChunks()) {
-				processChunk(chunk, world, name);
+				processChunk(chunk, world, world.getName());
+			}
+		}
+	}
+
+	public void regenerateMiniChunk(Chunk chunk, MaterialManager.MaterialDistribution dist) {
+		World world = chunk.getWorld();
+		MinMaxSettings mm = environmentSettings.get(world.getEnvironment());
+		int minY = mm.minY;
+		int maxY = mm.maxY;
+
+		for (int x = 1; x <= 15; x += 4) {
+			for (int z = 1; z <= 15; z += 4) {
+				for (int y = minY; y <= maxY; y += 4) {
+					Block block = chunk.getBlock(x, y, z);
+					setBlockTypeAndHandle(block, dist.next());
+				}
 			}
 		}
 	}
@@ -170,22 +186,6 @@ public class Generator implements Listener {
 					if (mat != null) {
 						setBlockTypeAndHandle(block, mat);
 					}
-				}
-			}
-		}
-	}
-
-	public void regenerateMiniChunk(Chunk chunk, MaterialManager.MaterialDistribution dist) {
-		World world = chunk.getWorld();
-		MinMaxSettings mm = environmentSettings.get(world.getEnvironment());
-		int minY = mm.minY;
-		int maxY = mm.maxY;
-
-		for (int x = 1; x <= 15; x += 4) {
-			for (int z = 1; z <= 15; z += 4) {
-				for (int y = minY; y <= maxY; y += 4) {
-					Block block = chunk.getBlock(x, y, z);
-					setBlockTypeAndHandle(block, dist.next());
 				}
 			}
 		}

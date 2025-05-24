@@ -4,6 +4,7 @@ import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.FallingBlock;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -14,6 +15,7 @@ import org.bukkit.event.block.BlockGrowEvent;
 import org.bukkit.event.block.BlockIgniteEvent;
 import org.bukkit.event.block.BlockSpreadEvent;
 import org.bukkit.event.entity.EntityChangeBlockEvent;
+import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.world.StructureGrowEvent;
 import org.bukkit.plugin.Plugin;
 
@@ -59,6 +61,7 @@ public class EventControl implements Listener {
 
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onBlockGrow(BlockGrowEvent event) {
+		if (!WorldManager.isCustomWorld(event.getBlock())) return;
 		if (BlockGrowEventToggle) {
 			Block block = event.getBlock();
 			Material cropType = event.getNewState().getType();
@@ -78,6 +81,7 @@ public class EventControl implements Listener {
 
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onStructureGrow(StructureGrowEvent event) {
+		if (!WorldManager.isCustomWorld(event.getLocation().getBlock())) return;
 		if (StructureGrowEventToggle) {
 			Block block = event.getLocation().getBlock();
 			Block blockBelow = block.getRelative(0 , -1, 0);
@@ -92,6 +96,7 @@ public class EventControl implements Listener {
 
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onBlockSpread(BlockSpreadEvent event) {
+		if (!WorldManager.isCustomWorld(event.getBlock())) return;
 		if (BlockSpreadEventToggle) {
 			Block sourceBlock = event.getSource();
 			Block targetBlock = event.getBlock();
@@ -119,6 +124,7 @@ public class EventControl implements Listener {
 
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onBlockForm(BlockFormEvent event) {
+		if (!WorldManager.isCustomWorld(event.getBlock())) return;
 		if (BlockFormEventToggle) {
 			Block block = event.getBlock();
 			Material newStateType = event.getNewState().getType();
@@ -136,6 +142,7 @@ public class EventControl implements Listener {
 
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onBlockFade(BlockFadeEvent event) {
+		if (!WorldManager.isCustomWorld(event.getBlock())) return;
 		if (BlockFadeEventToggle) {
 			Block block = event.getBlock();
 			Material originalType = event.getBlock().getType();
@@ -167,6 +174,7 @@ public class EventControl implements Listener {
 
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onBlockIgnite(BlockIgniteEvent event) {
+		if (!WorldManager.isCustomWorld(event.getBlock())) return;
 		if(BlockIgniteEventToggle) {
 			Block block = event.getBlock();
 			for (BlockFace face : EnumSet.of(BlockFace.DOWN, BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST, BlockFace.UP)) {
@@ -183,6 +191,7 @@ public class EventControl implements Listener {
 
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onEntityChangeBlock(EntityChangeBlockEvent event) {
+		if (!WorldManager.isCustomWorld(event.getBlock())) return;
 		if (EntityChangeBlockEventToggle) {
 			if (event.getEntity() instanceof FallingBlock) {
 				Block block = event.getBlock();
@@ -201,6 +210,7 @@ public class EventControl implements Listener {
 
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onBlockFromTo(BlockFromToEvent event) {
+		if (!WorldManager.isCustomWorld(event.getBlock())) return;
 		if (BlockFromToEventToggle) {
 			Block sourceBlock = event.getBlock();
 			Material sourceType = sourceBlock.getType();
@@ -219,6 +229,27 @@ public class EventControl implements Listener {
 					event.setCancelled(true);
 					if (loggingEnabled) {
 						Cc.logSB("Cancelled BlockFromToEvent for " + sourceType.name() + " at: " + sourceBlock.getLocation());
+					}
+				}
+			}
+		}
+	}
+
+	@EventHandler(priority = EventPriority.HIGHEST)
+	public void onPlayerCommand(PlayerCommandPreprocessEvent event) {
+		Player player = event.getPlayer();
+		String command = event.getMessage().toLowerCase().trim();
+
+		if (command.startsWith("/locate") && WorldManager.isCustomWorld(player)) {
+			String[] args = command.split(" ");
+			if (args.length > 1) {
+				String locateType = args[1];
+				if (locateType.equals("structure") || locateType.equals("poi")) {
+					event.setCancelled(true);
+					Cc.sendS(player, Cc.RED, "Locating structures and POIs is disabled in this world");
+					if (loggingEnabled) {
+						Cc.logSB(Cc.logO(Cc.YELLOW, "Blocked locate " + locateType + " in custom world by ") + 
+								Cc.logO(Cc.AQUA, player.getName()));
 					}
 				}
 			}

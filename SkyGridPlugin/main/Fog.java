@@ -70,7 +70,7 @@ public class Fog implements CommandExecutor {
 	private void applyFog(Player admin) {
 		fogBossBar.removeAll();
 		fogPlayers.clear();
-		if (admin != null) {
+		if (admin != null && WorldManager.isCustomWorld(admin)) {
 			fogBossBar.addPlayer(admin);
 			fogPlayers.add(admin);
 		}
@@ -81,8 +81,17 @@ public class Fog implements CommandExecutor {
 		fogTask = new BukkitRunnable() {
 			public void run() {
 				for (Player player : Bukkit.getOnlinePlayers()) {
-					fogBossBar.addPlayer(player);
-					fogPlayers.add(player);
+					if (WorldManager.isCustomWorld(player)) {
+						if (!fogPlayers.contains(player)) {
+							fogBossBar.addPlayer(player);
+							fogPlayers.add(player);
+						}
+					} else {
+						if (fogPlayers.contains(player)) {
+							fogBossBar.removePlayer(player);
+							fogPlayers.remove(player);
+						}
+					}
 				}
 			}
 		};
@@ -102,7 +111,7 @@ public class Fog implements CommandExecutor {
 	private void clearFog(Player admin) {
 		fogBossBar.removeAll();
 		fogPlayers.clear();
-		if (admin != null) {
+		if (admin != null && WorldManager.isCustomWorld(admin)) {
 			fogBossBar.addPlayer(admin);
 			fogPlayers.add(admin);
 		}

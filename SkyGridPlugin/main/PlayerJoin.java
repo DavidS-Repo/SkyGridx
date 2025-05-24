@@ -1,6 +1,7 @@
 package main;
 
 import org.bukkit.Bukkit;
+import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -18,7 +19,12 @@ public class PlayerJoin implements Listener {
 	public void onPlayerJoin(PlayerJoinEvent event) {
 		Player player = event.getPlayer();
 		if (!player.hasPlayedBefore() && PluginSettings.isOnFistJoinEnabled()) {
-			tprCommand.teleportPlayerForFirstJoin(player, Bukkit.getWorld("world"));
+			World customWorld = Bukkit.getWorld(WorldManager.PREFIX + "world");
+			if (customWorld != null) {
+				tprCommand.teleportPlayerForFirstJoin(player, customWorld);
+			} else {
+				Bukkit.getLogger().severe("Custom world not found: " + WorldManager.PREFIX + "world");
+			}
 		}
 	}
 }

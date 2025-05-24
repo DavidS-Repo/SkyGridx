@@ -44,6 +44,11 @@ public class EyeThrowListener implements Listener {
 		if (act != Action.RIGHT_CLICK_AIR && act != Action.RIGHT_CLICK_BLOCK) return;
 
 		Player player = e.getPlayer();
+		
+		if (!player.getWorld().getName().startsWith(WorldManager.PREFIX)) {
+            return;
+        }
+		
 		UUID uid = player.getUniqueId();
 		if (locked.contains(uid)) return;
 

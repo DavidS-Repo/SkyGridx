@@ -83,6 +83,7 @@ public class OreGen implements Listener {
 
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onBlockForm(BlockFormEvent event) {
+		if (!WorldManager.isCustomWorld(event.getBlock())) return;
 		Block block = event.getBlock();
 		Material toType = event.getNewState().getType();
 		Material fromType = block.getType();
