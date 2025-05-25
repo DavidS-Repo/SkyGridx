@@ -27,6 +27,10 @@ public class WorldManager {
 	public static boolean isCustomWorld(Player player) {
         return player.getWorld().getName().startsWith(PREFIX);
     }
+	
+	public static boolean isCustomWorld(World world) {
+	    return world.getName().startsWith(PREFIX);
+	}
 
 	public static void setupWorlds(JavaPlugin plugin) {
 		for (Map.Entry<World.Environment, String> e : NAMES.entrySet()) {
@@ -38,10 +42,7 @@ public class WorldManager {
 				plugin.getLogger().info("World already loaded: " + customName);
 				continue;
 			}
-			WorldCreator wc = new WorldCreator(customName)
-					.environment(env)
-					.generator(new VoidWorldGenerator());
-			wc.createWorld();
+			WorldCreator wc = new WorldCreator(customName).environment(env).generator(new VoidWorldGenerator());wc.createWorld();
 		}
 	}
 }

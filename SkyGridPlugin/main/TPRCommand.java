@@ -160,7 +160,7 @@ public class TPRCommand implements CommandExecutor {
 		return (lastCommandTime + b2bDelay - System.currentTimeMillis()) / 1000L;
 	}
 
-	private void findNonAirBlock(Player player, World world, int destinationX, int destinationY, int destinationZ, boolean isRegularTeleport) {
+	public void findNonAirBlock(Player player, World world, int destinationX, int destinationY, int destinationZ, boolean isRegularTeleport) {
 		int chunkX = destinationX >> 4;
 		int chunkZ = destinationZ >> 4;
 		world.loadChunk(chunkX, chunkZ, true);

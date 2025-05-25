@@ -23,6 +23,7 @@ public class ChunkLoader {
 	}
 
 	public void loadChunksAndRun(Runnable task) {
+		WorldManager.setupWorlds(plugin);
 		if (plugin instanceof SkyGridPlugin) {
 			((SkyGridPlugin) plugin).setChunksLoading(true);
 		}
@@ -37,7 +38,7 @@ public class ChunkLoader {
 		List<World> worlds = Bukkit.getWorlds().stream().filter(world -> world.getName().startsWith(WorldManager.PREFIX)).collect(Collectors.toList());
 		int centerX = 0;
 		int centerZ = 0;
-		int chunkRange = 4; // 4 chunks in each direction
+		int chunkRange = 6; // 4 chunks in each direction
 
 		if (IS_PAPER) {
 			CompletableFuture<?>[] futures = worlds.stream().flatMap(world -> {

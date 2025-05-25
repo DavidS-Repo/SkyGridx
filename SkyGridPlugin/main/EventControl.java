@@ -15,15 +15,24 @@ import org.bukkit.event.block.BlockGrowEvent;
 import org.bukkit.event.block.BlockIgniteEvent;
 import org.bukkit.event.block.BlockSpreadEvent;
 import org.bukkit.event.entity.EntityChangeBlockEvent;
+import org.bukkit.event.entity.EntityPortalEvent;
+import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
+import org.bukkit.event.player.PlayerPortalEvent;
+import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
 import org.bukkit.event.world.StructureGrowEvent;
 import org.bukkit.plugin.Plugin;
-
+import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.World;
+import org.bukkit.World.Environment;
 import java.util.EnumSet;
 
 public class EventControl implements Listener {
 
 	private final Plugin plugin;
+	private final TPRCommand tpr;
 	private static final String INITIALIZE_MESSAGE = "EventControl Enabled.";
 	private static final String ON_MESSAGE = Cc.logO(Cc.GREEN, "Event control logging enabled.");
 	private static final String OFF_MESSAGE = Cc.logO(Cc.GREEN, "Event control logging disabled.");
@@ -39,9 +48,9 @@ public class EventControl implements Listener {
 	private static final EnumSet<Material> FARMLAND_CROPS = EnumSet.of(Material.WHEAT, Material.CARROTS, Material.POTATOES, Material.BEETROOTS, Material.MELON_STEM, Material.PUMPKIN_STEM);
 	private static final EnumSet<Material> VINES = EnumSet.of(Material.CAVE_VINES, Material.CAVE_VINES_PLANT);
 
-
-	public EventControl(Plugin plugin) {
+	public EventControl(Plugin plugin, TPRCommand tpr) {
 		this.plugin = plugin;
+		this.tpr = tpr;
 	}
 
 	public void initialize() {
@@ -251,6 +260,163 @@ public class EventControl implements Listener {
 						Cc.logSB(Cc.logO(Cc.YELLOW, "Blocked locate " + locateType + " in custom world by ") + 
 								Cc.logO(Cc.AQUA, player.getName()));
 					}
+				}
+			}
+		}
+	}
+
+	// handle player portals into nether and into end
+	@EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+	public void onPlayerPortal(PlayerPortalEvent event) {
+		Player player = event.getPlayer();
+		Location from = event.getFrom();
+		World fromWorld = from.getWorld();
+		if (fromWorld == null || !WorldManager.isCustomWorld(player)) return;
+
+		String base = WorldManager.PREFIX + "world";
+		String overworldName = base;
+		String netherName = base + "_nether";
+		String endName = base + "_the_end";
+		TeleportCause cause = event.getCause();
+		Location dest = null;
+
+		// to custom nether
+		if (fromWorld.getName().equals(overworldName) && cause == TeleportCause.NETHER_PORTAL) {
+			dest = scaleLocation(from, 1.0 / 8, netherName);
+			event.setCanCreatePortal(true);
+			event.setSearchRadius(128);
+			event.setCreationRadius(16);
+		}
+		// back to custom overworld from nether
+		else if (fromWorld.getName().equals(netherName) && cause == TeleportCause.NETHER_PORTAL) {
+			dest = scaleLocation(from, 8, overworldName);
+			event.setCanCreatePortal(true);
+			event.setSearchRadius(128);
+			event.setCreationRadius(16);
+		}
+		// into custom end
+		else if (fromWorld.getName().equals(overworldName) && cause == TeleportCause.END_PORTAL) {
+			World end = Bukkit.getWorld(endName);
+			if (end != null) {
+				dest = end.getSpawnLocation().clone();
+				createEndPlatform(dest);
+				// disable portal creation so nothing else runs
+				event.setCanCreatePortal(false);
+				event.setSearchRadius(0);
+				event.setCreationRadius(0);
+			}
+		}
+
+		if (dest != null) {
+			event.setTo(dest);
+		}
+	}
+
+	// handle mobs in nether portals only
+	@EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+	public void onEntityPortal(EntityPortalEvent event) {
+		Location from = event.getFrom();
+		World fromWorld = from.getWorld();
+		if (fromWorld == null || !WorldManager.isCustomWorld(from.getBlock())) return;
+
+		String base = WorldManager.PREFIX + "world";
+		String overworldName = base;
+		String netherName = base + "_nether";
+		Environment env = fromWorld.getEnvironment();
+		Location dest = null;
+
+		if (env == Environment.NORMAL) {
+			dest = scaleLocation(from, 1.0 / 8, netherName);
+		}
+		else if (env == Environment.NETHER) {
+			dest = scaleLocation(from, 8, overworldName);
+		}
+
+		if (dest != null) {
+			event.setCanCreatePortal(true);
+			event.setCreationRadius(16);
+			event.setTo(dest);
+		}
+	}
+
+	@EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+	public void onPlayerChangedWorld(PlayerChangedWorldEvent event) {
+		Player player = event.getPlayer();
+		World from = event.getFrom();
+		World to = player.getWorld();
+
+		String base = WorldManager.PREFIX + "world";
+		String customEnd = base + "_the_end";
+		String customOver = base;
+
+		// Only act if player is leaving the custom end
+		if (!from.getName().equals(customEnd)) return;
+
+		// If player is NOT entering the custom overworld, teleport them there
+		if (!to.getName().equals(customOver)) {
+			new BukkitRunnable() {
+				@Override
+				public void run() {
+					World over = Bukkit.getWorld(customOver);
+					if (over == null) return;
+
+					CustomBedManager bedManager = CustomBedManager.getInstance();
+					Location bed = bedManager.getCustomBed(player.getUniqueId());
+
+					if (bed != null && bed.getWorld().getName().equals(customOver)) {
+						// Teleport near bed
+						tpr.findNonAirBlock(
+								player,
+								over,
+								bed.getBlockX(),
+								bed.getBlockY(),
+								bed.getBlockZ(),
+								true
+								);
+					} else {
+						// Teleport to spawn
+						Location spawn = over.getSpawnLocation();
+						tpr.findNonAirBlock(
+								player,
+								over,
+								spawn.getBlockX(),
+								spawn.getBlockY(),
+								spawn.getBlockZ(),
+								true
+								);
+					}
+				}
+			}.runTask(plugin);
+		}
+	}
+
+	// scale coords for nether portals
+	private Location scaleLocation(Location from, double scale, String targetName) {
+		World w = Bukkit.getWorld(targetName);
+		if (w == null) return from;
+		return new Location(
+				w,
+				from.getX() * scale,
+				from.getY(),
+				from.getZ() * scale
+				);
+	}
+
+	// build simple obsidian platform in end
+	private void createEndPlatform(Location center) {
+		int r = 2;
+		World w = center.getWorld();
+		int y = center.getBlockY() - 1;
+		for (int dx = -r; dx <= r; dx++) {
+			for (int dz = -r; dz <= r; dz++) {
+				Block b = new Location(
+						w,
+						center.getBlockX() + dx,
+						y,
+						center.getBlockZ() + dz
+						).getBlock();
+				if (b.getType() == Material.AIR) {
+					b.setType(Material.OBSIDIAN);
 				}
 			}
 		}

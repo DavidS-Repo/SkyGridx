@@ -45,10 +45,6 @@ public class SkyGridPlugin extends JavaPlugin implements Listener {
 		// Create an instance of Fog and pass the ResourcePackManager instance and settings
 		Fog fogCommandExecutor = new Fog(manager, settings);
 
-		// Register GrowthControl as a listener
-		EventControl eventControl = new EventControl(this);
-		eventControl.initialize();
-
 		// Create a custom filter to suppress specific warnings
 		// Get the logger for your plugin and set the custom filter
 		Filter logFilter = new LogFilter();
@@ -65,6 +61,13 @@ public class SkyGridPlugin extends JavaPlugin implements Listener {
 		getCommand("tpro").setExecutor(tprCommand);
 		getCommand("tprn").setExecutor(tprCommand);
 		getCommand("tpre").setExecutor(tprCommand);
+
+		// Register GrowthControl as a listener
+		EventControl eventControl = new EventControl(this, tprCommand);
+		eventControl.initialize();
+		
+		CustomBedManager bedManager = new CustomBedManager(this);
+		getServer().getPluginManager().registerEvents(new BedIsolation(bedManager, tprCommand), this);
 
 		// Register PlayerJoin as a listener
 		getServer().getPluginManager().registerEvents(new PlayerJoin(settings, tprCommand), this);
