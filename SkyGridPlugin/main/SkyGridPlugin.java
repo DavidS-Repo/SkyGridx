@@ -6,6 +6,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerLoginEvent;
+import org.bukkit.generator.ChunkGenerator;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
@@ -65,7 +66,7 @@ public class SkyGridPlugin extends JavaPlugin implements Listener {
 		// Register GrowthControl as a listener
 		EventControl eventControl = new EventControl(this, tprCommand);
 		eventControl.initialize();
-		
+
 		CustomBedManager bedManager = new CustomBedManager(this);
 		getServer().getPluginManager().registerEvents(new BedIsolation(bedManager, tprCommand, this), this);
 
@@ -157,5 +158,13 @@ public class SkyGridPlugin extends JavaPlugin implements Listener {
 				}
 			}.runTaskLater(this, 40);
 		}
+	}
+
+	@Override
+	public ChunkGenerator getDefaultWorldGenerator(String worldName, String id) {
+		if (worldName.startsWith("skygridx_")) {
+			return new VoidWorldGenerator();
+		}
+		return null;
 	}
 }

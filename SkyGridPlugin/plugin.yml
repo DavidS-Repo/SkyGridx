@@ -5,6 +5,13 @@ author: Go0fy_Go0ber
 description: A plugin that generates a SkyGrid and more.
 api-version: 1.21
 paperweight-mappings-namespace: mojang
+worlds:
+  skygridx_world:
+    generator: SkyGrid
+  skygridx_world_nether:
+    generator: SkyGrid
+  skygridx_world_the_end:
+    generator: SkyGrid
 commands:
   tpr:
     description: Teleport to a random location in the overworld, nether or end

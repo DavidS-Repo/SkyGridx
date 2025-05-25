@@ -23,34 +23,31 @@ public class WorldManager {
 	public static boolean isCustomWorld(Block block) {
 		return block.getWorld().getName().startsWith(PREFIX);
 	}
-	
+
 	public static boolean isCustomWorld(Player player) {
-        return player.getWorld().getName().startsWith(PREFIX);
-    }
-	
+		return player.getWorld().getName().startsWith(PREFIX);
+	}
+
 	public static boolean isCustomWorld(World world) {
-	    return world.getName().startsWith(PREFIX);
+		return world.getName().startsWith(PREFIX);
 	}
 
 	public static void setupWorlds(JavaPlugin plugin) {
-	    for (Map.Entry<World.Environment, String> e : NAMES.entrySet()) {
-	        World.Environment env = e.getKey();
-	        String vanilla = e.getValue();
-	        String customName = PREFIX + vanilla;
-
-	        if (Bukkit.getWorld(customName) != null) continue;
-
-	        World world = new WorldCreator(customName)
-	            .environment(env)
-	            .generator(new VoidWorldGenerator())
-	            .createWorld();
-
-	        if (env == World.Environment.THE_END) {
-	            // Delay to ensure chunks load before spawning crystals
-	            Bukkit.getScheduler().runTaskLater(plugin, () -> {
-	            	VoidWorldGenerator.CrystalManager.spawnCrystals(world);
-	            }, 20L);
-	        }
-	    }
+		for (Map.Entry<World.Environment, String> e : NAMES.entrySet()) {
+			World.Environment env = e.getKey();
+			String vanilla = e.getValue();
+			String customName = PREFIX + vanilla;
+			if (Bukkit.getWorld(customName) != null) continue;
+			World world = new WorldCreator(customName)
+					.environment(env)
+					.generator(new VoidWorldGenerator())
+					.createWorld();
+			world.setSpawnLocation(0, 64, 0);
+			if (env == World.Environment.THE_END) {
+				Bukkit.getScheduler().runTaskLater(plugin, () -> {
+					VoidWorldGenerator.CrystalManager.spawnCrystals(world);
+				}, 20L);
+			}
+		}
 	}
 }
