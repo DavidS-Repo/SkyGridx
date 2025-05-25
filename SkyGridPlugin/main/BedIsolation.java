@@ -15,14 +15,18 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
+import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitRunnable;
 
 public class BedIsolation implements Listener {
+	private final JavaPlugin plugin;
 	private final CustomBedManager bedManager;
 	private final TPRCommand tpr;
 
-	public BedIsolation(CustomBedManager manager, TPRCommand tpr) {
+	public BedIsolation(CustomBedManager manager, TPRCommand tpr, JavaPlugin plugin) {
 		this.bedManager = manager;
 		this.tpr = tpr;
+		this.plugin = plugin;
 	}
 
 	@EventHandler
@@ -68,47 +72,47 @@ public class BedIsolation implements Listener {
 
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onCustomRespawn(PlayerRespawnEvent event) {
-	    Player player = event.getPlayer();
-	    World deathWorld = player.getWorld();
+		Player player = event.getPlayer();
+		World deathWorld = player.getWorld();
+		if (!deathWorld.getName().startsWith(WorldManager.PREFIX)) return;
 
-	    if (!deathWorld.getName().startsWith(WorldManager.PREFIX)) return;
+		UUID id = player.getUniqueId();
+		World targetWorld;
+		Location targetLoc;
 
-	    UUID id = player.getUniqueId();
-	    CustomBedManager bedManager = this.bedManager;
+		if (bedManager.hasCustomBed(id)) {
+			targetLoc = bedManager.getCustomBed(id);
+			if (targetLoc == null) return;
+			targetWorld = targetLoc.getWorld();
+		} else {
+			String customName = WorldManager.PREFIX + "world";
+			targetWorld = Bukkit.getWorld(customName);
+			if (targetWorld == null) return;
+			targetLoc = targetWorld.getSpawnLocation();
+		}
 
-	    if (bedManager.hasCustomBed(id)) {
-	        Location loc = bedManager.getCustomBed(id);
-	        if (loc == null) return;
+		// tell Bukkit where to respawn immediately
+		event.setRespawnLocation(new Location(
+				targetWorld,
+				targetLoc.getBlockX() + 0.5,
+				targetLoc.getBlockY(),
+				targetLoc.getBlockZ() + 0.5
+				));
 
-	        World w = loc.getWorld();
-
-	        // Use your teleport helper to find a safe spot near the bed
-	        tpr.findNonAirBlock(
-	            player,
-	            w,
-	            loc.getBlockX(),
-	            loc.getBlockY(),
-	            loc.getBlockZ(),
-	            true
-	        );
-
-	    } else {
-	        String customOver = WorldManager.PREFIX + "world";
-	        World overWorld = Bukkit.getWorld(customOver);
-	        if (overWorld == null) return;
-
-	        Location spawn = overWorld.getSpawnLocation();
-
-	        // Use teleport helper to find safe spot near custom overworld spawn
-	        tpr.findNonAirBlock(
-	            player,
-	            overWorld,
-	            spawn.getBlockX(),
-	            spawn.getBlockY(),
-	            spawn.getBlockZ(),
-	            true
-	        );
-	    }
+		// run your safe‐teleport a tick later
+		new BukkitRunnable() {
+			@Override
+			public void run() {
+				tpr.findNonAirBlock(
+						player,
+						targetWorld,
+						targetLoc.getBlockX(),
+						targetLoc.getBlockY(),
+						targetLoc.getBlockZ(),
+						true
+						);
+			}
+		}.runTaskLater(plugin, 1L);
 	}
 
 }

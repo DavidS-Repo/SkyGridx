@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 public class ChunkLoader {
 
 	private final JavaPlugin plugin;
-	private static final boolean IS_PAPER = detectPaper(); // Paper detection
+	private static final boolean IS_PAPER = detectPaper();
 	private static final String WAIT_MESSAGE = Cc.logO(Cc.DARK_GREEN, "Please wait a couple seconds while we force load spawn chunks to ensure proper generation");
 	private static final String READY_MESSAGE = Cc.logO(Cc.DARK_GREEN, "Chunks have been loaded. You can now connect!");
 	private static final String THANKS_MESSAGE = Cc.logO(Cc.WHITE, "Thank you for installing SkyGridx :)");
@@ -23,11 +23,14 @@ public class ChunkLoader {
 	}
 
 	public void loadChunksAndRun(Runnable task) {
+		// ensure custom worlds exist and are loaded
 		WorldManager.setupWorlds(plugin);
+
 		if (plugin instanceof SkyGridPlugin) {
 			((SkyGridPlugin) plugin).setChunksLoading(true);
 		}
 
+		// send wait message
 		new BukkitRunnable() {
 			@Override
 			public void run() {
@@ -35,36 +38,52 @@ public class ChunkLoader {
 			}
 		}.runTask(plugin);
 
-		List<World> worlds = Bukkit.getWorlds().stream().filter(world -> world.getName().startsWith(WorldManager.PREFIX)).collect(Collectors.toList());
+		// gather only our skygrid worlds
+		List<World> worlds = Bukkit.getWorlds().stream()
+				.filter(w -> w.getName().startsWith(WorldManager.PREFIX))
+				.collect(Collectors.toList());
+
 		int centerX = 0;
 		int centerZ = 0;
-		int chunkRange = 6; // 4 chunks in each direction
+		int chunkRange = 8;
 
 		if (IS_PAPER) {
+			// async load on paper
 			CompletableFuture<?>[] futures = worlds.stream().flatMap(world -> {
-				CompletableFuture<?>[] worldFutures = new CompletableFuture<?>[(2 * chunkRange + 1) * (2 * chunkRange + 1)];
-				int index = 0;
-				for (int x = -chunkRange; x <= chunkRange; x++) {
-					for (int z = -chunkRange; z <= chunkRange; z++) {
-						Location loc = new Location(world, (centerX + x) << 4, 0, (centerZ + z) << 4);
-						worldFutures[index++] = world.getChunkAtAsync(loc).thenAccept(chunk -> {
-							chunk.setForceLoaded(true);
-						});
+				CompletableFuture<?>[] worldFuts = new CompletableFuture<?>[(2 * chunkRange + 1) * (2 * chunkRange + 1)];
+				int idx = 0;
+				for (int dx = -chunkRange; dx <= chunkRange; dx++) {
+					for (int dz = -chunkRange; dz <= chunkRange; dz++) {
+						int cx = centerX + dx;
+						int cz = centerZ + dz;
+						Location loc = new Location(world, cx << 4, 0, cz << 4);
+						worldFuts[idx++] = world.getChunkAtAsync(loc)
+								.thenAccept(chunk -> {
+									// ensure chunk is loaded before forcing
+									world.loadChunk(cx, cz, false);
+									chunk.setForceLoaded(true);
+								});
 					}
 				}
-				return List.of(worldFutures).stream();
+				return List.of(worldFuts).stream();
 			}).toArray(CompletableFuture[]::new);
 
-			CompletableFuture.allOf(futures).thenRun(() -> finishLoading(task));
+			CompletableFuture.allOf(futures)
+			.thenRun(() -> finishLoading(task));
+
 		} else {
+			// sync load on non-paper
 			new BukkitRunnable() {
 				@Override
 				public void run() {
 					for (World world : worlds) {
-						for (int x = -chunkRange; x <= chunkRange; x++) {
-							for (int z = -chunkRange; z <= chunkRange; z++) {
-								Location loc = new Location(world, (centerX + x) << 4, 0, (centerZ + z) << 4);
-								world.getChunkAt(loc).setForceLoaded(true);
+						for (int dx = -chunkRange; dx <= chunkRange; dx++) {
+							for (int dz = -chunkRange; dz <= chunkRange; dz++) {
+								int cx = centerX + dx;
+								int cz = centerZ + dz;
+								// load chunk synchronously
+								world.loadChunk(cx, cz, false);
+								world.getChunkAt(cx, cz).setForceLoaded(true);
 							}
 						}
 					}
@@ -88,9 +107,6 @@ public class ChunkLoader {
 		}.runTask(plugin);
 	}
 
-	/**
-	 * Detects if the server is running PaperMC.
-	 */
 	private static boolean detectPaper() {
 		try {
 			Class.forName("com.destroystokyo.paper.PaperConfig");

@@ -67,7 +67,7 @@ public class SkyGridPlugin extends JavaPlugin implements Listener {
 		eventControl.initialize();
 		
 		CustomBedManager bedManager = new CustomBedManager(this);
-		getServer().getPluginManager().registerEvents(new BedIsolation(bedManager, tprCommand), this);
+		getServer().getPluginManager().registerEvents(new BedIsolation(bedManager, tprCommand, this), this);
 
 		// Register PlayerJoin as a listener
 		getServer().getPluginManager().registerEvents(new PlayerJoin(settings, tprCommand), this);

@@ -33,16 +33,24 @@ public class WorldManager {
 	}
 
 	public static void setupWorlds(JavaPlugin plugin) {
-		for (Map.Entry<World.Environment, String> e : NAMES.entrySet()) {
-			World.Environment env = e.getKey();
-			String vanilla = e.getValue();
-			String customName = PREFIX + vanilla;
+	    for (Map.Entry<World.Environment, String> e : NAMES.entrySet()) {
+	        World.Environment env = e.getKey();
+	        String vanilla = e.getValue();
+	        String customName = PREFIX + vanilla;
 
-			if (Bukkit.getWorld(customName) != null) {
-				plugin.getLogger().info("World already loaded: " + customName);
-				continue;
-			}
-			WorldCreator wc = new WorldCreator(customName).environment(env).generator(new VoidWorldGenerator());wc.createWorld();
-		}
+	        if (Bukkit.getWorld(customName) != null) continue;
+
+	        World world = new WorldCreator(customName)
+	            .environment(env)
+	            .generator(new VoidWorldGenerator())
+	            .createWorld();
+
+	        if (env == World.Environment.THE_END) {
+	            // Delay to ensure chunks load before spawning crystals
+	            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+	            	VoidWorldGenerator.CrystalManager.spawnCrystals(world);
+	            }, 20L);
+	        }
+	    }
 	}
 }

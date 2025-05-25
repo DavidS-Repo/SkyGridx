@@ -298,9 +298,9 @@ public class EventControl implements Listener {
 		else if (fromWorld.getName().equals(overworldName) && cause == TeleportCause.END_PORTAL) {
 			World end = Bukkit.getWorld(endName);
 			if (end != null) {
-				dest = end.getSpawnLocation().clone();
-				createEndPlatform(dest);
-				// disable portal creation so nothing else runs
+				createEndPlatform(end);
+				Location spawn = new Location(end, 100.5, 65, 0.5);
+				event.setTo(spawn);
 				event.setCanCreatePortal(false);
 				event.setSearchRadius(0);
 				event.setCreationRadius(0);
@@ -331,7 +331,6 @@ public class EventControl implements Listener {
 		else if (env == Environment.NETHER) {
 			dest = scaleLocation(from, 8, overworldName);
 		}
-
 		if (dest != null) {
 			event.setCanCreatePortal(true);
 			event.setCreationRadius(16);
@@ -402,22 +401,16 @@ public class EventControl implements Listener {
 				);
 	}
 
-	// build simple obsidian platform in end
-	private void createEndPlatform(Location center) {
-		int r = 2;
-		World w = center.getWorld();
-		int y = center.getBlockY() - 1;
+	// build standard 5×5 obsidian platform at vanilla end spawn
+	private void createEndPlatform(World world) {
+		int centerX = 100;
+		int centerZ = 0;
+		int platformY = 64;
+		int r = 2;  // radius so total size is (2*2)+1 = 5
 		for (int dx = -r; dx <= r; dx++) {
 			for (int dz = -r; dz <= r; dz++) {
-				Block b = new Location(
-						w,
-						center.getBlockX() + dx,
-						y,
-						center.getBlockZ() + dz
-						).getBlock();
-				if (b.getType() == Material.AIR) {
-					b.setType(Material.OBSIDIAN);
-				}
+				world.getBlockAt(centerX + dx, platformY, centerZ + dz)
+				.setType(Material.OBSIDIAN);
 			}
 		}
 	}
