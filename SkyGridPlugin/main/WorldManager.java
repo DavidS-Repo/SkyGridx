@@ -33,6 +33,12 @@ public class WorldManager {
 	}
 
 	public static void setupWorlds(JavaPlugin plugin) {
+		Bukkit.getScheduler().runTask(plugin, () -> {
+			createWorlds(plugin);
+		});
+	}
+
+	private static void createWorlds(JavaPlugin plugin) {
 		for (Map.Entry<World.Environment, String> e : NAMES.entrySet()) {
 			World.Environment env = e.getKey();
 			String vanilla = e.getValue();

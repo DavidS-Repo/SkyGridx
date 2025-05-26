@@ -25,6 +25,8 @@ public class SkyGridPlugin extends JavaPlugin implements Listener {
 
 	@Override
 	public void onEnable() {
+		BukkitYMLPatcher.applyGeneratorSettings(this);
+		
 		Bukkit.getPluginManager().registerEvents(new ChestOpenListener(this), this);
 		Bukkit.getPluginManager().registerEvents(this, this);
 
