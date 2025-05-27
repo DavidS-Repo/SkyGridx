@@ -7,12 +7,10 @@ set run_bat_url=https://raw.githubusercontent.com/DavidS-Repo/SkyGridx/main/run.
 set paper_fetch_url=https://www.davids-repo.dev/fetch_latest_paper_build/
 
 set plugin_folder=plugins
-set world_folder=world
 :: -------------------------------------------------------
 
 :: Create folders (suppress errors if they already exist)
 mkdir "%plugin_folder%" 2>nul
-mkdir "%world_folder%" 2>nul
 
 :: Fetch latest PaperMC URL...
 echo Fetching latest PaperMC URL...
