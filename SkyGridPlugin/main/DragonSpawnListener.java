@@ -3,6 +3,7 @@ package main;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
+import org.bukkit.boss.DragonBattle;
 import org.bukkit.entity.EnderCrystal;
 import org.bukkit.entity.EntityType;
 import org.bukkit.event.EventHandler;
@@ -27,23 +28,41 @@ public class DragonSpawnListener implements Listener {
 
 		World world = event.getLocation().getWorld();
 		if (world == null || !world.getName().equals("skygridx_world_the_end")) return;
-		new BukkitRunnable() {
-			@Override
-			public void run() {
-				clearObstructions(world);
-				generatePillars(world);
-			}
-		}.runTaskLater(plugin, 100L); // 5 seconds later (100 ticks)
+
+		DragonBattle battle = world.getEnderDragonBattle();
+		if (battle == null) return;
+
+		// Only run our code if this is the first time the dragon is spawning
+		if (!battle.hasBeenPreviouslyKilled()) {
+			new BukkitRunnable() {
+				@Override
+				public void run() {
+					clearObstructions(world);
+					generatePillars(world);
+				}
+			}.runTaskLater(plugin, 100L); // 5 seconds later
+		}
 	}
 
 	private void clearObstructions(World world) {
 		int clearRadius = VoidWorldGenerator.MAIN_RADIUS + 10;
 		int r2 = clearRadius * clearRadius;
 
+		// Remove leftover crystals
+		for (EnderCrystal crystal : world.getEntitiesByClass(EnderCrystal.class)) {
+			Location loc = crystal.getLocation();
+			int x = loc.getBlockX();
+			int z = loc.getBlockZ();
+			if (x * x + z * z <= r2 && loc.getY() >= 65 && loc.getY() <= 110) {
+				crystal.remove();
+			}
+		}
+
+		// Clear blocks in the area
 		for (int x = -clearRadius; x <= clearRadius; x++) {
 			for (int z = -clearRadius; z <= clearRadius; z++) {
-				if ((x * x + z * z) <= r2) {
-					for (int y = 65; y <= 100; y++) {
+				if (x * x + z * z <= r2) {
+					for (int y = 65; y <= 110; y++) {
 						world.getBlockAt(x, y, z).setType(Material.AIR);
 					}
 				}
@@ -82,10 +101,10 @@ public class DragonSpawnListener implements Listener {
 				}
 			}
 
-			// Place bedrock at the top center
+			// Bedrock on top
 			world.getBlockAt(centerX, height + 1, centerZ).setType(Material.BEDROCK);
 
-			// Place the crystal on top of the bedrock
+			// Crystal on top
 			world.spawn(new Location(world, centerX + 0.5, height + 2, centerZ + 0.5), EnderCrystal.class);
 		}
 	}

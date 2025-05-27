@@ -7,7 +7,7 @@ import java.util.Random;
 
 public class VoidWorldGenerator extends ChunkGenerator {
 	public static final int PILLAR_COUNT = 10;
-	public static final int MAIN_RADIUS = 54;
+	public static final int MAIN_RADIUS = 42;
 
 	// radius 2 (5×5 grid: -xxx-, xxxxx, xxoxx, xxxxx, -xxx-)
 	public static final int[][] OFFSETS_RADIUS_2 = {
