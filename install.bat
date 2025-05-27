@@ -1,66 +1,56 @@
 @echo off
+setlocal
 
-:: Set variables
-set plugin_url=https://www.davids-repo.dev/skygridx/assets/SkyGrid.jar
-set datapack_url=https://www.davids-repo.dev/skygridx/assets/Void-Biomes-1.21.04.zip
+:: --- CONFIG -------------------------------------------
+set plugin_url=https://raw.githubusercontent.com/DavidS-Repo/SkyGridx/main/SkyGrid-1.21.5.jar
+set run_bat_url=https://raw.githubusercontent.com/DavidS-Repo/SkyGridx/main/run.bat
 set paper_fetch_url=https://www.davids-repo.dev/fetch_latest_paper_build/
 
 set plugin_folder=plugins
 set world_folder=world
-set datapack_folder=world\datapacks
+:: -------------------------------------------------------
 
-:: Create necessary folders
-echo Creating necessary server folders...
-mkdir %plugin_folder%
-mkdir %world_folder%
-mkdir %datapack_folder%
+:: Create folders (suppress errors if they already exist)
+mkdir "%plugin_folder%" 2>nul
+mkdir "%world_folder%" 2>nul
 
-:: Fetch the latest PaperMC download URL
-echo Fetching latest PaperMC download URL...
-for /f "tokens=*" %%a in ('curl -s %paper_fetch_url%') do set paper_url=%%a
+:: Fetch latest PaperMC URL...
+echo Fetching latest PaperMC URL...
+for /f "usebackq tokens=*" %%A in (`curl -s "%paper_fetch_url%"`) do set paper_url=%%A
 
-:: Check if the paper_url variable was set correctly
-if "%paper_url%"=="" (
-    echo Failed to fetch PaperMC URL.
-    exit /b 1
+if not defined paper_url (
+  echo ERROR: Could not fetch PaperMC URL.
+  exit /b 1
 )
 
-:: Download Paper server jar
-echo Downloading Paper server jar...
-curl -L -o server.jar %paper_url%
+:: Extract filename from URL
+for %%F in ("%paper_url%") do set paper_file=%%~nxF
 
-:: Download plugin
-echo Downloading SkyGridX plugin...
-curl -L -o %plugin_folder%\SkyGrid.jar %plugin_url%
+:: Download Paper server jar under its real name
+echo Downloading Paper jar as "%paper_file%"...
+curl -L -o "%paper_file%" "%paper_url%"
 
-:: Download datapack
-echo Downloading datapack...
-curl -L -o %datapack_folder%\Void-Biomes-1.21.04.zip %datapack_url%
+:: Download SkyGridX plugin
+echo Downloading plugin...
+curl -L -o "%plugin_folder%\SkyGrid.jar" "%plugin_url%"
 
-:: Get current date and time
+:: Create and sign EULA with timestamp
 for /f "tokens=1-4 delims=/ " %%a in ('date /t') do set today=%%c-%%a-%%b
-for /f "tokens=1-2 delims=:" %%a in ('time /t') do set time=%%a:%%b
+for /f "tokens=1-2 delims=:"   %%a in ('time /t') do set time=%%a:%%b
 set datetime=%today% %time%
 
-:: Create and sign the EULA
-echo Creating and signing EULA...
 (
-    echo #By changing the setting below to TRUE you are indicating your agreement to our EULA ^(https://aka.ms/MinecraftEULA^).
-    echo #%datetime%
-    echo eula=true
+  echo # By changing the setting below to TRUE you are indicating your agreement to our EULA ^(https://aka.ms/MinecraftEULA^).
+  echo #%datetime%
+  echo eula=true
 ) > eula.txt
 
-:: Create run.bat
-echo Creating run.bat...
-(
-    echo @echo off
-    echo java -Xms1G -Xmx4G -XX:+UseG1GC -XX:+UnlockExperimentalVMOptions -XX:G1NewSizePercent=30 -XX:G1MaxNewSizePercent=40 -XX:G1HeapRegionSize=8M -XX:G1ReservePercent=20 -XX:G1HeapWastePercent=5 -XX:G1MixedGCCountTarget=4 -XX:InitiatingHeapOccupancyPercent=15 -XX:G1MixedGCLiveThresholdPercent=90 -XX:G1RSetUpdatingPauseTimePercent=5 -XX:SurvivorRatio=32 -XX:+PerfDisableSharedMem -XX:MaxTenuringThreshold=1 -XX:+OptimizeStringConcat -XX:+UseCompressedOops -XX:+DisableExplicitGC -XX:+AlwaysPreTouch -XX:+ParallelRefProcEnabled -XX:+UseNUMA -XX:ParallelGCThreads=6 -XX:ConcGCThreads=6 -XX:MaxGCPauseMillis=200 -Dusing.aikars.flags=https://mcflags.emc.gs -Daikars.new.flags=true -jar server.jar --nogui
-    echo pause
-) > run.bat
+:: Download your run.bat
+echo Downloading run.bat...
+curl -L -o run.bat "%run_bat_url%"
 
-:: Confirm setup completion
-echo Setup completed! Starting the server...
-echo Running server...
-
-:: Run the server
+:: All set -- launch!
+echo Setup complete. Starting server...
 call run.bat
+
+endlocal
