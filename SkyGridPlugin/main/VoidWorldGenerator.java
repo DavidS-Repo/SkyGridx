@@ -1,80 +1,64 @@
 package main;
 
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.World;
-import org.bukkit.World.Environment;
 import org.bukkit.generator.ChunkGenerator;
 import org.bukkit.generator.WorldInfo;
-import org.bukkit.entity.EnderCrystal;
 
 import java.util.Random;
 
 public class VoidWorldGenerator extends ChunkGenerator {
-	private static final int PILLAR_COUNT = 10;
-	private static final int MAIN_RADIUS = 64;
-	private static final int[] PILLAR_RADII  = {3, 3, 3, 3, 4, 4, 4, 4, 5, 5};
-	private static final int[] PILLAR_HEIGHTS = {76, 79, 82, 85, 88, 91, 94, 97, 100, 103};
+	public static final int PILLAR_COUNT = 10;
+	public static final int MAIN_RADIUS = 54;
 
-	@Override
-	public void generateSurface(WorldInfo worldInfo, Random random, int chunkX, int chunkZ, ChunkData chunkData) {
-		if (worldInfo.getEnvironment() == Environment.THE_END) {
-			generatePillars(worldInfo, chunkX, chunkZ, chunkData);
-			generatePortalBase(chunkX, chunkZ, chunkData);
-		}
-	}
+	// radius 2 (5×5 grid: -xxx-, xxxxx, xxoxx, xxxxx, -xxx-)
+	public static final int[][] OFFSETS_RADIUS_2 = {
+			{ -2, -1 }, { -2, 0 }, { -2, 1 },
+			{ -1, -2 }, { -1, -1 }, { -1, 0 }, { -1, 1 }, { -1, 2 },
+			{  0, -2 }, {  0, -1 }, {  0, 0 }, {  0, 1 }, {  0, 2 },
+			{  1, -2 }, {  1, -1 }, {  1, 0 }, {  1, 1 }, {  1, 2 },
+			{  2, -1 }, {  2, 0 }, {  2, 1 }
+	};
 
-	private void generatePillars(WorldInfo worldInfo, int chunkX, int chunkZ, ChunkData chunkData) {
-		int baseX = chunkX << 4;
-		int baseZ = chunkZ << 4;
+	// radius 3 (7×7 grid: --xxx--, -xxxxx-, xxxxxxx, xxxoxxx, xxxxxxx, -xxxxx-, --xxx--)
+	public static final int[][] OFFSETS_RADIUS_3 = {
+			{ -3, -1 }, { -3, 0 }, { -3, 1 },
+			{ -2, -2 }, { -2, -1 }, { -2, 0 }, { -2, 1 }, { -2, 2 },
+			{ -1, -3 }, { -1, -2 }, { -1, -1 }, { -1, 0 }, { -1, 1 }, { -1, 2 }, { -1, 3 },
+			{  0, -3 }, {  0, -2 }, {  0, -1 }, {  0, 0 }, {  0, 1 }, {  0, 2 }, {  0, 3 },
+			{  1, -3 }, {  1, -2 }, {  1, -1 }, {  1, 0 }, {  1, 1 }, {  1, 2 }, {  1, 3 },
+			{  2, -2 }, {  2, -1 }, {  2, 0 }, {  2, 1 }, {  2, 2 },
+			{  3, -1 }, {  3, 0 }, {  3, 1 }
+	};
 
-		for (int i = 0; i < PILLAR_COUNT; i++) {
-			double angle = 2 * Math.PI * i / PILLAR_COUNT;
-			int centerX = (int) Math.round(MAIN_RADIUS * Math.cos(angle));
-			int centerZ = (int) Math.round(MAIN_RADIUS * Math.sin(angle));
-			int radius  = PILLAR_RADII[i];
-			int height  = PILLAR_HEIGHTS[i];
+	// radius 4 (9×9 grid: ---xxx---, --xxxxx--, -xxxxxxx-, xxxxxxxxx, xxxxoxxxx, xxxxxxxxx, -xxxxxxx-, --xxxxx--, ---xxx---)
+	public static final int[][] OFFSETS_RADIUS_4 = {
+			{ -4, -1 }, { -4, 0 }, { -4, 1 },
+			{ -3, -2 }, { -3, -1 }, { -3, 0 }, { -3, 1 }, { -3, 2 },
+			{ -2, -3 }, { -2, -2 }, { -2, -1 }, { -2, 0 }, { -2, 1 }, { -2, 2 }, { -2, 3 },
+			{ -1, -4 }, { -1, -3 }, { -1, -2 }, { -1, -1 }, { -1, 0 }, { -1, 1 }, { -1, 2 }, { -1, 3 }, { -1, 4 },
+			{  0, -4 }, {  0, -3 }, {  0, -2 }, {  0, -1 }, {  0, 0 }, {  0, 1 }, {  0, 2 }, {  0, 3 }, {  0, 4 },
+			{  1, -4 }, {  1, -3 }, {  1, -2 }, {  1, -1 }, {  1, 0 }, {  1, 1 }, {  1, 2 }, {  1, 3 }, {  1, 4 },
+			{  2, -3 }, {  2, -2 }, {  2, -1 }, {  2, 0 }, {  2, 1 }, {  2, 2 }, {  2, 3 },
+			{  3, -2 }, {  3, -1 }, {  3, 0 }, {  3, 1 }, {  3, 2 },
+			{  4, -1 }, {  4, 0 }, {  4, 1 }
+	};
 
-			if (baseX + 15 < centerX - radius || baseX > centerX + radius ||
-					baseZ + 15 < centerZ - radius || baseZ > centerZ + radius) {
-				continue;
-			}
-
-			for (int x = baseX; x < baseX + 16; x++) {
-				for (int z = baseZ; z < baseZ + 16; z++) {
-					double dx = x - centerX;
-					double dz = z - centerZ;
-					if (dx * dx + dz * dz <= radius * radius) {
-						for (int y = 0; y <= height; y++) {
-							chunkData.setBlock(x - baseX, y, z - baseZ, Material.OBSIDIAN);
-						}
-					}
-				}
-			}
-		}
-	}
-
-	private void generatePortalBase(int chunkX, int chunkZ, ChunkData chunkData) {
-		if (chunkX == 0 && chunkZ == 0) {
-			chunkData.setBlock(0, 64, 0, Material.BEDROCK);
-		}
-	}
+	// radius 5 (11×11 grid: ----xxx----, --xxxxxxx--, -xxxxxxxxx-, -xxxxxxxxx-, xxxxxxxxxxx, xxxxxoxxxxx, xxxxxxxxxxx, -xxxxxxxxx-, -xxxxxxxxx-, --xxxxxxx--, ----xxx----)
+	public static final int[][] OFFSETS_RADIUS_5 = {
+			// z = -5
+			{ -1, -5 }, {  0, -5 }, {  1, -5 },
+			{ -3, -4 }, { -2, -4 }, { -1, -4 }, {  0, -4 }, {  1, -4 }, {  2, -4 }, {  3, -4 },
+			{ -4, -3 }, { -3, -3 }, { -2, -3 }, { -1, -3 }, {  0, -3 }, {  1, -3 }, {  2, -3 }, {  3, -3 }, {  4, -3 },
+			{ -4, -2 }, { -3, -2 }, { -2, -2 }, { -1, -2 }, {  0, -2 }, {  1, -2 }, {  2, -2 }, {  3, -2 }, {  4, -2 },
+			{ -5, -1 }, { -4, -1 }, { -3, -1 }, { -2, -1 }, { -1, -1 }, {  0, -1 }, {  1, -1 }, {  2, -1 }, {  3, -1 }, {  4, -1 }, {  5, -1 },
+			{ -5,  0 }, { -4,  0 }, { -3,  0 }, { -2,  0 }, { -1,  0 }, {  0,  0 }, {  1,  0 }, {  2,  0 }, {  3,  0 }, {  4,  0 }, {  5,  0 },
+			{ -5,  1 }, { -4,  1 }, { -3,  1 }, { -2,  1 }, { -1,  1 }, {  0,  1 }, {  1,  1 }, {  2,  1 }, {  3,  1 }, {  4,  1 }, {  5,  1 },
+			{ -4,  2 }, { -3,  2 }, { -2,  2 }, { -1,  2 }, {  0,  2 }, {  1,  2 }, {  2,  2 }, {  3,  2 }, {  4,  2 },
+			{ -4,  3 }, { -3,  3 }, { -2,  3 }, { -1,  3 }, {  0,  3 }, {  1,  3 }, {  2,  3 }, {  3,  3 }, {  4,  3 },
+			{ -3,  4 }, { -2,  4 }, { -1,  4 }, {  0,  4 }, {  1,  4 }, {  2,  4 }, {  3,  4 },
+			{ -1,  5 }, {  0,  5 }, {  1,  5 }
+	};
 
 	@Override public void generateBedrock(WorldInfo worldInfo, Random random, int chunkX, int chunkZ, ChunkData chunkData) {}
 	@Override public void generateCaves(WorldInfo worldInfo, Random random, int chunkX, int chunkZ, ChunkData chunkData) {}
 	@Override public void generateNoise(WorldInfo worldInfo, Random random, int chunkX, int chunkZ, ChunkData chunkData) {}
-
-	public static class CrystalManager {
-		public static void spawnCrystals(World endWorld) {
-			for (int i = 0; i < PILLAR_COUNT; i++) {
-				double angle = 2 * Math.PI * i / PILLAR_COUNT;
-				int x = (int) Math.round(MAIN_RADIUS * Math.cos(angle));
-				int z = (int) Math.round(MAIN_RADIUS * Math.sin(angle));
-				int height = PILLAR_HEIGHTS[i];
-
-				Location loc = new Location(endWorld, x + 0.5, height + 2, z + 0.5);
-				endWorld.spawn(loc, EnderCrystal.class);
-			}
-		}
-	}
 }

@@ -43,8 +43,11 @@ public class CustomBedManager {
 			double y = bedData.getDouble(key + ".y");
 			double z = bedData.getDouble(key + ".z");
 
-			// Only load beds if world is a custom world
-			if (world != null && world.getName().startsWith(WorldManager.PREFIX)) {
+			// Skip if world is null, not custom, or is Nether/End
+			if (world != null 
+					&& world.getName().startsWith(WorldManager.PREFIX)
+					&& world.getEnvironment() != World.Environment.NETHER
+					&& world.getEnvironment() != World.Environment.THE_END) {
 				bedSpawns.put(uuid, new Location(world, x, y, z));
 			}
 		}
@@ -56,12 +59,15 @@ public class CustomBedManager {
 			bedData.set(key, null);
 		}
 
-		// Save only beds in custom worlds
+		// Save only valid beds
 		for (Map.Entry<UUID, Location> entry : bedSpawns.entrySet()) {
 			Location loc = entry.getValue();
-			if (loc.getWorld().getName().startsWith(WorldManager.PREFIX)) {
+			World world = loc.getWorld();
+			if (world.getName().startsWith(WorldManager.PREFIX)
+					&& world.getEnvironment() != World.Environment.NETHER
+					&& world.getEnvironment() != World.Environment.THE_END) {
 				String uuidStr = entry.getKey().toString();
-				bedData.set(uuidStr + ".world", loc.getWorld().getName());
+				bedData.set(uuidStr + ".world", world.getName());
 				bedData.set(uuidStr + ".x", loc.getX());
 				bedData.set(uuidStr + ".y", loc.getY());
 				bedData.set(uuidStr + ".z", loc.getZ());
@@ -76,7 +82,10 @@ public class CustomBedManager {
 	}
 
 	public void setCustomBed(Player player, Location loc) {
-		if (loc.getWorld().getName().startsWith(WorldManager.PREFIX)) {
+		World world = loc.getWorld();
+		if (world.getName().startsWith(WorldManager.PREFIX)
+				&& world.getEnvironment() != World.Environment.NETHER
+				&& world.getEnvironment() != World.Environment.THE_END) {
 			bedSpawns.put(player.getUniqueId(), loc);
 			saveBeds();
 		}

@@ -1,6 +1,7 @@
 package main;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.WorldCreator;
 import org.bukkit.block.Block;
@@ -44,15 +45,10 @@ public class WorldManager {
 			String vanilla = e.getValue();
 			String customName = PREFIX + vanilla;
 			if (Bukkit.getWorld(customName) != null) continue;
-			World world = new WorldCreator(customName)
-					.environment(env)
-					.generator(new VoidWorldGenerator())
-					.createWorld();
+			World world = new WorldCreator(customName).environment(env).generator(new VoidWorldGenerator()).createWorld();
 			world.setSpawnLocation(0, 64, 0);
 			if (env == World.Environment.THE_END) {
-				Bukkit.getScheduler().runTaskLater(plugin, () -> {
-					VoidWorldGenerator.CrystalManager.spawnCrystals(world);
-				}, 20L);
+				world.getBlockAt(0, 65, 0).setType(Material.BEDROCK);
 			}
 		}
 	}

@@ -28,6 +28,7 @@ public class SkyGridPlugin extends JavaPlugin implements Listener {
 		BukkitYMLPatcher.applyGeneratorSettings(this);
 		
 		Bukkit.getPluginManager().registerEvents(new ChestOpenListener(this), this);
+		getServer().getPluginManager().registerEvents(new DragonSpawnListener(this), this);
 		Bukkit.getPluginManager().registerEvents(this, this);
 
 		// Create an instance of ResourcePackManager
