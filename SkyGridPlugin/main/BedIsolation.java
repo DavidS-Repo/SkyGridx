@@ -7,6 +7,8 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
+import org.bukkit.block.data.BlockData;
+import org.bukkit.block.data.type.Bed;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -38,10 +40,22 @@ public class BedIsolation implements Listener {
 		if (!mat.name().endsWith("_BED")) return;
 
 		World world = event.getClickedBlock().getWorld();
-		// Only allow beds in custom worlds
 		if (!world.getName().startsWith(WorldManager.PREFIX)) return;
 
-		bedManager.setCustomBed(event.getPlayer(), event.getClickedBlock().getLocation());
+		// find the foot half no matter which half was clicked
+		BlockData data = event.getClickedBlock().getBlockData();
+		Location footLoc;
+		if (data instanceof Bed) {
+			Bed bed = (Bed) data;
+			if (bed.getPart() == Bed.Part.HEAD) {
+				footLoc = event.getClickedBlock()
+						.getRelative(bed.getFacing().getOppositeFace())
+						.getLocation();
+			} else {
+				footLoc = event.getClickedBlock().getLocation();
+			}
+			bedManager.setCustomBed(event.getPlayer(), footLoc);
+		}
 	}
 
 	@EventHandler
@@ -50,17 +64,32 @@ public class BedIsolation implements Listener {
 
 		Location loc = event.getBlock().getLocation();
 		World world = loc.getWorld();
-
-		// Only track bed breaks in custom worlds
 		if (!world.getName().startsWith(WorldManager.PREFIX)) return;
 
+		// convert broken block to its foot half
+		BlockData data = event.getBlock().getBlockData();
+		Location footLoc;
+		if (data instanceof Bed) {
+			Bed bed = (Bed) data;
+			if (bed.getPart() == Bed.Part.HEAD) {
+				footLoc = event.getBlock()
+						.getRelative(bed.getFacing().getOppositeFace())
+						.getLocation();
+			} else {
+				footLoc = event.getBlock().getLocation();
+			}
+		} else {
+			footLoc = event.getBlock().getLocation();
+		}
+
+		// find matching stored bed and remove it
 		UUID toRemove = null;
 		for (Map.Entry<UUID, Location> entry : bedManager.getAllBeds().entrySet()) {
-			Location bed = entry.getValue();
-			if (bed.getWorld().equals(world)
-					&& bed.getBlockX() == loc.getBlockX()
-					&& bed.getBlockY() == loc.getBlockY()
-					&& bed.getBlockZ() == loc.getBlockZ()) {
+			Location stored = entry.getValue();
+			if (stored.getWorld().equals(footLoc.getWorld())
+					&& stored.getBlockX() == footLoc.getBlockX()
+					&& stored.getBlockY() == footLoc.getBlockY()
+					&& stored.getBlockZ() == footLoc.getBlockZ()) {
 				toRemove = entry.getKey();
 				break;
 			}
@@ -91,7 +120,6 @@ public class BedIsolation implements Listener {
 			targetLoc = targetWorld.getSpawnLocation();
 		}
 
-		// tell Bukkit where to respawn immediately
 		event.setRespawnLocation(new Location(
 				targetWorld,
 				targetLoc.getBlockX() + 0.5,
@@ -99,7 +127,6 @@ public class BedIsolation implements Listener {
 				targetLoc.getBlockZ() + 0.5
 				));
 
-		// run your safe‐teleport a tick later
 		new BukkitRunnable() {
 			@Override
 			public void run() {
@@ -114,5 +141,4 @@ public class BedIsolation implements Listener {
 			}
 		}.runTaskLater(plugin, 1L);
 	}
-
 }

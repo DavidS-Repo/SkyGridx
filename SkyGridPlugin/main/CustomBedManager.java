@@ -3,7 +3,6 @@ package main;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
@@ -15,111 +14,126 @@ import java.util.Map;
 import java.util.UUID;
 
 public class CustomBedManager {
-	private final File bedFile;
 	private static CustomBedManager instance;
-	private final FileConfiguration bedData;
+
+	private final Plugin plugin;
+	private final File bedFile;
 	private final Map<UUID, Location> bedSpawns = new HashMap<>();
 
 	public CustomBedManager(Plugin plugin) {
 		instance = this;
+		this.plugin = plugin;
 		this.bedFile = new File(plugin.getDataFolder(), "custom_beds.yml");
 		if (!bedFile.exists()) {
+			bedFile.getParentFile().mkdirs();
 			try {
-				bedFile.getParentFile().mkdirs();
 				bedFile.createNewFile();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 		}
-		this.bedData = YamlConfiguration.loadConfiguration(bedFile);
-		loadBeds();
 	}
 
-	private void loadBeds() {
-		for (String key : bedData.getKeys(false)) {
-			UUID uuid = UUID.fromString(key);
-			World world = Bukkit.getWorld(bedData.getString(key + ".world"));
-			double x = bedData.getDouble(key + ".x");
-			double y = bedData.getDouble(key + ".y");
-			double z = bedData.getDouble(key + ".z");
+	public static void reloadBeds() {
+		CustomBedManager inst = getInstance();
+		if (inst != null) {
+			inst.loadBeds();
+		}
+	}
 
-			// Skip if world is null, not custom, or is Nether/End
-			if (world != null 
-					&& world.getName().startsWith(WorldManager.PREFIX)
-					&& world.getEnvironment() != World.Environment.NETHER
-					&& world.getEnvironment() != World.Environment.THE_END) {
-				bedSpawns.put(uuid, new Location(world, x, y, z));
+	public void loadBeds() {
+		synchronized (bedSpawns) {
+			bedSpawns.clear();
+		}
+		YamlConfiguration config = YamlConfiguration.loadConfiguration(bedFile);
+		for (String key : config.getKeys(false)) {
+			UUID uuid;
+			try {
+				uuid = UUID.fromString(key);
+			} catch (IllegalArgumentException ex) {
+				continue;
+			}
+			String worldName = config.getString(key + ".world");
+			World world = Bukkit.getWorld(worldName);
+			int x = config.getInt(key + ".x");
+			int y = config.getInt(key + ".y");
+			int z = config.getInt(key + ".z");
+			Location loc = new Location(world, x, y, z);
+			synchronized (bedSpawns) {
+				bedSpawns.put(uuid, loc);
 			}
 		}
 	}
 
-	private void saveBeds() {
-		// Clear old data
-		for (String key : bedData.getKeys(false)) {
-			bedData.set(key, null);
-		}
-
-		// Save only valid beds
-		for (Map.Entry<UUID, Location> entry : bedSpawns.entrySet()) {
+	private synchronized void saveSnapshot() {
+		Map<UUID, Location> snapshot = new HashMap<>(bedSpawns);
+		var config = new YamlConfiguration();
+		for (var entry : snapshot.entrySet()) {
+			UUID uuid = entry.getKey();
 			Location loc = entry.getValue();
 			World world = loc.getWorld();
-			if (world.getName().startsWith(WorldManager.PREFIX)
-					&& world.getEnvironment() != World.Environment.NETHER
-					&& world.getEnvironment() != World.Environment.THE_END) {
-				String uuidStr = entry.getKey().toString();
-				bedData.set(uuidStr + ".world", world.getName());
-				bedData.set(uuidStr + ".x", loc.getX());
-				bedData.set(uuidStr + ".y", loc.getY());
-				bedData.set(uuidStr + ".z", loc.getZ());
+			if (!world.getName().startsWith(WorldManager.PREFIX)
+					|| world.getEnvironment() == World.Environment.NETHER
+					|| world.getEnvironment() == World.Environment.THE_END) {
+				continue;
 			}
+			String key = uuid.toString();
+			config.set(key + ".world", world.getName());
+			config.set(key + ".x", loc.getBlockX());
+			config.set(key + ".y", loc.getBlockY());
+			config.set(key + ".z", loc.getBlockZ());
 		}
-
 		try {
-			bedData.save(bedFile);
+			config.save(bedFile);
 		} catch (IOException e) {
+			plugin.getLogger().severe("Could not save custom_beds.yml");
 			e.printStackTrace();
 		}
 	}
+
 
 	public void setCustomBed(Player player, Location loc) {
 		World world = loc.getWorld();
 		if (world.getName().startsWith(WorldManager.PREFIX)
 				&& world.getEnvironment() != World.Environment.NETHER
 				&& world.getEnvironment() != World.Environment.THE_END) {
-			bedSpawns.put(player.getUniqueId(), loc);
-			saveBeds();
+			synchronized (bedSpawns) {
+				bedSpawns.put(player.getUniqueId(), loc);
+			}
+			saveSnapshot();
 		}
 	}
 
 	public void removeCustomBed(Player player) {
-		bedSpawns.remove(player.getUniqueId());
-		bedData.set(player.getUniqueId().toString(), null);
-		saveBeds();
+		removeCustomBed(player.getUniqueId());
 	}
 
 	public void removeCustomBed(UUID uuid) {
-		bedSpawns.remove(uuid);
-		bedData.set(uuid.toString(), null);
-		saveBeds();
+		synchronized (bedSpawns) {
+			bedSpawns.remove(uuid);
+		}
+		saveSnapshot();
 	}
 
 	public Location getCustomBed(UUID uuid) {
-		return bedSpawns.get(uuid);
+		synchronized (bedSpawns) {
+			return bedSpawns.get(uuid);
+		}
 	}
 
 	public boolean hasCustomBed(UUID uuid) {
-		return bedSpawns.containsKey(uuid);
+		synchronized (bedSpawns) {
+			return bedSpawns.containsKey(uuid);
+		}
 	}
 
 	public Map<UUID, Location> getAllBeds() {
-		return new HashMap<>(bedSpawns);
+		synchronized (bedSpawns) {
+			return new HashMap<>(bedSpawns);
+		}
 	}
 
 	public static CustomBedManager getInstance() {
 		return instance;
-	}
-
-	public Location getCustomBedLocation(Player player) {
-		return bedSpawns.get(player.getUniqueId());
 	}
 }

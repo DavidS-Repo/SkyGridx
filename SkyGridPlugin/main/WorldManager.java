@@ -36,6 +36,7 @@ public class WorldManager {
 	public static void setupWorlds(JavaPlugin plugin) {
 		Bukkit.getScheduler().runTask(plugin, () -> {
 			createWorlds(plugin);
+			CustomBedManager.reloadBeds();
 		});
 	}
 
