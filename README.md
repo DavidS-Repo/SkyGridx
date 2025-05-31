@@ -1,16 +1,7 @@
 # SkyGridx - Official Support & Downloads
 
-Join our **Discord Community** for help, support, issues, feedback, and discussions!  
-Click here to join: **[Join Our Discord](https://discord.gg/nSWCXFp4UA)**  
-
-## Plugin Info
-- **Latest Version:**
-- 1.21.5 (Spigot, Bukkit, Paper, Pufferfish, Purpur)
-- 1.21.4 (Folia)
-
-## Download Links:
-- [**Spigot, Bukkit, Paper, Pufferfish, and Purpur**](https://www.davids-repo.dev/skygridx/assets/SkyGrid.jar)
-- [**Folia Optimized Specific Version**](https://www.davids-repo.dev/skygridx/assets/SkyGrid-Folia-Beta-1.21.4.jar)
+Join our **Discord Community** for help, support, issues, feedback, and discussions!
+Click here to join: **[Join Our Discord](https://discord.gg/nSWCXFp4UA)**
 
 ## Overview
 
@@ -24,57 +15,57 @@ This plugin also includes a built-in random teleport command for each dimension,
 # **Key Features:**
 
 ## **Block Selection:**
-   - Create a unique SkyGrid with a variety of blocks from the [Bukkit Material page](https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Material.html).
-   - Customize block types and percentages effortlessly.
+ - Create a unique SkyGrid with a variety of blocks from the [Bukkit Material page](https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Material.html).
+ - Customize block types and percentages effortlessly.
 
 ## **Real-time Generation:**
-   - SkyGrid generates in real-time as you explore.
+ - SkyGrid generates in real-time as you explore.
 
 ## **Built-in Fog Feature:**
-   - Fog feature accompanied by a texture pack. Admins can enable it using `/fogon` and disable with `/fogoff`. This feature allows lower render distances without disrupting immersion.
-   - Feature is included in the settings file if you would like to enable it by default, it will come as disabled by default.
+ - Fog feature accompanied by a texture pack. Admins can enable it using `/fogon` and disable with `/fogoff`. This feature allows lower render distances without disrupting immersion.
+ - Feature is included in the settings file if you would like to enable it by default, it will come as disabled by default.
 
 ## **Material Distribution:**
-   - Define personalized materials for block placement per world.
-   - Fine-tune material distribution percentages for a distinct experience.
+ - Define personalized materials for block placement per world.
+ - Fine-tune material distribution percentages for a distinct experience.
 
 ## **Biome-Specific Grids:**
-   - Customize grids in Overworld, Nether, and End with unique blocks at the [biome](https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/block/Biome.html) level.
+ - Customize grids in Overworld, Nether, and End with unique blocks at the [biome](https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/block/Biome.html) level.
 
 ## **Ore Generation:**
-   - Seamlessly integrated into the gameplay, this feature replaced generated stone, cobblestone or basalt with any blocks you want.
-   - The block types generated, and their percentages can be effortlessly modified to suit your preferences in the ores.yml file inside the OreGenBlock folder, and work on all worlds where stone, cobblestone or basalt can be generated.
+ - Seamlessly integrated into the gameplay, this feature replaced generated stone, cobblestone or basalt with any blocks you want.
+ - The block types generated, and their percentages can be effortlessly modified to suit your preferences in the ores.yml file inside the OreGenBlock folder, and work on all worlds where stone, cobblestone or basalt can be generated.
 
 ## **Teleportation Command:**
-   - Securely teleport to random locations in
-     - Overworld (/**tpr overworld**) or (**/tpro**)
-     - Nether (**/tpr nether**) or (**/tprn**)
-     - End (**/tpr end**) or (**/tpre**).
-   - Range can be customized in the settings
-   - Settings also include cooldown for per world command reuse
-   - All have their own individualize permissions
+ - Securely teleport to random locations in
+ - Overworld (/**tpr overworld**) or (**/tpro**)
+ - Nether (**/tpr nether**) or (**/tprn**)
+ - End (**/tpr end**) or (**/tpre**).
+ - Range can be customized in the settings
+ - Settings also include cooldown for per world command reuse
+ - All have their own individualize permissions
 
 ## **Spawner Settings:**
-   - The available entities for use can be found at [here](https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/entity/EntityType.html)
-   - Fine-tune spawner settings for entities, delay, max nearby entities, and more.
-   - Random entity selection based on spawn weights for added unpredictability.
-   - Customize spawners for specific biomes at the block level, adding a new layer of customization. For example, if you specify the biome as `DEEP_DARK,` you can configure spawners to spawn `WARDEN` entities exclusively in that biome.
+ - The available entities for use can be found at [here](https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/entity/EntityType.html)
+ - Fine-tune spawner settings for entities, delay, max nearby entities, and more.
+ - Random entity selection based on spawn weights for added unpredictability.
+ - Customize spawners for specific biomes at the block level, adding a new layer of customization. For example, if you specify the biome as `DEEP_DARK,` you can configure spawners to spawn `WARDEN` entities exclusively in that biome.
 
 ## **Chest Loot Customization:**
-   - Tailor chest loot settings with precision, specifying items, percentages, amounts, custom names, Enchantments , lore colors and more.
-   - Tiered loot distribution for added variety, each tier with its own set of items and probabilities.
-   - Customize chest loot for specific biomes, allowing for a more immersive and thematic distribution of items based on the environment.
+ - Tailor chest loot settings with precision, specifying items, percentages, amounts, custom names, Enchantments , lore colors and more.
+ - Tiered loot distribution for added variety, each tier with its own set of items and probabilities.
+ - Customize chest loot for specific biomes, allowing for a more immersive and thematic distribution of items based on the environment.
 
 ## **Mini Chunk Regeneration**
-   - Periodically regenerate selected chunks on a timer without touching the surrounding world.
-   - Configure with `/miniregen` or `MiniRegen/mini_regen_settings.yml` once chunks have been chosen.
-   - Supports custom material distributions and grouping for bulk removal.
+ - Periodically regenerate selected chunks on a timer without touching the surrounding world.
+ - Configure with `/miniregen` or `MiniRegen/mini_regen_settings.yml` once chunks have been chosen.
+ - Supports custom material distributions and grouping for bulk removal.
 
 ## **Enhanced Eye of Ender**
-   - Eyes follow a smooth arc to the nearest registered portal, hover for 5 s with particles, then refund the eye.
-   - If no portal exists, they pop instantly with a small explosion and refund.
-   - Portal coordinates stored in an efficient binary file (`portals.dat`).
-   - This is only for `END_PORTAL` materials used in the grid, and serves as a replacement for the missing stronghold structure.
+ - Eyes follow a smooth arc to the nearest registered portal, hover for 5 s with particles, then refund the eye.
+ - If no portal exists, they pop instantly with a small explosion and refund.
+ - Portal coordinates stored in an efficient binary file (`portals.dat`).
+ - This is only for `END_PORTAL` materials used in the grid, and serves as a replacement for the missing stronghold structure.
 
 ---
 
