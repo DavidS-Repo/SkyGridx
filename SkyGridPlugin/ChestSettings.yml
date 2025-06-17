@@ -1,120 +1,290 @@
 # ------------------------------------------------------------------------------
-# Chest Settings Documentation
+# Chest Settings - Complete Guide and Examples
 #
-# This file configures how chests are populated in specific biomes using a
-# weight-based system. Each chest configuration respects a global "MaxItemsPerSlot"
-# setting which limits the number of items that can appear in any one slot.
-# (Does not apply to Minecraft-based Loot Tables)
+# This file controls how the plugin fills chests for your world.
 #
-# The plugin supports two modes:
+# Place this file in your plugin's config folder, usually:
+#    plugins/SkyGrid/SkygridBlocks/ChestSettings.yml
 #
-# 1) Custom Loot Tables:
+# WHAT THIS FILE DOES:
+#   - Lets you set up custom chest loot for different biome types.
+#   - You can use your own lists of items or use built-in Minecraft loot tables.
+#   - You can mix custom and vanilla pools and make each biome unique.
 #
-#    In Custom Loot Tables mode you explicitly define which items appear in a chest.
-#    Two formats are supported:
+# ------------------------------------------------------------------------------
+
+# --- MAX ITEMS PER SLOT ---
+# How many of an item can go in one slot, for custom loot mode.
+# This does NOT affect vanilla (Minecraft) loot tables.
 #
-#    [Legacy (Compact) Format]
+MaxItemsPerSlot: 3
+
+# ------------------------------------------------------------------------------
+# FORMAT OVERVIEW
 #
-#    ChestSettings:
-#      ChestOld:
-#        Items: [MATERIAL_ENUM:weight:maxAmount]
-#               [MATERIAL_ENUM:weight:minAmount-maxAmount]
-#               # - weight: chance in percent that the material is chosen
-#               # - maxAmount: maximum total of that material in the chest
-#               # - minAmount (optional): minimum total of that material in the chest, if omitted, defaults to 0 (preserves existing behavior)
-#        Biomes: [BIOME_ENUM]
+# You have two main ways to fill chests:
 #
-#      Example Compact Entries:
-#        - DIAMOND:10:1-3     # 10% chance, between 1 and 3 diamonds total
-#        - STICK:50:5         # 50% chance, up to 5 sticks (min defaults to 0)
+# 1. Custom Loot (you decide each item, its odds, its enchantments, etc.)
+# 2. Minecraft Loot Tables (use vanilla loot, nothing else to set)
 #
-#    [New Expanded Format]
+# You can also combine them in pools for more variety.
 #
-#     ChestSettings:                                    # Top-level key
-#       ChestNew:                                       # Unique chest name
-#         Items:
-#           - MATERIAL_ENUM:                            # Exact names from Bukkit’s Material enum
-#             - Weight: <numeric value>                 # Chance in percent to include
-#             - MinAmount: <numeric value>              # OPTIONAL: minimum total amount (defaults to 0)
-#             - MaxAmount: <numeric value>              # Maximum total amount in the chest
-#             - CustomName: <custom display name>       # Supports Minecraft color codes
-#             - LevelType: <Standard or Roman>          # Enchantment display style
-#             - Enchantments:
-#                 - ENCHANTMENT_ENUM:                   # Exact names from Bukkit’s Enchantment enum
-#                     - Weight: <numeric chance in percent>
-#                     - MinLevel: <minimum level>
-#                     - MaxLevel: <maximum level>
-#                     - LoreColor: <color>               # Optional, see valid colors below
-#         Biomes:
-#           - BIOME_ENUM                               # Exact names from Bukkit’s Biome enum
+# ------------------------------------------------------------------------------
+# REFERENCE LINKS
 #
-#      This format offers additional customization:
-#        • MinAmount: explicitly set the minimum number of that item chest-wide.
-#        • MaxAmount: upper cap on that item in the chest.
-#        • CustomName: display name with color codes (e.g., "§6HolyDirt").
-#        • LevelType: how enchant levels render (Standard or Roman).
-#        • Enchantments: specify weight, level range, and lore color per enchant.
+# - All Materials (Item Names):  
+#     https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Material.html
+# - All Biomes:  
+#     https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/block/Biome.html
+# - All Enchantments:  
+#     https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/enchantments/Enchantment.html
+# - All LootTables:  
+#     https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/loot/LootTables.html
 #
-#      Example Expanded Entry:
-#        - MYCELIUM:
-#            - Weight: 30
-#            - MinAmount: 2
-#            - MaxAmount: 5
-#            - CustomName: §6HolyDirt
-#            - LevelType: Standard
+# USE THESE EXACT NAMES. Case doesn't matter, but spellings do.
+#
+# ------------------------------------------------------------------------------
+# YAML TIPS (IMPORTANT!)
+#
+# - NEVER use tabs! Use spaces only. YAML breaks on tabs.
+# - Indentation matters. Match the samples exactly.
+# - If you need a quote, use double-quotes: "like this"
+# - Comments start with #
+# - Don't leave a trailing comma in lists.
+# - Strings like "§6" for colors must be quoted.
+#
+# ------------------------------------------------------------------------------
+#
+# EXAMPLES BELOW!
+#
+# ------------------------------------------------------------------------------
+# 1. CUSTOM LOOT TABLES (You pick items for chests)
+#
+# You can use:
+#   - Compact Format (simple, fast, less detail)
+#   - Expanded Format (more options, supports custom names, enchants, etc.)
+#
+# --- COMPACT FORMAT ---
+#
+#  ChestSettings:
+#    <YourChestName>:
+#      Items:
+#        - MATERIAL:weight:min-max
+#        - MATERIAL:weight:max      # min defaults to 1
+#        - MATERIAL:Xp:min-max      # "p" at the end is "ChancePerChest" mode (%)
+#      Biomes: [BIOME1, BIOME2]
+#
+#   - weight: How likely this item is compared to others (unless you use p, then it's a % chance for the whole chest)
+#   - min-max: Range of this item in the chest (optional min, defaults to 1)
+#
+# EXAMPLES (COMPACT):
+#
+#  ChestSettings:
+#    BasicChest:
+#      Items:
+#        - DIAMOND:10:1-3     # 10 weight, 1-3 diamonds per chest
+#        - STICK:50:5         # 50 weight, up to 5 sticks (min defaults to 1)
+#        - APPLE:2p:1-4       # 2% chance, 1-4 apples (ChancePerChest)
+#        - AIR:100:1          # AIR as filler, makes other items less common
+#      Biomes: [FOREST, PLAINS]
+#
+# --- EXPANDED FORMAT ---
+#
+# Lets you control everything (names, enchantments, per-chest chance, colors, etc.)
+#
+#  ChestSettings:
+#    <YourChestName>:
+#      Items:
+#        - MATERIAL:
+#            - Weight: <number>
+#            - ChancePerChest: <number>   # Use for rare drops; percent chance, only checked once per chest
+#            - MinAmount: <number>        # Minimum (defaults to 1)
+#            - MaxAmount: <number>        # Maximum (defaults to 1)
+#            - CustomName: "<custom name>"# Use color codes (like "§6Epic Shovel")
+#            - LevelType: <Standard|Roman># How enchant levels show in lore
 #            - Enchantments:
-#                - FORTUNE:
+#                - ENCHANTMENT:
+#                    - Weight: <number>   # Chance for this enchant, % (0-100)
+#                    - MinLevel: <number> # Enchant level range
+#                    - MaxLevel: <number>
+#                    - LoreColor: <color> # RED, BLUE, GREEN, etc. (for lore text)
+#      Biomes: [BIOME1, BIOME2]
+#
+# EXAMPLES (EXPANDED):
+#
+#  ChestSettings:
+#    FancyChest:
+#      Items:
+#        - GOLDEN_APPLE:
+#            - Weight: 5
+#            - MinAmount: 1
+#            - MaxAmount: 2
+#            - CustomName: "§6Golden Snack"
+#        - ENCHANTED_BOOK:
+#            - Weight: 2
+#            - Enchantments:
+#                - SHARPNESS:
 #                    - Weight: 100
+#                    - MinLevel: 3
+#                    - MaxLevel: 5
+#                - FORTUNE:
+#                    - Weight: 50
 #                    - MinLevel: 1
-#                    - MaxLevel: 3
+#                    - MaxLevel: 2
+#        - IRON_SWORD:
+#            - ChancePerChest: 3   # Only a 3% chance for the entire chest!
+#            - MaxAmount: 1
+#            - CustomName: "§fKnight's Blade"
+#            - LevelType: Roman
+#            - Enchantments:
+#                - FIRE_ASPECT:
+#                    - Weight: 70
+#                    - MinLevel: 1
+#                    - MaxLevel: 2
 #                    - LoreColor: RED
+#        - BREAD:
+#            - Weight: 30
+#            - MinAmount: 1
+#            - MaxAmount: 5
+#        - AIR:
+#            - Weight: 120         # Used to make rare items even rarer
+#      Biomes: [FOREST, PLAINS, LUSH_CAVES]
 #
-# 2) Minecraft-based Loot Tables:
+# You can mix compact and expanded in one Items list if you want!
 #
-#    In this mode vanilla Minecraft loot generation is used. Instead of an "Items" section,
-#    you define a "LootTables" section with one or more loot table entries.
+# ------------------------------------------------------------------------------
+# 2. MINECRAFT (VANILLA) LOOT TABLES
 #
-#    Formatting:
+# You just pick loot tables. Nothing else.
+# See the link at the top for all possible LootTables.
 #
-#      Each loot table entry is defined as a map where the key is a loot table enum (from
-#      Bukkit’s LootTables, such as SIMPLE_DUNGEON, ABANDONED_MINESHAFT, etc.) and the value
-#      is a list containing a "Weight" property.
-#      Bukkit LootTables: https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/loot/LootTables.html
+#  ChestSettings:
+#    VanillaCaveChest:
+#      LootTables:
+#        - ABANDONED_MINESHAFT:
+#            - Weight: 100
+#        - BASTION_TREASURE:
+#            - Weight: 10
+#      Biomes: [DRIPSTONE_CAVES, DEEP_DARK]
 #
-#      Example:
+# Notes:
+#   - Weight here is how likely each loot table is, if you have more than one.
+#   - No Items or MaxItemsPerSlot settings are used for these.
 #
-#      ChestSettings:
-#        ChestVanilla:
-#          LootTables:
-#            - ABANDONED_MINESHAFT:
-#                - Weight: 100
-#          Biomes: [BIRCH_FOREST, DRIPSTONE_CAVES, LUSH_CAVES]
+# ------------------------------------------------------------------------------
+# 3. MIXED POOLS (Custom + Vanilla)
 #
-#      Another Example:
+# You can make a pool of options—each chest picks from one, using weight.
 #
-#      ChestSettings:
-#        ChestMulti:
-#          LootTables:
-#            - SIMPLE_DUNGEON:
-#                - Weight: 80.6
-#            - VILLAGE_ARMORER:
-#                - Weight: 19.4
-#          Biomes: [DESERT, FOREST, PLAINS]
+# Example:
 #
-# Additional Notes:
+#  ChestSettings:
+#    MixedLoot:
+#      LootTables:
+#        - SIMPLE_DUNGEON:
+#            - Weight: 70
+#        - FancyChest:   # Custom loot table defined above!
+#            - Weight: 30
+#      Biomes: [BIRCH_FOREST]
 #
-#   - Advanced Weighting: In Custom Loot Tables mode, you can use filler items (such as AIR)
-#     with high weight values to lower the odds of rare items appearing.
+# ------------------------------------------------------------------------------
+# WHAT HAPPENS WHEN A CHEST IS PLACED:
 #
-#   - maxAmount vs. MaxItemsPerSlot:
-#       * maxAmount: Maximum total number of a given item allowed in the chest.
-#       * MaxItemsPerSlot: Maximum number of that item that can appear in any one slot.(Not needed if using Minecraft-based Loot Tables only)
+# - If a chest's biome matches a Biomes list, it can use that config.
+# - If you use LootTables, it picks one at random (based on weight) and fills it with that.
+# - If you use Items, it fills using your custom logic.
+# - If a pool has both, it can pick either.
 #
-#   - MinAmount only applies in Custom Loot Tables mode; if omitted, it’s treated as 0.
+# ------------------------------------------------------------------------------
+# ITEM OPTIONS EXPLAINED
 #
-#   - YAML Tips:
-#       * Both the compact and expanded formats are supported for custom loot tables.
-#       * For vanilla loot tables, use the enum names from Bukkit’s LootTables.
+# - Weight: Used for "per slot" items, higher = more common
+# - ChancePerChest: Used for rare items you want to try to appear only once (by % chance per chest). If both are set, ChancePerChest is used.
+# - MinAmount, MaxAmount: Range for the number of items. If you put MinAmount: 0, the item might not appear at all.
+# - CustomName: Use for colored names, like "§cLegendary Sword"
+# - LevelType: "Standard" = 5, "Roman" = V (for lore display)
+# - Enchantments: See format above. Weight is % chance per item.
+# - LoreColor: Use for the colored text of the enchantment name in lore.
+#
+# ------------------------------------------------------------------------------
+# COMMON PITFALLS & TROUBLESHOOTING
+#
+# - If the plugin logs "Bad material" or "Bad enchantment," check your spelling.
+# - Using the wrong YAML indentation or tabs WILL BREAK the file.
+# - The plugin only supports biomes/items/enchantments/loot tables that exist in your server version!
+# - AIR can be used in custom loot for filler only (not for vanilla).
+# - If nothing shows up in chests, check your config for missing colons or wrong keys.
+#
+# ------------------------------------------------------------------------------
+# FAQ
+#
+# Q: Where do I get the right MATERIAL or ENCHANTMENT names?
+#    Use the links at the top. Copy the exact enum name (no spaces, all caps, _ instead of spaces).
+#
+# Q: Can I have multiple chest configs for the same biome?
+#    Yes, but only one will be picked per chest. You can pool them for variety.
+#
+# Q: Do I have to restart the server after editing this?
+#    Using /reload is enough.
+#
+# Q: What if I mess up the YAML?
+#    The plugin might not load, or will log errors. Use a YAML validator if you’re stuck: https://yamlvalidator.com/
+#
+# Q: Can I use comments?
+#    Yes. Start lines with #
+#
+# ------------------------------------------------------------------------------
+# MINIMUM CONFIG
+#
+# MaxItemsPerSlot: 3
+#
+# ChestSettings:
+#   MyChest:
+#     Items:
+#       - STONE:10:1-3
+#     Biomes: [PLAINS]
+#
+# ------------------------------------------------------------------------------
+# EVERYTHING ON EXAMPLE
+#
+# MaxItemsPerSlot: 5
+#
+# ChestSettings:
+#   GodChest:
+#     Items:
+#       - DIAMOND_SWORD:
+#           - Weight: 5
+#           - MinAmount: 1
+#           - MaxAmount: 1
+#           - CustomName: "§bGod Sword"
+#           - LevelType: Standard
+#           - Enchantments:
+#               - SHARPNESS:
+#                   - Weight: 100
+#                   - MinLevel: 4
+#                   - MaxLevel: 5
+#                   - LoreColor: RED
+#               - LOOTING:
+#                   - Weight: 60
+#                   - MinLevel: 1
+#                   - MaxLevel: 3
+#                   - LoreColor: GREEN
+#       - GOLDEN_APPLE:
+#           - ChancePerChest: 10
+#           - MinAmount: 2
+#           - MaxAmount: 5
+#           - CustomName: "§6Epic Apple"
+#       - AIR:
+#           - Weight: 100
+#     Biomes: [PLAINS, DESERT, FOREST]
+#
+#   DungeonChest:
+#     LootTables:
+#       - SIMPLE_DUNGEON:
+#           - Weight: 70
+#       - GodChest:
+#           - Weight: 30
+#     Biomes: [LUSH_CAVES]
 #
 # ------------------------------------------------------------------------------
 #
@@ -122,8 +292,6 @@
 #
 # Overworld Biomes:
 #
-
-MaxItemsPerSlot: 3 # Does not apply to Minecraft loot table chest types, just needed for custom chest.
 
 ChestSettings:
   Custom_Chest1:
@@ -139,13 +307,13 @@ ChestSettings:
   Vanilla_Overworld_Desert:
     LootTables:
       - DESERT_PYRAMID:
-          - Weight: 100
+        - Weight: 100
       - DESERT_PYRAMID_ARCHAEOLOGY:
-          - Weight: 100
+        - Weight: 100
       - DESERT_WELL_ARCHAEOLOGY:
-          - Weight: 100
+        - Weight: 100
       - VILLAGE_DESERT_HOUSE:
-          - Weight: 100
+        - Weight: 100
     Biomes:
       - DESERT
 
