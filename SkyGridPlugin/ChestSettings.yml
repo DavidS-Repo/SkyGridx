@@ -228,7 +228,7 @@ MaxItemsPerSlot: 3
 #    Using /reload is enough.
 #
 # Q: What if I mess up the YAML?
-#    The plugin might not load, or will log errors. Use a YAML validator if you’re stuck: https://yamlvalidator.com/
+#    The plugin might not load, or will log errors. Use a YAML validator if you’re stuck: https://www.yamllint.com/
 #
 # Q: Can I use comments?
 #    Yes. Start lines with #
