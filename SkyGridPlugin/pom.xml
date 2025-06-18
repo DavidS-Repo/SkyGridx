@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>SkyGrid</groupId>
 	<artifactId>SkyGrid</artifactId>
-	<version>1.21.5</version>
+	<version>1.21.6</version>
 	<name>SkyGrid</name>
 	<description>A plugin that generates a SkyGrid in Minecraft worlds and more.</description>
 	<repositories>
@@ -20,22 +20,18 @@
 			<id>fastutil</id>
 			<url>https://mvnrepository.com/artifact/it.unimi.dsi/fastutil</url>
 		</repository>
-		<repository>
-			<id>RoaringBitmap</id>
-			<url>https://mvnrepository.com/artifact/org.roaringbitmap/RoaringBitmap</url>
-		</repository>
 	</repositories>
 	<dependencies>
 		<dependency>
 			<groupId>io.papermc.paper</groupId>
 			<artifactId>paper-api</artifactId>
-			<version>1.21.5-R0.1-SNAPSHOT</version>
+			<version>1.21.6-R0.1-SNAPSHOT</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.spigotmc</groupId>
 			<artifactId>spigot-api</artifactId>
-			<version>1.21.5-R0.1-SNAPSHOT</version>
+			<version>1.21.6-R0.1-SNAPSHOT</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
