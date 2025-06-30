@@ -2,7 +2,7 @@
 setlocal
 
 :: --- CONFIG -------------------------------------------
-set plugin_url=https://raw.githubusercontent.com/DavidS-Repo/SkyGridx/main/SkyGrid-1.21.6.jar
+set plugin_url=https://raw.githubusercontent.com/DavidS-Repo/SkyGridx/main/SkyGrid-1.21.7.jar
 set run_bat_url=https://raw.githubusercontent.com/DavidS-Repo/SkyGridx/main/run.bat
 set paper_fetch_url=https://www.davids-repo.dev/fetch_latest_paper_build/
 
