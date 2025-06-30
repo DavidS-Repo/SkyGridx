@@ -5,10 +5,14 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.generator.ChunkGenerator;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
+
+import net.kyori.adventure.text.Component;
+
+import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
+
 
 import java.util.logging.Filter;
 
@@ -26,7 +30,7 @@ public class SkyGridPlugin extends JavaPlugin implements Listener {
 	@Override
 	public void onEnable() {
 		BukkitYMLPatcher.applyGeneratorSettings(this);
-		
+
 		Bukkit.getPluginManager().registerEvents(new ChestOpenListener(this), this);
 		getServer().getPluginManager().registerEvents(new DragonSpawnListener(this), this);
 		Bukkit.getPluginManager().registerEvents(this, this);
@@ -141,13 +145,13 @@ public class SkyGridPlugin extends JavaPlugin implements Listener {
 		return generator;
 	}
 
-	@SuppressWarnings("deprecation")
 	@EventHandler(priority = EventPriority.HIGHEST)
-	public void onPlayerLogin(PlayerLoginEvent event) {
-		if (chunksLoading) {
-			event.disallow(PlayerLoginEvent.Result.KICK_OTHER, Cc.RED + "Chunks are still loading, please wait a moment and try again." + Cc.RESET);
-		}
-	}
+    public void onAsyncPlayerPreLogin(AsyncPlayerPreLoginEvent event) {
+        if (chunksLoading) {
+            event.setLoginResult(AsyncPlayerPreLoginEvent.Result.KICK_OTHER);
+            event.kickMessage(Component.text("Chunks are still loading, please wait a moment and try again."));
+        }
+    }
 
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onPlayerJoin(PlayerJoinEvent event) {

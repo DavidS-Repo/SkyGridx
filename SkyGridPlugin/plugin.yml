@@ -1,5 +1,5 @@
 name: SkyGrid
-version: 1.21.6
+version: 1.21.7
 main: main.SkyGridPlugin
 load: STARTUP
 author: Go0fy_Go0ber
