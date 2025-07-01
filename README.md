@@ -1,192 +1,130 @@
-# Chunker - Official Support & Downloads
+# SkyGridx - Official Support & Downloads
 
-Join our **Discord Community** for help, support, issues, feedback, and discussions!
-Click here to join: **[Join Our Discord](https://discord.gg/FUx7fk4PsA)**
+Join our **Discord Community** for help, support, issues, feedback, and discussions!  
+Click here to join: **[Join Our Discord](https://discord.gg/nSWCXFp4UA)**  
 
-#### Supported MC Versions:
-- Minecraft 1.20.5+  
-- Requires Java 21 or higher
+## Plugin Info
 
-#### Supported Servers:
-- Spigot, Bukkit, Paper, Pufferfish, Purpur, Leaf, and Folia
+**Latest Version:**
+- 1.21.7 (Spigot, Bukkit, Paper, Pufferfish, Purpur, Leaf)
+- 1.21.6 (Folia)
 
-<div style="display: flex; justify-content: space-between; width: 100% !important;">
-    <img src="https://www.davids-repo.dev/mc/chunker1.png" style="width: 49% !important; height: auto;">
-    <img src="https://www.davids-repo.dev/mc/chunker2.png" style="width: 49% !important; height: auto;">
-</div>
+## Download Links:
+- [**Spigot, Bukkit, Paper, Pufferfish, and Purpur**](https://www.davids-repo.dev/skygridx/assets/SkyGrid.jar)
+- [**Folia Optimized Specific Version**](https://www.davids-repo.dev/skygridx/assets/SkyGrid-Folia-Beta-1.21.4.jar)
 
 ## Overview
-Chunker is designed to be more efficient and resilient than traditional pre-generators. Many pre-generators track thousands of chunks in memory, risking significant rollback or data loss if the server crashes. Chunker, by contrast, only tracks minimal state (like the current region’s position and how many chunks are completed), so crashes have less impact on the generation process.
 
-It works best on Paper forks because it can utilize asynchronous chunk-loading (`CompletableFuture`) for faster performance. On non-Paper servers (Bukkit/Spigot and others), it falls back to a synchronous chunk-loading method but still performs significantly faster than many default solutions.
+The SkyGrid Plugin offers access to the latest blocks (1.21.5) and empowers users to fully customize the grids in the Overworld, Nether, and End dimensions. The initial generation process, which typically takes ~1 minute, adapts to the server's capabilities. Subsequently, all generation activities occur efficiently in real-time.
 
-You can configure Chunker to run automatically **only** when there are no players online and to halt immediately if a player joins. This behavior is controlled by `auto_run` in `settings.yml`. You can also adjust how aggressively each world’s tasks run by changing `task_queue_timer` and `parallel_tasks_multiplier`. If you want to keep the server load minimal, set low concurrency or run only when the server is empty.
+This plugin also includes a built-in random teleport command for each dimension, ensuring that players can safely explore their chosen realm. Furthermore, it features an ore generator that can modify stone generation to create various blocks of your choice. While currently configured primarily for ores, the possibilities are virtually endless.
 
-## Optimized JVM Launch Parameters (`start.bat`):
+![Skygrid](https://www.davids-repo.dev/mc/sg3.webp)
+
+ 
+## **Key Features:**
+
+## **Block Selection:**
+   - Create a unique SkyGrid with a variety of blocks from the [Bukkit Material page](https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Material.html).
+   - Customize block types and percentages effortlessly.
+
+## **Real-time Generation:**
+   - SkyGrid generates in real-time as you explore.
+
+## **Built-in Fog Feature:**
+   - Fog feature accompanied by a texture pack. Admins can enable it using `/fogon` and disable with `/fogoff`. This feature allows lower render distances without disrupting immersion.
+   - Feature is included in the settings file if you would like to enable it by default, it will come as disabled by default.
+
+## **Material Distribution:**
+   - Define personalized materials for block placement per world.
+   - Fine-tune material distribution percentages for a distinct experience.
+
+## **Biome-Specific Grids:**
+   - Customize grids in Overworld, Nether, and End with unique blocks at the [biome](https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/block/Biome.html) level.
+
+## **Ore Generation:**
+   - Seamlessly integrated into the gameplay, this feature replaced generated stone, cobblestone or basalt with any blocks you want.
+   - The block types generated, and their percentages can be effortlessly modified to suit your preferences in the ores.yml file inside the OreGenBlock folder, and work on all worlds where stone, cobblestone or basalt can be generated.
+
+## **Teleportation Command:**
+   - Securely teleport to random locations in
+     - Overworld (/**tpr overworld**) or (**/tpro**)
+     - Nether (**/tpr nether**) or (**/tprn**)
+     - End (**/tpr end**) or (**/tpre**).
+   - Range can be customized in the settings
+   - Settings also include cooldown for per world command reuse
+   - All have their own individualize permissions
+
+## **Spawner Settings:**
+   - The available entities for use can be found at [here](https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/entity/EntityType.html)
+   - Fine-tune spawner settings for entities, delay, max nearby entities, and more.
+   - Random entity selection based on spawn weights for added unpredictability.
+   - Customize spawners for specific biomes at the block level, adding a new layer of customization. For example, if you specify the biome as `DEEP_DARK,` you can configure spawners to spawn `WARDEN` entities exclusively in that biome.
+
+## **Chest Loot Customization:**
+   - Tailor chest loot settings with precision, specifying items, percentages, amounts, custom names, Enchantments , lore colors and more.
+   - Tiered loot distribution for added variety, each tier with its own set of items and probabilities.
+   - Customize chest loot for specific biomes, allowing for a more immersive and thematic distribution of items based on the environment.
+
+## **Mini Chunk Regeneration**
+   - Periodically regenerate selected chunks on a timer without touching the surrounding world.
+   - Configure with `/miniregen` or `MiniRegen/mini_regen_settings.yml` once chunks have been chosen.
+   - Supports custom material distributions and grouping for bulk removal.
+
+## **Enhanced Eye of Ender**
+   - Eyes follow a smooth arc to the nearest registered portal, hover for 5 s with particles, then refund the eye.
+   - If no portal exists, they pop instantly with a small explosion and refund.
+   - Portal coordinates stored in an efficient binary file (`portals.dat`).
+   - This is only for `END_PORTAL` materials used in the grid, and serves as a replacement for the missing stronghold structure.
 
 ---
-<details>
-  <summary>
-      View run.bat Source Code
-  </summary>
 
-```bash
-@echo off
-for %%f in (*.jar) do set JAR=%%f
-REM Launching Java with Aikar's flags
-java ^
- -Xms1G ^
- -Xmx=30G ^
- -XX:+UseG1GC ^
- -XX:+UnlockExperimentalVMOptions ^
- -XX:G1NewSizePercent=30 ^
- -XX:G1MaxNewSizePercent=40 ^
- -XX:G1HeapRegionSize=8M ^
- -XX:G1ReservePercent=20 ^
- -XX:G1HeapWastePercent=5 ^
- -XX:G1MixedGCCountTarget=4 ^
- -XX:InitiatingHeapOccupancyPercent=15 ^
- -XX:G1MixedGCLiveThresholdPercent=90 ^
- -XX:G1RSetUpdatingPauseTimePercent=5 ^
- -XX:SurvivorRatio=32 ^
- -XX:+PerfDisableSharedMem ^
- -XX:MaxTenuringThreshold=1 ^
- -XX:+OptimizeStringConcat ^
- -XX:+UseCompressedOops ^
- -XX:+DisableExplicitGC ^
- -XX:+AlwaysPreTouch ^
- -XX:+ParallelRefProcEnabled ^
- -XX:+UseNUMA ^
- -XX:ParallelGCThreads=16 ^
- -XX:ConcGCThreads=16 ^
- -XX:MaxGCPauseMillis=50 ^
- -Dusing.aikars.flags=https://mcflags.emc.gs ^
- -Daikars.new.flags=true ^
- -jar "%JAR%" --nogui
-pause
-```
+## Commands:
 
-</details>
+- `/tpr [world]`: Random teleport in the Overworld, Nether, or End.
+- `/tpro`: Random teleport in the Overworld.
+- `/tprn`: Random teleport in the Nether.
+- `/tpre`: Random teleport in the End.
+- `/fogon`: Enable fog.
+- `/fogoff`: Disable fog.
+- `/eclogson`: Enable Event Control logging.
+- `/eclogsoff`: Disable Event Control logging.
+- `/patch`: Patch files to update materials and entities to the newest version.
+- `/miniregen add [interval in seconds] [alias] [distribution] [group(optional)]`: Schedule mini chunk regeneration for your current chunk.
+- `/miniregen remove [alias]`: Remove a mini chunk regeneration setting by alias.
+- `/miniregen remove group [groupName]`: Remove all mini regeneration settings in a given group.
 
-- `Xms1G` and `Xmx30G` should be updated to match your minimum (`Xms`) and max memory (`Xmx`) for your own server.
-- Update both `XX:ParallelGCThreads` and `XX:ConcGCThreads` to match your number of threads.
+## Permissions:
+
+(**Default all**)
+- `sg.tpr`: Allows teleportation to Overworld, Nether, and End using the `/tpr [world]` command.
+- `sg.tpr.overworld`: Grants permission to use the `/tpro` command for teleportation in the Overworld.
+- `sg.tpr.nether`: Grants permission to use the `/tprn` command for teleportation in the Nether.
+- `sg.tpr.end`: Enables usage of the `/tpre` command for teleportation in the End.
+
+(**Default OP**)
+- `sg.tpr.*`: Provides access to all teleportation commands.
+- `sg.fogon`: Allows enabling fog using the `/fogon` command.
+- `sg.fogoff`: Allows disabling fog with the `/fogoff` command.
+- `sg.eclogson`: Grants permission to enable Event Control logging using `/eclogson`.
+- `sg.eclogsoff`: Grants permission to disable Event Control logging using `/eclogsoff`.
+- `sg.patch`: Allows patching files to update materials and entities to another version.
+- `sg.regen`: Grants permission to regenerate all loaded chunks using the `/regen` command.
+- `sg.miniregen`: Grants permission to manage mini chunk regeneration using the `/miniregen` command.
+- `sg.*`: Provides access to all SkyGrid commands.
+
+## Installation Instructions
+For detailed installation instructions, [click here](https://www.davids-repo.dev/skygridx/installation/).
+
+## Configuration Files
+- [Plugin Settings](https://www.davids-repo.dev/skygridx/settings/)
+- [Ore Generator Settings](https://www.davids-repo.dev/skygridx/ores/)
+- [Mob Spawner Settings](https://www.davids-repo.dev/skygridx/spawner_settings/)
+- [Chest Settings](https://www.davids-repo.dev/skygridx/chest_settings/)
+- [SkyGrid World Block Selection Guide](https://www.davids-repo.dev/skygridx/block_selection/)
+
 ---
 
-## Paper Config
-> **Note:** On non-Paper servers, asynchronous functionality will **not** be used.  
-> However, if you **are** on a Paper-based server (including Pufferfish, Purpur, etc.), you can take extra steps to optimize pre-generation:
-
-In your `paper-global.yml` (or equivalent), consider increasing the parallelism for chunk generation and I/O:
-
-```yaml
-chunk-loading-advanced:
-  auto-config-send-distance: true
-  player-max-concurrent-chunk-generates: -1
-  player-max-concurrent-chunk-loads: -1
-
-chunk-loading-basic:
-  player-max-chunk-generate-rate: -1.0
-  player-max-chunk-load-rate: -1.0
-  player-max-chunk-send-rate: -1.0
-
-chunk-system:
-  gen-parallelism: default
-  io-threads: 16
-  worker-threads: 16
-
-region-file-cache-size: 16
-```
-
-- **Adjust** `io-threads` and `worker-threads` to match (or approach) your CPU’s thread count.
-- By default, Paper only uses half your threads for chunk tasks; raising these can help ensure asynchronous chunk generation runs at full speed.
-- Lower `region-file-cache-size` if running pregen on a fresh world with no players online.
-
-## Command Usage
-
-The primary commands are:
-
-```text
-/pregen <ParallelTasksMultiplier> <PrintUpdateDelay> <world> <Radius or "default">
-/pregenoff [world]
-```
-
-### Examples
-1. `/pregen 4 10s world default`
-   - Pre-generates the overworld (`world`)  
-   - Uses 4 parallel chunk-loading tasks (on Paper, these run asynchronously)  
-   - Prints progress logs every 10 seconds  
-   - `default` uses the world border as the radius
-
-2. `/pregen 6 5s world 1000b`
-   - Pre-generates the overworld  
-   - 6 parallel tasks  
-   - Prints logs every 5 seconds  
-   - **1000b** = 1000-block radius → Chunker calculates `(1000 / 16)²`
-
-3. `/pregen 2 2m world_nether 500c`
-   - Pre-generates the Nether  
-   - 2 parallel tasks  
-   - Logs every 2 minutes  
-   - **500c** = 500-chunk radius → `500 × 500 = 250,000 chunks`
-
-4. `/pregen 1 12h world_the_end 100r`
-   - Pre-generates The End  
-   - 1 parallel task  
-   - Logs every 12 hours  
-   - **100r** = 100-region radius → `(100 × 32)² = 10,240,000 chunks`
-
-### Command Parameters
-- **ParallelTasksMultiplier**: Determines how many chunk-loading tasks run in parallel. On Paper, these tasks are async. Recommended: Keep at or below your CPU’s thread count.
-- **PrintUpdateDelay**: How often progress logs appear. Add suffix `s`, `m`, or `h`.
-- **<world>**: The world to pre-generate. Tab-completion supported.
-- **<Radius>**: The target radius with a suffix:
-  - `b` – Blocks (e.g., `20000b`)
-  - `c` – Chunks (e.g., `500c`)
-  - `r` – Regions (e.g., `30r`)
-  - `default` – Uses world border
-- **/pregenoff [world]**:
-  - No args = stops all worlds  
-  - With world name = stops that world only
-
-## Permissions
-(Defaults to OP)
-
-- `chunker.pregen` – Allows use of `/pregen`
-- `chunker.pregenoff` – Allows use of `/pregenoff`
-- `chunker.*` – Grants all Chunker permissions
-
-## Configuration: settings.yml
-
-```yaml
-world:
-  auto_run: false
-  task_queue_timer: 60
-  parallel_tasks_multiplier: auto
-  print_update_delay: 5s
-  radius: default
-
-world_nether:
-  auto_run: false
-  task_queue_timer: 60
-  parallel_tasks_multiplier: auto
-  print_update_delay: 5s
-  radius: default
-
-world_the_end:
-  auto_run: false
-  task_queue_timer: 60
-  parallel_tasks_multiplier: auto
-  print_update_delay: 5s
-  radius: default
-```
-
-## Summary of Changes from Older Versions
-- **No more Virtual Threads** – Uses standard `CompletableFuture` concurrency on Paper.
-- **Improved Schedulers** – Custom async scheduler using `ForkJoinPool.commonPool()`.
-- **Minimal State Tracking** – Uses small progress files per world (e.g., `world_pregenerator.txt`).
-
-## Quick Tips
-1. Begin with `parallel_tasks_multiplier = 1`, then adjust.
-2. Async loading (Paper and Folia) = much better performance.
-3. Use `print_update_delay` of 10s+ to avoid excessive log output during long runs.
-
+## Additional Mechanisms:
+- [Biome-Specific Block Generation Guide](https://www.davids-repo.dev/skygridx/biome_specific/)
+---
