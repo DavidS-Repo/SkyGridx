@@ -10,8 +10,8 @@ Click here to join: **[Join Our Discord](https://discord.gg/nSWCXFp4UA)**
 - 1.21.6 (Folia)
 
 ## Download Links:
-- [**Spigot, Bukkit, Paper, Pufferfish, and Purpur**](https://www.davids-repo.dev/skygridx/assets/SkyGrid.jar)
-- [**Folia Optimized Specific Version**](https://www.davids-repo.dev/skygridx/assets/SkyGrid-Folia-Beta-1.21.4.jar)
+- [**Spigot, Bukkit, Paper, Pufferfish, and Purpur**](https://www.davids-repo.dev/skygridx/assets/SkyGrid-1.21.7.jar)
+- [**Folia Optimized Specific Version**](https://www.davids-repo.dev/skygridx/assets/SkyGrid-Folia-1.21.6.jar)
 
 ## Overview
 
