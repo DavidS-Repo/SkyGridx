@@ -38,7 +38,7 @@ public class PluginSettings {
 		config.addDefault("generator.default.minY", 0);
 		config.addDefault("generator.default.maxY", 128);
 
-		//TPR settings
+		// TPR settings
 		config.addDefault("tprCommand.onFirstJoin", false);
 		config.addDefault("tprCommand.b2bDelay", 10);
 		config.addDefault("tprCommand.tprDelay", 30);
@@ -49,27 +49,116 @@ public class PluginSettings {
 		config.addDefault("tprCommand.minX", -29999983);
 		config.addDefault("tprCommand.minZ", -29999983);
 		config.addDefault("tprCommand.destinationY", 64);
-		config.addDefault("tprCommand.DANGEROUSBLOCKS.Materials", List.of
-				("AIR", "ALLIUM", "AZURE_BLUET", "BEETROOTS", "BIG_DRIPLEAF", "BLUE_ORCHID", "BROWN_MUSHROOM", "CACTUS", "CAMPFIRE", "CARROTS", 
-						"CAVE_VINES_PLANT", "COBWEB", "CORNFLOWER", "CRIMSON_FUNGUS", "CRIMSON_ROOTS", "DANDELION", "DEAD_BUSH", "FERN", "FIRE", 
-						"GLOW_LICHEN", "GRASS", "HANGING_ROOTS", "KELP", "KELP_PLANT", "LARGE_FERN", "LAVA", "LAVA_CAULDRON", "LILAC", "LILY_OF_THE_VALLEY", 
-						"MAGMA_BLOCK", "MELON_STEM", "NETHER_SPROUTS", "NETHER_WART", "ORANGE_TULIP", "OXEYE_DAISY", "PEONY", "PINK_TULIP", "PITCHER_PLANT", 
-						"POINTED_DRIPSTONE", "POPPY", "POTATOES", "POWDER_SNOW", "PUMPKIN_STEM", "RED_MUSHROOM", "RED_TULIP", "ROSE_BUSH", "SCULK_VEIN", 
-						"SEAGRASS", "SMALL_DRIPLEAF", "SNOW", "SOUL_FIRE", "SPORE_BLOSSOM", "SUGAR_CANE", "SUNFLOWER", "SWEET_BERRY_BUSH", "TALL_GRASS", 
-						"TALL_SEAGRASS", "TORCHFLOWER", "TORCHFLOWER_CROP", "TWISTING_VINES", "VINE", "VOID_AIR", "WARPED_FUNGUS", "WARPED_ROOTS", "WATER", 
-						"WEEPING_VINES", "WHEAT", "WHITE_TULIP", "WITHER_ROSE"));
+		config.addDefault("tprCommand.DANGEROUSBLOCKS.Materials", List.of(
+				"AIR",
+				"ALLIUM",
+				"AZURE_BLUET",
+				"BEETROOTS",
+				"BIG_DRIPLEAF",
+				"BLUE_ORCHID",
+				"BROWN_MUSHROOM",
+				"BUSH",
+				"CACTUS",
+				"CACTUS_FLOWER",
+				"CAMPFIRE",
+				"CARROTS",
+				"CAVE_VINES_PLANT",
+				"COBWEB",
+				"CORNFLOWER",
+				"CRIMSON_FUNGUS",
+				"CRIMSON_ROOTS",
+				"DANDELION",
+				"DEAD_BUSH",
+				"FERN",
+				"FIREFLY_BUSH",
+				"FIRE",
+				"GLOW_LICHEN",
+				"HANGING_ROOTS",
+				"KELP",
+				"KELP_PLANT",
+				"LARGE_FERN",
+				"LAVA",
+				"LAVA_CAULDRON",
+				"LEAF_LITTER",
+				"LILAC",
+				"LILY_OF_THE_VALLEY",
+				"MAGMA_BLOCK",
+				"MELON_STEM",
+				"NETHER_SPROUTS",
+				"NETHER_WART",
+				"ORANGE_TULIP",
+				"OXEYE_DAISY",
+				"PALE_HANGING_MOSS",
+				"PEONY",
+				"PINK_TULIP",
+				"PITCHER_PLANT",
+				"POINTED_DRIPSTONE",
+				"POPPY",
+				"POTATOES",
+				"POWDER_SNOW",
+				"PUMPKIN_STEM",
+				"RED_MUSHROOM",
+				"RED_TULIP",
+				"ROSE_BUSH",
+				"SCULK_VEIN",
+				"SEAGRASS",
+				"SHORT_DRY_GRASS",
+				"SHORT_GRASS",
+				"SMALL_DRIPLEAF",
+				"SNOW",
+				"SOUL_FIRE",
+				"SPORE_BLOSSOM",
+				"SUGAR_CANE",
+				"SUNFLOWER",
+				"SWEET_BERRY_BUSH",
+				"TALL_GRASS",
+				"TALL_SEAGRASS",
+				"TORCHFLOWER",
+				"TORCHFLOWER_CROP",
+				"TWISTING_VINES",
+				"VINE",
+				"VOID_AIR",
+				"WARPED_FUNGUS",
+				"WARPED_ROOTS",
+				"WATER",
+				"WEEPING_VINES",
+				"WHEAT",
+				"WHITE_TULIP",
+				"WITHER_ROSE",
+				"WILDFLOWERS"
+				));
 
-		//Fog setting
+		// Fog setting
 		config.addDefault("fog.autoEnable", false);
 
-		//Event Control Settings
-		config.addDefault("EventControl.GRAVITY_AFFECTED_BLOCKS.Materials", List.of
-				("SAND", "RED_SAND", "GRAVEL", "KELP_PLANT", "ANVIL", "SUSPICIOUS_SAND", "SUSPICIOUS_GRAVEL", "DRAGON_EGG", 
-						"BLACK_CONCRETE_POWDER", "BLUE_CONCRETE_POWDER", "BROWN_CONCRETE_POWDER", "CYAN_CONCRETE_POWDER", "GRAY_CONCRETE_POWDER", 
-						"GREEN_CONCRETE_POWDER", "LIGHT_BLUE_CONCRETE_POWDER", "LIGHT_GRAY_CONCRETE_POWDER", "LIME_CONCRETE_POWDER", "MAGENTA_CONCRETE_POWDER", 
-						"ORANGE_CONCRETE_POWDER", "PINK_CONCRETE_POWDER", "PURPLE_CONCRETE_POWDER", "RED_CONCRETE_POWDER", "WHITE_CONCRETE_POWDER", "YELLOW_CONCRETE_POWDER"));
+		// Event Control Settings
+		config.addDefault("EventControl.GRAVITY_AFFECTED_BLOCKS.Materials", List.of(
+				"SAND",
+				"RED_SAND",
+				"GRAVEL",
+				"KELP_PLANT",
+				"ANVIL",
+				"SUSPICIOUS_SAND",
+				"SUSPICIOUS_GRAVEL",
+				"DRAGON_EGG",
+				"BLACK_CONCRETE_POWDER",
+				"BLUE_CONCRETE_POWDER",
+				"BROWN_CONCRETE_POWDER",
+				"CYAN_CONCRETE_POWDER",
+				"GRAY_CONCRETE_POWDER",
+				"GREEN_CONCRETE_POWDER",
+				"LIGHT_BLUE_CONCRETE_POWDER",
+				"LIGHT_GRAY_CONCRETE_POWDER",
+				"LIME_CONCRETE_POWDER",
+				"MAGENTA_CONCRETE_POWDER",
+				"ORANGE_CONCRETE_POWDER",
+				"PINK_CONCRETE_POWDER",
+				"PURPLE_CONCRETE_POWDER",
+				"RED_CONCRETE_POWDER",
+				"WHITE_CONCRETE_POWDER",
+				"YELLOW_CONCRETE_POWDER"
+				));
 
-		//Fog setting
 		config.addDefault("EventControl.BlockIgniteEvent", true);
 		config.addDefault("EventControl.BlockFadeEvent", true);
 		config.addDefault("EventControl.BlockFromToEvent", true);
@@ -109,7 +198,7 @@ public class PluginSettings {
 				.map(Material::valueOf)
 				.collect(Collectors.toCollection(() -> EnumSet.noneOf(Material.class)));
 	}
-	
+
 	public final static int THREADS() {
 		return Runtime.getRuntime().availableProcessors();
 	}
@@ -154,8 +243,12 @@ public class PluginSettings {
 		return config.getInt("generator.default.minY");
 	}
 
+	public static boolean isOnFirstJoinEnabled() {
+		return config.getBoolean("tprCommand.onFirstJoin");
+	}
+
 	public static boolean isOnFistJoinEnabled() {
-		return config.getBoolean("tprCommand.onFistJoin");
+		return isOnFirstJoinEnabled();
 	}
 
 	public static int getb2bDelay() {
@@ -205,31 +298,31 @@ public class PluginSettings {
 	public static boolean isBlockIgniteEvent() {
 		return config.getBoolean("EventControl.BlockIgniteEvent");
 	}
-	
+
 	public static boolean isBlockFadeEvent() {
 		return config.getBoolean("EventControl.BlockFadeEvent");
 	}
-	
+
 	public static boolean isBlockFromToEvent() {
 		return config.getBoolean("EventControl.BlockFromToEvent");
 	}
-	
+
 	public static boolean isStructureGrowEvent() {
 		return config.getBoolean("EventControl.StructureGrowEvent");
 	}
-	
+
 	public static boolean isBlockSpreadEvent() {
 		return config.getBoolean("EventControl.BlockSpreadEvent");
 	}
-	
+
 	public static boolean isBlockGrowEvent() {
 		return config.getBoolean("EventControl.BlockGrowEvent");
 	}
-	
+
 	public static boolean isBlockFormEvent() {
 		return config.getBoolean("EventControl.BlockFormEvent");
 	}
-	
+
 	public static boolean isEntityChangeBlockEvent() {
 		return config.getBoolean("EventControl.EntityChangeBlockEvent");
 	}
