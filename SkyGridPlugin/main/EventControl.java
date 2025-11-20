@@ -167,16 +167,6 @@ public class EventControl implements Listener {
 				if (loggingEnabled) {
 					Cc.logSB("Cancelled melt event at: " + block.getLocation());
 				}
-			} else if ((originalType == Material.FIRE || originalType == Material.SOUL_FIRE) && newType == Material.AIR) {
-				for (BlockFace face : EnumSet.of(BlockFace.DOWN, BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST, BlockFace.UP)) {
-					if (!IS_FLOATING.contains(block.getRelative(face).getType())) {
-						return;
-					}
-				}
-				event.setCancelled(true);
-				if (loggingEnabled) {
-					Cc.logSB("Cancelled fire extinguish event at: " + block.getLocation());
-				}
 			}
 		}
 	}
@@ -265,7 +255,6 @@ public class EventControl implements Listener {
 		}
 	}
 
-	// handle player portals into nether and into end
 	@EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
 	public void onPlayerPortal(PlayerPortalEvent event) {
 		Player player = event.getPlayer();
@@ -280,21 +269,18 @@ public class EventControl implements Listener {
 		TeleportCause cause = event.getCause();
 		Location dest = null;
 
-		// to custom nether
 		if (fromWorld.getName().equals(overworldName) && cause == TeleportCause.NETHER_PORTAL) {
 			dest = scaleLocation(from, 1.0 / 8, netherName);
 			event.setCanCreatePortal(true);
 			event.setSearchRadius(128);
 			event.setCreationRadius(16);
 		}
-		// back to custom overworld from nether
 		else if (fromWorld.getName().equals(netherName) && cause == TeleportCause.NETHER_PORTAL) {
 			dest = scaleLocation(from, 8, overworldName);
 			event.setCanCreatePortal(true);
 			event.setSearchRadius(128);
 			event.setCreationRadius(16);
 		}
-		// into custom end
 		else if (fromWorld.getName().equals(overworldName) && cause == TeleportCause.END_PORTAL) {
 			World end = Bukkit.getWorld(endName);
 			if (end != null) {
@@ -312,7 +298,6 @@ public class EventControl implements Listener {
 		}
 	}
 
-	// handle mobs in nether portals only
 	@EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
 	public void onEntityPortal(EntityPortalEvent event) {
 		Location from = event.getFrom();
@@ -348,10 +333,12 @@ public class EventControl implements Listener {
 		String customEnd = base + "_the_end";
 		String customOver = base;
 
-		// Only act if player is leaving the custom end
 		if (!from.getName().equals(customEnd)) return;
 
-		// If player is NOT entering the custom overworld, teleport them there
+		if (tpr.isRecentCommandTeleport(player)) {
+			return;
+		}
+
 		if (!to.getName().equals(customOver)) {
 			new BukkitRunnable() {
 				@Override
@@ -363,7 +350,6 @@ public class EventControl implements Listener {
 					Location bed = bedManager.getCustomBed(player.getUniqueId());
 
 					if (bed != null && bed.getWorld().getName().equals(customOver)) {
-						// Teleport near bed
 						tpr.findNonAirBlock(
 								player,
 								over,
@@ -373,7 +359,6 @@ public class EventControl implements Listener {
 								true
 								);
 					} else {
-						// Teleport to spawn
 						Location spawn = over.getSpawnLocation();
 						tpr.findNonAirBlock(
 								player,
@@ -389,7 +374,6 @@ public class EventControl implements Listener {
 		}
 	}
 
-	// scale coords for nether portals
 	private Location scaleLocation(Location from, double scale, String targetName) {
 		World w = Bukkit.getWorld(targetName);
 		if (w == null) return from;
@@ -401,12 +385,11 @@ public class EventControl implements Listener {
 				);
 	}
 
-	// build standard 5×5 obsidian platform at vanilla end spawn
 	private void createEndPlatform(World world) {
 		int centerX = 100;
 		int centerZ = 0;
 		int platformY = 64;
-		int r = 2;  // radius so total size is (2*2)+1 = 5
+		int r = 2;
 		for (int dx = -r; dx <= r; dx++) {
 			for (int dz = -r; dz <= r; dz++) {
 				world.getBlockAt(centerX + dx, platformY, centerZ + dz)
