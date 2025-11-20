@@ -85,6 +85,8 @@ default_distribution:
   CALCITE: 2
   CARROTS: 1
   CAVE_VINES: 0.5
+  COPPER_CHEST: 1.5
+  COPPER_LANTERN: 0.3
   CHERRY_LEAVES: 3
   CHEST: 2.5
   CHISELED_COPPER: 0.1
@@ -223,6 +225,7 @@ default_distribution:
   TRIAL_SPAWNER: 0.001
   TUBE_CORAL_BLOCK: 0.5
   TUFF: 20
+  OAK_SHELF: 0.3
   VAULT: 0.01
   WATER: 10
   WHEAT: 1
