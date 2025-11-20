@@ -1,5 +1,4 @@
 package main;
-
 import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -8,16 +7,11 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.generator.ChunkGenerator;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
-
 import net.kyori.adventure.text.Component;
-
 import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
-
-
 import java.util.logging.Filter;
 
 public class SkyGridPlugin extends JavaPlugin implements Listener {
-
 	private boolean firstBoot = false;
 	private boolean firstPlayerConnected = false;
 	private boolean chunksLoading = false;
@@ -26,42 +20,38 @@ public class SkyGridPlugin extends JavaPlugin implements Listener {
 	private Generator generator;
 	private MiniRegenManager miniRegenManager;
 	private PortalLocationManager portalManager;
+	private ChestRegionData chestRegionData;
 
 	@Override
 	public void onEnable() {
 		BukkitYMLPatcher.applyGeneratorSettings(this);
 
+		// Initialize ChestRegionData early
+		chestRegionData = ChestRegionData.getInstance(this);
+
 		Bukkit.getPluginManager().registerEvents(new ChestOpenListener(this), this);
 		getServer().getPluginManager().registerEvents(new DragonSpawnListener(this), this);
 		Bukkit.getPluginManager().registerEvents(this, this);
-
 		// Create an instance of ResourcePackManager
 		ResourcePackManager manager = new ResourcePackManager();
-
 		// Register the instance as a listener
 		getServer().getPluginManager().registerEvents(manager, this);
-
 		// Ensure plugin folders exist
 		bootChecker = new FirstBootChecker(this);
 		bootChecker.createFoldersIfNotExist("SkygridBlocks");
 		bootChecker.createFoldersIfNotExist("OreGenBlock");
 		firstBoot = bootChecker.checkForFirstBoot();
-
 		// Initialize PluginSettings
 		settings = new PluginSettings(this);
-
 		// Create an instance of Fog and pass the ResourcePackManager instance and settings
 		Fog fogCommandExecutor = new Fog(manager, settings);
-
 		// Create a custom filter to suppress specific warnings
 		// Get the logger for your plugin and set the custom filter
 		Filter logFilter = new LogFilter();
 		getLogger().setFilter(logFilter);
-
 		// Set the command executor for your fog commands
 		getCommand("fogon").setExecutor(fogCommandExecutor);
 		getCommand("fogoff").setExecutor(fogCommandExecutor);
-
 		// Register the "/tpr" command
 		TPRCommand tprCommand = new TPRCommand(this);
 		getCommand("tpr").setTabCompleter(new TPRAutoCompleter());
@@ -69,37 +59,29 @@ public class SkyGridPlugin extends JavaPlugin implements Listener {
 		getCommand("tpro").setExecutor(tprCommand);
 		getCommand("tprn").setExecutor(tprCommand);
 		getCommand("tpre").setExecutor(tprCommand);
-
 		// Register GrowthControl as a listener
 		EventControl eventControl = new EventControl(this, tprCommand);
 		eventControl.initialize();
-
 		CustomBedManager bedManager = new CustomBedManager(this);
 		getServer().getPluginManager().registerEvents(new BedIsolation(bedManager, tprCommand, this), this);
-		
+
 		CustomAnchorManager anchorManager = new CustomAnchorManager(this);
 		getServer().getPluginManager().registerEvents(new AnchorIsolation(anchorManager, tprCommand, this),this);
-
 		// Register PlayerJoin as a listener
 		getServer().getPluginManager().registerEvents(new PlayerJoin(settings, tprCommand), this);
-
 		// Set the executor for GrowthControlOn and GrowthControlOff commands
 		EventControlCommands commands = new EventControlCommands(this, eventControl);
 		getCommand("eclogson").setExecutor(commands);
 		getCommand("eclogsoff").setExecutor(commands);
-
 		// Register PatchCommand as command executor for /patch
 		getCommand("patch").setExecutor(new PatchCommand(this));
-
 		// generation logic (only trigger ChunkLoader on first boot)
 		handleGeneration();
-
 		// Register miniregen as command executor and tab completer for /miniregen
 		miniRegenManager = new MiniRegenManager(this, generator);
 		miniRegenManager.initialize();
 		getCommand("miniregen").setExecutor(new MiniRegenCommand(miniRegenManager));
 		getCommand("miniregen").setTabCompleter(new MiniRegenTabCompleter(miniRegenManager));
-
 		// Register portal handling and pass events
 		portalManager = new PortalLocationManager(this);
 		portalManager.initialize();
@@ -110,6 +92,10 @@ public class SkyGridPlugin extends JavaPlugin implements Listener {
 	public void onDisable() {
 		if (miniRegenManager != null) {
 			miniRegenManager.shutdown();
+		}
+		// Properly shutdown chest region data system
+		if (chestRegionData != null) {
+			chestRegionData.shutdown();
 		}
 	}
 
@@ -133,10 +119,8 @@ public class SkyGridPlugin extends JavaPlugin implements Listener {
 		if (generator == null) {
 			generator = new Generator(this);
 			generator.initialize();
-
 			// Register the RegenCommand with the Generator instance
 			getCommand("regen").setExecutor(new RegenerateCommand(this, generator));
-
 			if (firstBoot) {
 				new ChunkLoader(this).loadChunksAndRun(() -> {
 				});
@@ -149,12 +133,12 @@ public class SkyGridPlugin extends JavaPlugin implements Listener {
 	}
 
 	@EventHandler(priority = EventPriority.HIGHEST)
-    public void onAsyncPlayerPreLogin(AsyncPlayerPreLoginEvent event) {
-        if (chunksLoading) {
-            event.setLoginResult(AsyncPlayerPreLoginEvent.Result.KICK_OTHER);
-            event.kickMessage(Component.text("Chunks are still loading, please wait a moment and try again."));
-        }
-    }
+	public void onAsyncPlayerPreLogin(AsyncPlayerPreLoginEvent event) {
+		if (chunksLoading) {
+			event.setLoginResult(AsyncPlayerPreLoginEvent.Result.KICK_OTHER);
+			event.kickMessage(Component.text("Chunks are still loading, please wait a moment and try again."));
+		}
+	}
 
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onPlayerJoin(PlayerJoinEvent event) {
