@@ -2,7 +2,10 @@ package main;
 
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import org.bukkit.*;
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -29,14 +32,14 @@ public class TPRCommand implements CommandExecutor {
 
 	static {
 		DANGEROUSBLOCKS = PluginSettings.getDangerousBlocks();
-		Lx = PluginSettings.getMaxX(); 
-		Sx = PluginSettings.getMinX(); 
-		Lz = PluginSettings.getMaxZ(); 
-		Sz = PluginSettings.getMinZ(); 
+		Lx = PluginSettings.getMaxX();
+		Sx = PluginSettings.getMinX();
+		Lz = PluginSettings.getMaxZ();
+		Sz = PluginSettings.getMinZ();
 		Y = PluginSettings.getDestinationY();
-		b2b = PluginSettings.getb2bDelay(); 
-		tprN = PluginSettings.getTprNetherDelay(); 
-		tprE = PluginSettings.getTprEndDelay(); 
+		b2b = PluginSettings.getb2bDelay();
+		tprN = PluginSettings.getTprNetherDelay();
+		tprE = PluginSettings.getTprEndDelay();
 		tprO = PluginSettings.getTprDelay();
 	}
 
@@ -122,7 +125,8 @@ public class TPRCommand implements CommandExecutor {
 		if ((currentTime - lastCommandTime) < b2bDelay) {
 			return false;
 		}
-		Object2LongOpenHashMap<World.Environment> environmentTimes = lastTeleportTimes.getOrDefault(playerId, new Object2LongOpenHashMap<>());
+		Object2LongOpenHashMap<World.Environment> environmentTimes =
+				lastTeleportTimes.getOrDefault(playerId, new Object2LongOpenHashMap<>());
 		long lastTeleportTime = environmentTimes.getOrDefault(world.getEnvironment(), 0L);
 		int delay = getTeleportDelay(world);
 		return (currentTime - lastTeleportTime) >= delay * 1000L;
@@ -150,14 +154,32 @@ public class TPRCommand implements CommandExecutor {
 		Object2LongOpenHashMap<World.Environment> environmentTimes = lastTeleportTimes.get(playerId);
 		long lastTeleportTime = environmentTimes.getOrDefault(world.getEnvironment(), 0L);
 		int delay = getTeleportDelay(world);
-		return (lastTeleportTime + (delay * 1000L) - System.currentTimeMillis()) / 1000L;
+		long remaining = lastTeleportTime + (delay * 1000L) - System.currentTimeMillis();
+		if (remaining <= 0) {
+			return 0;
+		}
+		return remaining / 1000L;
 	}
 
 	private long getRemainingB2BCooldown(Player player) {
 		UUID playerId = player.getUniqueId();
 		long lastCommandTime = lastCommandTimes.getOrDefault(playerId, 0L);
 		long b2bDelay = b2b * 1000L;
-		return (lastCommandTime + b2bDelay - System.currentTimeMillis()) / 1000L;
+		long remaining = lastCommandTime + b2bDelay - System.currentTimeMillis();
+		if (remaining <= 0) {
+			return 0;
+		}
+		return remaining / 1000L;
+	}
+
+	public boolean isRecentCommandTeleport(Player player) {
+		UUID playerId = player.getUniqueId();
+		long lastTime = lastCommandTimes.getOrDefault(playerId, 0L);
+		if (lastTime == 0L) {
+			return false;
+		}
+		long diff = System.currentTimeMillis() - lastTime;
+		return diff >= 0 && diff <= 2000L;
 	}
 
 	public void findNonAirBlock(Player player, World world, int destinationX, int destinationY, int destinationZ, boolean isRegularTeleport) {
@@ -180,7 +202,8 @@ public class TPRCommand implements CommandExecutor {
 							if (!block.getType().isAir() && !isDangerousBlock(block.getType())) {
 								if (isRegularTeleport) {
 									UUID playerId = player.getUniqueId();
-									Object2LongOpenHashMap<World.Environment> environmentTimes = lastTeleportTimes.getOrDefault(playerId, new Object2LongOpenHashMap<>());
+									Object2LongOpenHashMap<World.Environment> environmentTimes =
+											lastTeleportTimes.getOrDefault(playerId, new Object2LongOpenHashMap<>());
 									environmentTimes.put(world.getEnvironment(), System.currentTimeMillis());
 									lastTeleportTimes.put(playerId, environmentTimes);
 									lastCommandTimes.put(playerId, System.currentTimeMillis());
