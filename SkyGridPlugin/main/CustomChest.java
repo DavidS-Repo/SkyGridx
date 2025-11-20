@@ -11,8 +11,8 @@ import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.EnchantmentStorageMeta;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.loot.LootTable;
 import org.bukkit.loot.LootTables;
 import org.bukkit.persistence.PersistentDataType;
@@ -32,24 +32,16 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
- * Primary chest-generation helper.
- * Handles loading chest settings, tagging new chests,
- * and filling them when players open them.
+ * Handles custom chest configs and filling chest contents.
  */
 public class CustomChest {
-
 	private static CustomChest instance;
 	private static JavaPlugin plugin;
-
-	/** max items allowed per slot, from config */
 	private static int maxItemsPerSlot;
-
-	/** marks chest that needs custom population */
-	public static NamespacedKey UNPOPULATED_KEY;
-	/** stores chosen custom chest name for mixed pools */
-	private static NamespacedKey CUSTOM_REF_KEY;
-
 	private static final Material[] MATERIALS = Material.values();
+
+	public static NamespacedKey UNPOPULATED_KEY;
+	private static NamespacedKey CUSTOM_REF_KEY;
 
 	private final Int2ObjectMap<ChestConfig> chestConfigsByHash = new Int2ObjectOpenHashMap<>();
 	private final Map<String, ChestConfig> chestConfigsByName = new HashMap<>();
@@ -58,14 +50,12 @@ public class CustomChest {
 	private CustomChest(JavaPlugin plugin) {
 		CustomChest.plugin = plugin;
 		UNPOPULATED_KEY = new NamespacedKey(plugin, "custom_loot_unpopulated");
-		CUSTOM_REF_KEY   = new NamespacedKey(plugin, "custom_loot_pointer");
+		CUSTOM_REF_KEY = new NamespacedKey(plugin, "custom_loot_pointer");
 		loadChestSettingsAsync();
 	}
 
 	/**
-	 * Singleton accessor.
-	 * @param plugin your main plugin instance
-	 * @return the single CustomChest instance
+	 * Returns the singleton instance.
 	 */
 	public static CustomChest getInstance(JavaPlugin plugin) {
 		if (instance == null) {
@@ -75,72 +65,100 @@ public class CustomChest {
 	}
 
 	/**
-	 * Called during world gen to tag new chests for later fill.
-	 * @param block the block placed by world gen
+	 * Registers a chest from a block and writes it to the DB in a batch.
 	 */
 	public void loadChest(Block block) {
+		List<ChestRegionData.ChestRecord> records = new ArrayList<>(1);
+		loadChest(block, records);
+		if (!records.isEmpty()) {
+			ChestRegionData.getInstance(plugin).registerChests(records);
+		}
+	}
+
+	/**
+	 * Registers a chest from a block and adds it to the given record list.
+	 */
+	public void loadChest(Block block, List<ChestRegionData.ChestRecord> records) {
 		if (!(block.getState() instanceof Chest chest)) return;
 
-		String biomeKey = block.getBiome().toString().toUpperCase();
-		IntSet possible = biomeToChestHashes.getOrDefault(biomeKey, new IntOpenHashSet());
-		if (possible.isEmpty()) return;
+		String biomeRaw = block.getBiome().getKey().getKey().toUpperCase();
+
+		IntSet possible = biomeToChestHashes.getOrDefault(biomeRaw, new IntOpenHashSet());
+		if (possible.isEmpty()) {
+			plugin.getLogger().warning("No chest config for biome: " + biomeRaw + " at " + chest.getLocation());
+			return;
+		}
 
 		ChestConfig cfg = chestConfigsByHash.get(possible.iterator().nextInt());
-		if (cfg == null) return;
+		if (cfg == null) {
+			plugin.getLogger().warning("Chest config is null for biome: " + biomeRaw);
+			return;
+		}
 
-		// mixed pools path
 		if (cfg.hasLootPool()) {
 			PoolEntry pick = cfg.selectRandomLootPool();
 			if (pick == null) return;
 
 			if (pick.vanillaTable != null) {
-				chest.setLootTable(pick.vanillaTable);
-				chest.update();
+				records.add(new ChestRegionData.ChestRecord(
+						chest.getLocation(),
+						ChestRegionData.ChestType.VANILLA,
+						pick.vanillaTable.getKey().toString()
+						));
 				return;
 			}
 
 			if (pick.customRefName != null) {
 				ChestConfig ref = chestConfigsByName.get(pick.customRefName);
 				if (ref != null && ref.itemsData != null) {
-					chest.getPersistentDataContainer().set(UNPOPULATED_KEY, PersistentDataType.BYTE, (byte) 1);
-					chest.getPersistentDataContainer().set(CUSTOM_REF_KEY, PersistentDataType.STRING, pick.customRefName);
-					chest.getInventory().clear();
-					chest.update();
+					records.add(new ChestRegionData.ChestRecord(
+							chest.getLocation(),
+							ChestRegionData.ChestType.CUSTOM,
+							pick.customRefName
+							));
 				}
 			}
 			return;
 		}
 
-		// direct items path
 		if (cfg.itemsData != null) {
-			chest.getPersistentDataContainer().set(UNPOPULATED_KEY, PersistentDataType.BYTE, (byte) 1);
-			chest.getInventory().clear();
-			chest.update();
+			records.add(new ChestRegionData.ChestRecord(
+					chest.getLocation(),
+					ChestRegionData.ChestType.CUSTOM,
+					null
+					));
 		}
 	}
 
 	/**
-	 * Fills a tagged chest when a player opens it.
-	 * Runs async rolls then schedules a sync placement.
-	 * @param chest the chest being opened
+	 * Fills a chest on open based on stored info or biome.
 	 */
-	public void populateChestOnOpen(Chest chest) {
-		String refName = chest.getPersistentDataContainer().get(CUSTOM_REF_KEY, PersistentDataType.STRING);
-		ChestConfig cfg;
-		if (refName != null) {
-			cfg = chestConfigsByName.get(refName);
-		} else {
-			String biomeKey = chest.getBlock().getBiome().toString().toUpperCase();
+	public void populateChestOnOpen(Chest chest, ChestRegionData.ChestInfo info) {
+		ChestConfig cfg = null;
+
+		if (info != null && info.lootTableKey != null) {
+			cfg = chestConfigsByName.get(info.lootTableKey);
+		}
+
+		if (cfg == null) {
+			String biomeKey = chest.getBlock().getBiome().getKey().getKey().toUpperCase();
 			IntSet set = biomeToChestHashes.getOrDefault(biomeKey, new IntOpenHashSet());
-			if (set.isEmpty()) return;
+			if (set.isEmpty()) {
+				plugin.getLogger().warning("No chest config for biome: " + biomeKey + " when populating chest");
+				return;
+			}
 			cfg = chestConfigsByHash.get(set.iterator().nextInt());
 		}
-		if (cfg == null || cfg.itemsData == null) return;
+
+		if (cfg == null || cfg.itemsData == null) {
+			return;
+		}
 
 		calculateItemsToPlace(cfg.itemsData, chest.getInventory())
 		.thenAccept(stacks ->
 		new BukkitRunnable() {
-			@Override public void run() {
+			@Override
+			public void run() {
 				placeItemsInChest(chest.getInventory(), stacks);
 			}
 		}.runTask(plugin)
@@ -148,63 +166,83 @@ public class CustomChest {
 	}
 
 	/**
-	 * Rolls items based on chance and weight.
-	 * @param data parsed items+chance config
-	 * @param inv chest inventory (size defines slots)
-	 * @return future with an array of ItemStacks to place
+	 * Fills a legacy NBT based chest on open.
 	 */
+	public void populateLegacyChestOnOpen(Chest chest) {
+		String refName = chest.getPersistentDataContainer().get(CUSTOM_REF_KEY, PersistentDataType.STRING);
+		ChestConfig cfg;
+		if (refName != null) {
+			cfg = chestConfigsByName.get(refName);
+		} else {
+			String biomeKey = chest.getBlock().getBiome().getKey().getKey().toUpperCase();
+			IntSet set = biomeToChestHashes.getOrDefault(biomeKey, new IntOpenHashSet());
+			if (set.isEmpty()) return;
+			cfg = chestConfigsByHash.get(set.iterator().nextInt());
+		}
+
+		if (cfg == null || cfg.itemsData == null) return;
+
+		calculateItemsToPlace(cfg.itemsData, chest.getInventory())
+		.thenAccept(stacks ->
+		new BukkitRunnable() {
+			@Override
+			public void run() {
+				placeItemsInChest(chest.getInventory(), stacks);
+			}
+		}.runTask(plugin)
+				);
+	}
+
 	private CompletableFuture<ItemStack[]> calculateItemsToPlace(ItemsData data, Inventory inv) {
 		return CompletableFuture.supplyAsync(() -> {
 			ThreadLocalRandom rng = ThreadLocalRandom.current();
 			ItemStack[] out = new ItemStack[inv.getSize()];
+
 			int[] counts = getCurrentItemCounts(inv);
 			List<Integer> free = getEmptySlotList(inv);
 
-			// one-per-chest chance items
 			for (ItemSettings chance : data.chanceItems) {
 				if (rng.nextDouble(100) >= chance.chancePerChestPercent) continue;
 				if (free.isEmpty()) break;
+
 				int slot = free.remove(rng.nextInt(free.size()));
 				int left = chance.maxAmount - counts[chance.materialOrdinal];
 				if (left <= 0) continue;
+
 				int amt = rng.nextInt(chance.minAmount, Math.min(left, maxItemsPerSlot) + 1);
 				if (amt <= 0) continue;
+
 				out[slot] = buildStack(chance, amt, rng);
 				counts[chance.materialOrdinal] += amt;
 			}
 
-			// weighted per-slot rolls
 			int[] slots = free.stream().mapToInt(i -> i).toArray();
 			for (int s : slots) {
 				ItemSettings picked = data.getRandomWeightedItem();
 				if (picked == null) continue;
+
 				int left = picked.maxAmount - counts[picked.materialOrdinal];
 				if (left <= 0) continue;
+
 				int cap = Math.min(left, maxItemsPerSlot);
 				if (cap < picked.minAmount) continue;
+
 				int amt = rng.nextInt(picked.minAmount, cap + 1);
 				if (amt <= 0) continue;
+
 				out[s] = buildStack(picked, amt, rng);
 				counts[picked.materialOrdinal] += amt;
 			}
+
 			return out;
 		});
 	}
 
-	/**
-	 * Builds an ItemStack from settings.
-	 * Uses EnchantmentStorageMeta for books, ItemMeta for gear.
-	 * @param settings the item config
-	 * @param amount how many in stack
-	 * @param rng random for weight checks
-	 * @return ready ItemStack
-	 */
 	@SuppressWarnings("deprecation")
 	private ItemStack buildStack(ItemSettings settings, int amount, ThreadLocalRandom rng) {
 		Material mat = MATERIALS[settings.materialOrdinal];
 		ItemStack stack = new ItemStack(mat, amount);
 
-		// custom display name
 		if (settings.customName != null && !settings.customName.isEmpty()) {
 			ItemMeta nm = stack.getItemMeta();
 			nm.setDisplayName(settings.customName);
@@ -233,6 +271,7 @@ public class CustomChest {
 						? new ArrayList<>(meta.getLore())
 								: new ArrayList<>();
 				String lt = "standard".equalsIgnoreCase(settings.levelType) ? "Standard" : "Roman";
+
 				for (EnchantmentSetting es : settings.enchantments) {
 					if (rng.nextDouble(100) < es.weight) {
 						int lvl = rng.nextInt(es.minLevel, es.maxLevel + 1);
@@ -255,7 +294,6 @@ public class CustomChest {
 			}
 		}
 
-		// If it's a tipped arrow, randomize the potion effect and duration
 		if (mat == Material.TIPPED_ARROW) {
 			TippedArrowRandomizer randomizer = new TippedArrowRandomizer();
 			randomizer.randomizeTippedArrow(stack);
@@ -264,7 +302,6 @@ public class CustomChest {
 		return stack;
 	}
 
-	/** gather empty slot indexes */
 	private List<Integer> getEmptySlotList(Inventory inv) {
 		List<Integer> list = new ArrayList<>();
 		ItemStack[] cont = inv.getContents();
@@ -274,7 +311,6 @@ public class CustomChest {
 		return list;
 	}
 
-	/** count items by material ordinal */
 	private int[] getCurrentItemCounts(Inventory inv) {
 		int[] arr = new int[MATERIALS.length];
 		for (ItemStack it : inv.getContents()) {
@@ -283,7 +319,6 @@ public class CustomChest {
 		return arr;
 	}
 
-	/** place the rolled stacks into chest inventory */
 	private void placeItemsInChest(Inventory inv, ItemStack[] items) {
 		ItemStack[] base = inv.getContents();
 		for (int i = 0; i < items.length; i++) {
@@ -292,7 +327,6 @@ public class CustomChest {
 		inv.setContents(base);
 	}
 
-	/** async load of ChestSettings.yml */
 	private void loadChestSettingsAsync() {
 		CompletableFuture.runAsync(() -> {
 			File f = new File(plugin.getDataFolder(), "SkygridBlocks/ChestSettings.yml");
@@ -306,10 +340,12 @@ public class CustomChest {
 			chestConfigsByHash.clear();
 			chestConfigsByName.clear();
 			biomeToChestHashes.clear();
+
 			if (!cfg.isConfigurationSection("ChestSettings")) {
 				plugin.getLogger().severe("Missing ChestSettings section");
 				return;
 			}
+
 			ConfigurationSection root = cfg.getConfigurationSection("ChestSettings");
 			for (String key : root.getKeys(false)) {
 				ChestConfig c = parseSingleChest(key, root.getConfigurationSection(key));
@@ -324,22 +360,17 @@ public class CustomChest {
 		});
 	}
 
-	/**
-	 * Parses one chest config node.
-	 * @param key the chest name
-	 * @param sec its configuration section
-	 * @return parsed ChestConfig
-	 */
 	private ChestConfig parseSingleChest(String key, ConfigurationSection sec) {
 		ChestConfig cfg = new ChestConfig();
 
-		// handle vanilla loot tables or custom pointer
 		if (sec.contains("LootTables")) {
 			for (Object o : sec.getList("LootTables")) {
 				if (!(o instanceof Map<?, ?> map) || map.size() != 1) continue;
+
 				Map.Entry<?, ?> e = map.entrySet().iterator().next();
 				String name = e.getKey().toString();
 				double w = 1;
+
 				if (e.getValue() instanceof List<?> props) {
 					for (Object p : props) {
 						if (p instanceof Map<?, ?> pm && pm.containsKey("Weight")) {
@@ -347,6 +378,7 @@ public class CustomChest {
 						}
 					}
 				}
+
 				PoolEntry pe = new PoolEntry();
 				pe.weight = w;
 				try {
@@ -358,7 +390,6 @@ public class CustomChest {
 			}
 		}
 
-		// handle items list
 		if (sec.contains("Items")) {
 			Object raw = sec.get("Items");
 			Object2ReferenceMap<Integer, ItemSettings> map = new Object2ReferenceOpenHashMap<>();
@@ -377,22 +408,20 @@ public class CustomChest {
 		return cfg;
 	}
 
-	/**
-	 * Parses a compact item string: Material:Chance:Min-Max
-	 * @param s the raw string
-	 * @param map where to put the ItemSettings
-	 */
 	private void parseCompactItemString(String s, Object2ReferenceMap<Integer, ItemSettings> map) {
 		String[] p = s.split(":");
 		if (p.length < 3) return;
+
 		Material mat = Material.matchMaterial(p[0]);
 		if (mat == null) {
 			plugin.getLogger().warning("Bad material: " + s);
 			return;
 		}
+
 		boolean pct = p[1].endsWith("p") || p[1].endsWith("P");
 		double num = tryParseDouble(p[1].replace("p", "").replace("P", ""), 1);
 		int min = 1, max;
+
 		if (p[2].contains("-")) {
 			String[] r = p[2].split("-");
 			min = (int) tryParseDouble(r[0], 1);
@@ -400,18 +429,15 @@ public class CustomChest {
 		} else {
 			max = (int) tryParseDouble(p[2], 1);
 		}
+
 		ItemSettings it = new ItemSettings(mat.ordinal(), pct ? 1 : num, min, max);
 		if (pct) it.chancePerChestPercent = num;
 		map.put(mat.ordinal(), it);
 	}
 
-	/**
-	 * Parses expanded item node with Weight, ChancePerChest, MinAmount, MaxAmount, CustomName, LevelType, Enchantments
-	 * @param node one-key map of material to properties list
-	 * @param map where to put the ItemSettings
-	 */
 	private void parseExpandedItemNode(Map<?, ?> node, Object2ReferenceMap<Integer, ItemSettings> map) {
 		if (node.size() != 1) return;
+
 		Map.Entry<?, ?> e = node.entrySet().iterator().next();
 		Material mat = Material.matchMaterial(e.getKey().toString());
 		if (mat == null) return;
@@ -444,20 +470,18 @@ public class CustomChest {
 		map.put(mat.ordinal(), it);
 	}
 
-	/**
-	 * Builds a list of EnchantmentSetting from config node
-	 * @param raw the raw object (should be List<Map<String, List<Map<String,Object>>>>)
-	 * @param out list to populate
-	 */
 	private void buildEnchantList(Object raw, List<EnchantmentSetting> out) {
 		if (!(raw instanceof List<?> list)) return;
+
 		for (Object o : list) {
 			if (!(o instanceof Map<?, ?> m) || m.size() != 1) continue;
 			Map.Entry<?, ?> e = m.entrySet().iterator().next();
 			String name = e.getKey().toString();
+
 			double w = 0;
 			int min = 0, max = 0;
 			String col = null;
+
 			if (e.getValue() instanceof List<?> props) {
 				for (Object p : props) {
 					if (!(p instanceof Map<?, ?> pm)) continue;
@@ -472,15 +496,11 @@ public class CustomChest {
 					}
 				}
 			}
+
 			out.add(new EnchantmentSetting(name, w, min, max, col));
 		}
 	}
 
-	/**
-	 * Safely parse a double or return default.
-	 * @param v raw value
-	 * @param def fallback
-	 */
 	private double tryParseDouble(Object v, double def) {
 		try {
 			return Double.parseDouble(v.toString());
@@ -488,8 +508,6 @@ public class CustomChest {
 			return def;
 		}
 	}
-
-	// ----- data beans below -----
 
 	static class ChestConfig {
 		final List<PoolEntry> lootPool = new ArrayList<>();
@@ -503,8 +521,10 @@ public class CustomChest {
 			double total = 0;
 			for (PoolEntry e : lootPool) total += e.weight;
 			if (total <= 0) return null;
+
 			double r = ThreadLocalRandom.current().nextDouble(total);
 			double acc = 0;
+
 			for (PoolEntry e : lootPool) {
 				acc += e.weight;
 				if (r < acc) return e;
