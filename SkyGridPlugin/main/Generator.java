@@ -6,8 +6,6 @@ import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Beehive;
 import org.bukkit.block.Block;
-import org.bukkit.block.BlockState;
-import org.bukkit.block.TileState;
 import org.bukkit.block.data.Ageable;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.type.Bamboo;
@@ -21,14 +19,19 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.world.ChunkLoadEvent;
 
+import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadLocalRandom;
 
+/**
+ * Generates and processes Skygrid chunks and blocks.
+ */
 public class Generator implements Listener {
 	private static final String PREFIX = "skygridx_";
 
@@ -49,13 +52,11 @@ public class Generator implements Listener {
 				World.Environment.NETHER,
 				World.Environment.THE_END
 				);
-
 		CROP_MATERIALS = EnumSet.of(
 				Material.WHEAT, Material.BEETROOTS, Material.CARROTS, Material.POTATOES, Material.TORCHFLOWER_CROP,
 				Material.PITCHER_CROP, Material.NETHER_WART, Material.CAVE_VINES, Material.CAVE_VINES_PLANT,
 				Material.SWEET_BERRY_BUSH, Material.TWISTING_VINES, Material.TWISTING_VINES_PLANT
 				);
-
 		LEAVES = EnumSet.of(
 				Material.ACACIA_LEAVES, Material.AZALEA_LEAVES, Material.BIRCH_LEAVES, Material.CHERRY_LEAVES,
 				Material.DARK_OAK_LEAVES, Material.FLOWERING_AZALEA_LEAVES, Material.JUNGLE_LEAVES,
@@ -73,6 +74,9 @@ public class Generator implements Listener {
 		initEnvSettings();
 	}
 
+	/**
+	 * Sets min and max Y per environment.
+	 */
 	private void initEnvSettings() {
 		environmentSettings.put(World.Environment.NORMAL,
 				new MinMaxSettings(PluginSettings.normalMinY(), PluginSettings.normalMaxY()));
@@ -84,6 +88,9 @@ public class Generator implements Listener {
 				new MinMaxSettings(PluginSettings.defaultMinY(), PluginSettings.defaultMaxY()));
 	}
 
+	/**
+	 * Sets up worlds, listeners, and material data.
+	 */
 	public void initialize() {
 		WorldManager.setupWorlds(plugin);
 		plugin.getServer().getPluginManager().registerEvents(this, plugin);
@@ -91,6 +98,9 @@ public class Generator implements Listener {
 		registerOreGen();
 	}
 
+	/**
+	 * Loads material configs for each world async.
+	 */
 	private void loadWorldMaterialsAsync() {
 		CompletableFuture.runAsync(() -> {
 			plugin.getLogger().info("Enabling Advanced material loader.");
@@ -103,33 +113,46 @@ public class Generator implements Listener {
 		});
 	}
 
+	/**
+	 * Registers ore generation listener.
+	 */
 	private void registerOreGen() {
 		OreGen oreGen = new OreGen(plugin);
 		plugin.getServer().getPluginManager().registerEvents(oreGen, plugin);
 	}
 
+	/**
+	 * Checks if a world is a Skygrid world.
+	 */
 	private boolean isSkygridWorld(String name) {
 		return name.startsWith(PREFIX);
 	}
 
+	/**
+	 * Handles chunk load event for Skygrid worlds.
+	 */
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onChunkLoad(ChunkLoadEvent event) {
 		World world = event.getWorld();
 		String worldName = world.getName();
-
 		if (!isSkygridWorld(worldName)) {
 			return;
 		}
 
+		Chunk chunk = event.getChunk();
+
 		if (event.isNewChunk()) {
 			Bukkit.getScheduler().runTaskLater(
 					plugin,
-					() -> processChunk(event.getChunk(), world, worldName),
+					() -> processChunk(chunk, world, worldName),
 					PluginSettings.getProcessDelay()
 					);
 		}
 	}
 
+	/**
+	 * Processes all loaded chunks in Skygrid worlds.
+	 */
 	public void processLoadedChunks() {
 		for (World.Environment dim : DIMENSIONS_TO_PROCESS) {
 			Set<Chunk> toProcess = new HashSet<>();
@@ -146,6 +169,9 @@ public class Generator implements Listener {
 		}
 	}
 
+	/**
+	 * Regenerates all loaded chunks in all Skygrid worlds.
+	 */
 	public void regenerateAllLoadedChunks() {
 		for (World world : Bukkit.getWorlds()) {
 			if (!isSkygridWorld(world.getName())) continue;
@@ -155,27 +181,41 @@ public class Generator implements Listener {
 		}
 	}
 
+	/**
+	 * Regenerates a mini grid inside a chunk with given material distribution.
+	 */
 	public void regenerateMiniChunk(Chunk chunk, MaterialManager.MaterialDistribution dist) {
 		World world = chunk.getWorld();
 		MinMaxSettings mm = environmentSettings.get(world.getEnvironment());
 		int minY = mm.minY;
 		int maxY = mm.maxY;
 
+		List<ChestRegionData.ChestRecord> chestRecords = new ArrayList<>();
+
 		for (int x = 1; x <= 15; x += 4) {
 			for (int z = 1; z <= 15; z += 4) {
 				for (int y = minY; y <= maxY; y += 4) {
 					Block block = chunk.getBlock(x, y, z);
-					setBlockTypeAndHandle(block, dist.next());
+					setBlockTypeAndHandle(block, dist.next(), chestRecords);
 				}
 			}
 		}
+
+		if (!chestRecords.isEmpty()) {
+			ChestRegionData.getInstance(plugin).registerChests(chestRecords);
+		}
 	}
 
+	/**
+	 * Fills a chunk with grid blocks for Skygrid.
+	 */
 	private void processChunk(Chunk chunk, World world, String worldName) {
 		World.Environment env = world.getEnvironment();
 		MinMaxSettings mm = environmentSettings.get(env);
 		int minY = mm.minY;
 		int maxY = mm.maxY;
+
+		List<ChestRegionData.ChestRecord> chestRecords = new ArrayList<>();
 
 		for (int x = 1; x <= 15; x += 4) {
 			for (int z = 1; z <= 15; z += 4) {
@@ -184,18 +224,21 @@ public class Generator implements Listener {
 					String biome = block.getBiome().toString();
 					Material mat = materialManager.getRandomMaterialForWorld(worldName, biome);
 					if (mat != null) {
-						setBlockTypeAndHandle(block, mat);
+						setBlockTypeAndHandle(block, mat, chestRecords);
 					}
 				}
 			}
 		}
+
+		if (!chestRecords.isEmpty()) {
+			ChestRegionData.getInstance(plugin).registerChests(chestRecords);
+		}
 	}
 
-	private void setBlockTypeAndHandle(Block block, Material mat) {
-		BlockState state = block.getState();
-		if (state instanceof TileState) {
-			block.setType(Material.AIR, false);
-		}
+	/**
+	 * Sets a block type and applies special handling for some types.
+	 */
+	private void setBlockTypeAndHandle(Block block, Material mat, List<ChestRegionData.ChestRecord> chestRecords) {
 		block.setType(mat, false);
 
 		if (LEAVES.contains(mat)) {
@@ -208,18 +251,22 @@ public class Generator implements Listener {
 			handleBamboo(block);
 		} else if (mat == Material.SPAWNER) {
 			spawner.BlockInfo(block);
-		} else if (mat == Material.CHEST) {
-			chest.loadChest(block);
+		} else if (mat == Material.CHEST || mat == Material.COPPER_CHEST) {
+			chest.loadChest(block, chestRecords);
 		} else if (mat == Material.BEE_NEST || mat == Material.BEEHIVE) {
 			handleBeehive(block);
 		} else if (mat == Material.TRIAL_SPAWNER || mat == Material.VAULT) {
 			handleTrial(block);
 		}
+
 		if (mat == Material.END_PORTAL_FRAME || mat == Material.END_PORTAL) {
 			plugin.getPortalManager().addPortal(block.getLocation());
 		}
 	}
 
+	/**
+	 * Sets leaves to persistent to avoid decay.
+	 */
 	private void handleLeaves(Block block) {
 		BlockData data = block.getBlockData();
 		if (data instanceof Leaves leaves) {
@@ -228,6 +275,9 @@ public class Generator implements Listener {
 		}
 	}
 
+	/**
+	 * Sets crop blocks to a grown state.
+	 */
 	private void handleCrop(Block block) {
 		BlockData data = block.getBlockData();
 		if (data instanceof CaveVines vines) {
@@ -239,6 +289,9 @@ public class Generator implements Listener {
 		}
 	}
 
+	/**
+	 * Sets chorus flowers to a mid growth state.
+	 */
 	private void handleChorusFlower(Block block) {
 		BlockData data = block.getBlockData();
 		if (data instanceof Ageable age) {
@@ -247,6 +300,9 @@ public class Generator implements Listener {
 		}
 	}
 
+	/**
+	 * Adjusts bamboo growth state and leaves.
+	 */
 	private void handleBamboo(Block block) {
 		BlockData data = block.getBlockData();
 		if (data instanceof Bamboo bamboo) {
@@ -256,11 +312,17 @@ public class Generator implements Listener {
 		}
 	}
 
+	/**
+	 * Picks a random bamboo leaf size.
+	 */
 	private Bamboo.Leaves getRandomLeafSize() {
 		Bamboo.Leaves[] vals = Bamboo.Leaves.values();
 		return vals[random.nextInt(vals.length)];
 	}
 
+	/**
+	 * Fills beehives with bees.
+	 */
 	private void handleBeehive(Block block) {
 		Beehive hive = (Beehive) block.getState();
 		if (!hive.isFull()) {
@@ -272,6 +334,9 @@ public class Generator implements Listener {
 		hive.update();
 	}
 
+	/**
+	 * Sets trial spawners and vaults to ominous or not.
+	 */
 	private void handleTrial(Block block) {
 		BlockData data = block.getBlockData();
 		boolean ominous = random.nextBoolean();
