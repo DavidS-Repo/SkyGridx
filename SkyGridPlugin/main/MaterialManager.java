@@ -33,19 +33,6 @@ public class MaterialManager {
 		loadMaterialsForWorld("world_the_end.yml");
 	}
 
-	/**
-	 * Normalizes biome strings so lookups match YAML keys.
-	 * Accepts enum-like (MUSHROOM_FIELDS) and namespaced keys (minecraft:mushroom_fields).
-	 */
-	private static String normalizeBiome(String biome) {
-		if (biome == null) return "";
-		String b = biome.trim();
-		int colon = b.indexOf(':');
-		if (colon >= 0) b = b.substring(colon + 1);
-		b = b.replace(' ', '_').replace('-', '_');
-		return b.toUpperCase(Locale.ROOT);
-	}
-
 	public void loadMaterialsForWorld(String fileName) {
 		File file = new File(plugin.getDataFolder(), "SkygridBlocks/" + fileName);
 		if (!file.exists()) {
@@ -114,7 +101,7 @@ public class MaterialManager {
 
 				String[] biomes = biomeKey.split(",");
 				for (String biome : biomes) {
-					String trimmedBiome = normalizeBiome(biome);
+					String trimmedBiome = BiomeKeyUtil.normalize(biome);
 					if (trimmedBiome.isEmpty()) {
 						plugin.getLogger().warning("Empty biome name in key: " + biomeKey + " in file " + fileName);
 						continue;
@@ -165,7 +152,7 @@ public class MaterialManager {
 	 * 4) baseWorldName-DEFAULT
 	 */
 	public Material getRandomMaterialForWorld(String worldName, String biomeName) {
-		biomeName = normalizeBiome(biomeName);
+		biomeName = BiomeKeyUtil.normalize(biomeName);
 
 		String key = worldName + "-" + biomeName;
 		MaterialDistribution dist = materialDistributions.get(key);
