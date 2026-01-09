@@ -16,6 +16,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.io.File;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -63,8 +64,10 @@ public class Spawner {
 		if (block == null || block.getType() != Material.SPAWNER) {
 			return;
 		}
-		String biomeName = block.getBiome().toString();
+
+		String biomeName = BiomeKeyUtil.normalize(block.getBiome().getKey().toString());
 		SpawnerData data = biomeToSpawnerData.get(biomeName);
+
 		CreatureSpawner spawner = (CreatureSpawner) block.getState();
 		if (data != null) {
 			EntityType entity = data.getRandomEntity();
@@ -95,7 +98,14 @@ public class Spawner {
 	}
 
 	private EntityType getDefaultEntityTypeForWorld(World world) {
-		ObjectArrayList<EntityType> entities = defaultEntitiesCache.get(world.getName());
+		String name = world.getName();
+		ObjectArrayList<EntityType> entities = defaultEntitiesCache.get(name);
+
+		if ((entities == null || entities.isEmpty()) && name.startsWith(WorldManager.PREFIX)) {
+			String base = name.substring(WorldManager.PREFIX.length());
+			entities = defaultEntitiesCache.get(base);
+		}
+
 		if (entities == null || entities.isEmpty()) {
 			return EntityType.SKELETON;
 		}
@@ -110,12 +120,22 @@ public class Spawner {
 	}
 
 	private void cacheDefaultEntities() {
-		defaultEntitiesCache.put("world", new ObjectArrayList<>(DEFAULT_WORLD_ENTITIES));
-		defaultEntitiesCache.put("world_nether", new ObjectArrayList<>(DEFAULT_NETHER_ENTITIES));
-		defaultEntitiesCache.put("world_the_end", new ObjectArrayList<>(DEFAULT_END_ENTITIES));
+		ObjectArrayList<EntityType> worldList = new ObjectArrayList<>(DEFAULT_WORLD_ENTITIES);
+		ObjectArrayList<EntityType> netherList = new ObjectArrayList<>(DEFAULT_NETHER_ENTITIES);
+		ObjectArrayList<EntityType> endList = new ObjectArrayList<>(DEFAULT_END_ENTITIES);
+
+		defaultEntitiesCache.put("world", worldList);
+		defaultEntitiesCache.put("world_nether", netherList);
+		defaultEntitiesCache.put("world_the_end", endList);
+
+		defaultEntitiesCache.put(WorldManager.PREFIX + "world", worldList);
+		defaultEntitiesCache.put(WorldManager.PREFIX + "world_nether", netherList);
+		defaultEntitiesCache.put(WorldManager.PREFIX + "world_the_end", endList);
 	}
 
 	private void preprocessSpawnerData() {
+		biomeToSpawnerData.clear();
+
 		if (!spawnerSettings.isConfigurationSection("SpawnerSettings")) {
 			return;
 		}
@@ -123,9 +143,11 @@ public class Spawner {
 		if (spawnerSettingsSection == null) {
 			return;
 		}
+
 		for (String spawnerKey : spawnerSettingsSection.getKeys(false)) {
 			ConfigurationSection spawnerSection = spawnerSettingsSection.getConfigurationSection(spawnerKey);
 			if (spawnerSection == null) continue;
+
 			int delay = spawnerSection.getInt("Delay", DEFAULT_DELAY);
 			int maxNearby = spawnerSection.getInt("MaxNearbyEntities", DEFAULT_MAX_NEARBY_ENTITIES);
 			int maxSpawnDelay = spawnerSection.getInt("MaxSpawnDelay", DEFAULT_MAX_SPAWN_DELAY);
@@ -133,11 +155,20 @@ public class Spawner {
 			int playerRange = spawnerSection.getInt("PlayerRange", DEFAULT_PLAYER_RANGE);
 			int spawnCount = spawnerSection.getInt("SpawnCount", DEFAULT_SPAWN_COUNT);
 			int spawnRange = spawnerSection.getInt("SpawnRange", DEFAULT_SPAWN_RANGE);
+
 			List<String> entityList = spawnerSection.getStringList("Entities");
 			SpawnerData data = parseSpawnerData(entityList, delay, maxNearby, maxSpawnDelay, minSpawnDelay, playerRange, spawnCount, spawnRange);
+
 			List<String> biomes = spawnerSection.getStringList("Biomes");
-			for (String biome : biomes) {
-				biomeToSpawnerData.put(biome, data);
+			for (String biomeEntry : biomes) {
+				if (biomeEntry == null) continue;
+				String[] parts = biomeEntry.split(",");
+				for (String biome : parts) {
+					String key = BiomeKeyUtil.normalize(biome);
+					if (!key.isEmpty()) {
+						biomeToSpawnerData.put(key, data);
+					}
+				}
 			}
 		}
 	}
@@ -148,24 +179,34 @@ public class Spawner {
 			return new SpawnerData(delay, maxNearby, maxSpawnDelay, minSpawnDelay, playerRange, spawnCount, spawnRange,
 					new EntityType[0], new double[0]);
 		}
+
 		EntityType[] entityTypes = new EntityType[entityList.size()];
 		double[] cumulativeWeights = new double[entityList.size()];
 		double totalWeight = 0.0;
 		int idx = 0;
+
 		for (String entry : entityList) {
-			String[] parts = entry.split(":");
+			if (entry == null) continue;
+			String e = entry.trim();
+			if (e.isEmpty()) continue;
+
+			String[] parts = e.split(":");
 			if (parts.length == 2) {
 				try {
-					EntityType type = EntityType.valueOf(parts[0]);
-					double weight = Double.parseDouble(parts[1]);
+					String typeName = parts[0].trim().toUpperCase(Locale.ROOT);
+					String weightStr = parts[1].trim();
+					EntityType type = EntityType.valueOf(typeName);
+					double weight = Double.parseDouble(weightStr);
+
 					totalWeight += weight;
 					cumulativeWeights[idx] = totalWeight;
 					entityTypes[idx] = type;
 					idx++;
-				} catch (IllegalArgumentException e) {
+				} catch (IllegalArgumentException ignored) {
 				}
 			}
 		}
+
 		if (idx < entityTypes.length) {
 			EntityType[] truncatedTypes = new EntityType[idx];
 			double[] truncatedWeights = new double[idx];
@@ -174,6 +215,7 @@ public class Spawner {
 			entityTypes = truncatedTypes;
 			cumulativeWeights = truncatedWeights;
 		}
+
 		return new SpawnerData(delay, maxNearby, maxSpawnDelay, minSpawnDelay, playerRange, spawnCount, spawnRange, entityTypes, cumulativeWeights);
 	}
 
@@ -188,6 +230,7 @@ public class Spawner {
 		final EntityType[] entityTypes;
 		final double[] cumulativeWeights;
 		final double totalWeight;
+
 		SpawnerData(int delay, int maxNearbyEntities, int maxSpawnDelay, int minSpawnDelay,
 				int playerRange, int spawnCount, int spawnRange, EntityType[] entityTypes, double[] cumulativeWeights) {
 			this.delay = delay;
