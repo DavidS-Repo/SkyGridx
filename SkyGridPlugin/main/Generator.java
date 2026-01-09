@@ -26,7 +26,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
@@ -92,25 +91,10 @@ public class Generator implements Listener {
 	 * Sets up worlds, listeners, and material data.
 	 */
 	public void initialize() {
-		WorldManager.setupWorlds(plugin);
+		materialManager.reloadAll();
 		plugin.getServer().getPluginManager().registerEvents(this, plugin);
-		loadWorldMaterialsAsync();
+		WorldManager.setupWorlds(plugin);
 		registerOreGen();
-	}
-
-	/**
-	 * Loads material configs for each world async.
-	 */
-	private void loadWorldMaterialsAsync() {
-		CompletableFuture.runAsync(() -> {
-			plugin.getLogger().info("Enabling Advanced material loader.");
-			materialManager.loadMaterialsForWorld("world.yml");
-			materialManager.loadMaterialsForWorld("world_nether.yml");
-			materialManager.loadMaterialsForWorld("world_the_end.yml");
-		}).exceptionally(th -> {
-			plugin.getLogger().severe("Failed to load materials: " + th.getMessage());
-			return null;
-		});
 	}
 
 	/**
@@ -221,7 +205,7 @@ public class Generator implements Listener {
 			for (int z = 1; z <= 15; z += 4) {
 				for (int y = minY; y <= maxY; y += 4) {
 					Block block = chunk.getBlock(x, y, z);
-					String biome = block.getBiome().toString();
+					String biome = block.getBiome().getKey().toString();
 					Material mat = materialManager.getRandomMaterialForWorld(worldName, biome);
 					if (mat != null) {
 						setBlockTypeAndHandle(block, mat, chestRecords);
