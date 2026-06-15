@@ -1,83 +1,38 @@
 package main;
 
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.EnchantmentStorageMeta;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * Utility class to hide the default enchantment display and add custom lore with friendly names.
+ * Utility to hide default enchant display and add custom lore with friendly names.
  */
 public class EnchantmentNameSupport {
-
-	// Map of enchantment keys to friendly display names
-	private static final Map<String, String> FRIENDLY_NAMES = new HashMap<>();
-
-	static {
-		FRIENDLY_NAMES.put("aqua_affinity", "Aqua Affinity");
-		FRIENDLY_NAMES.put("bane_of_arthropods", "Bane of Arthropods");
-		FRIENDLY_NAMES.put("binding_curse", "Curse of Binding");
-		FRIENDLY_NAMES.put("blast_protection", "Blast Protection");
-		FRIENDLY_NAMES.put("breach", "Breach");
-		FRIENDLY_NAMES.put("channeling", "Channeling");
-		FRIENDLY_NAMES.put("density", "Density");
-		FRIENDLY_NAMES.put("depth_strider", "Depth Strider");
-		FRIENDLY_NAMES.put("efficiency", "Efficiency");
-		FRIENDLY_NAMES.put("feather_falling", "Feather Falling");
-		FRIENDLY_NAMES.put("fire_aspect", "Fire Aspect");
-		FRIENDLY_NAMES.put("fire_protection", "Fire Protection");
-		FRIENDLY_NAMES.put("flame", "Flame");
-		FRIENDLY_NAMES.put("fortune", "Fortune");
-		FRIENDLY_NAMES.put("frost_walker", "Frost Walker");
-		FRIENDLY_NAMES.put("impaling", "Impaling");
-		FRIENDLY_NAMES.put("infinity", "Infinity");
-		FRIENDLY_NAMES.put("knockback", "Knockback");
-		FRIENDLY_NAMES.put("looting", "Looting");
-		FRIENDLY_NAMES.put("loyalty", "Loyalty");
-		FRIENDLY_NAMES.put("luck_of_the_sea", "Luck of the Sea");
-		FRIENDLY_NAMES.put("lure", "Lure");
-		FRIENDLY_NAMES.put("mending", "Mending");
-		FRIENDLY_NAMES.put("multishot", "Multishot");
-		FRIENDLY_NAMES.put("piercing", "Piercing");
-		FRIENDLY_NAMES.put("power", "Power");
-		FRIENDLY_NAMES.put("projectile_protection", "Projectile Protection");
-		FRIENDLY_NAMES.put("protection", "Protection");
-		FRIENDLY_NAMES.put("punch", "Punch");
-		FRIENDLY_NAMES.put("quick_charge", "Quick Charge");
-		FRIENDLY_NAMES.put("respiration", "Respiration");
-		FRIENDLY_NAMES.put("riptide", "Riptide");
-		FRIENDLY_NAMES.put("sharpness", "Sharpness");
-		FRIENDLY_NAMES.put("silk_touch", "Silk Touch");
-		FRIENDLY_NAMES.put("smite", "Smite");
-		FRIENDLY_NAMES.put("soul_speed", "Soul Speed");
-		FRIENDLY_NAMES.put("sweeping_edge", "Sweeping Edge");
-		FRIENDLY_NAMES.put("swift_sneak", "Swift Sneak");
-		FRIENDLY_NAMES.put("thorns", "Thorns");
-		FRIENDLY_NAMES.put("unbreaking", "Unbreaking");
-		FRIENDLY_NAMES.put("vanishing_curse", "Curse of Vanishing");
-		FRIENDLY_NAMES.put("wind_burst", "Wind Burst");
-	}
+	private static final LegacyComponentSerializer LEGACY = LegacyComponentSerializer.legacySection();
 
 	/**
-	 * Record representing an enchantment with its chosen level and formatting settings.
+	 * Holds an enchantment choice with level, format type, and lore color.
 	 */
-	public record ChosenEnchantment(Enchantment enchantment, int level, String levelType, String loreColor) { }
+	public record ChosenEnchantment(Enchantment enchantment, int level,
+			String levelType, String loreColor) { }
 
 	/**
-	 * Applies the given chosen enchantments to the item:
-	 * <ul>
-	 *   <li>Adds the enchantments (so the effects are applied).</li>
-	 *   <li>Hides the default enchantment display using ItemFlag.HIDE_ENCHANTS.</li>
-	 *   <li>Adds custom lore lines showing friendly names with appropriate level formatting.</li>
-	 * </ul>
+	 * Applies custom enchant display on gear or books.
+	 * Hides vanilla list, adds true enchants or stored enchants plus lore.
 	 *
-	 * @param item           The ItemStack to modify.
-	 * @param chosenEnchants The list of chosen enchantments.
+	 * @param item           the ItemStack to modify
+	 * @param chosenEnchants list of chosen enchants with formatting
 	 */
-	@SuppressWarnings("deprecation")
-	public static void applyCustomEnchantDisplay(ItemStack item, List<ChosenEnchantment> chosenEnchants) {
+	public static void applyCustomEnchantDisplay(ItemStack item,
+			List<ChosenEnchantment> chosenEnchants) {
 		if (item == null || chosenEnchants == null || chosenEnchants.isEmpty()) {
 			return;
 		}
@@ -85,96 +40,101 @@ public class EnchantmentNameSupport {
 		if (meta == null) {
 			return;
 		}
+
 		meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
-		List<String> newLore = meta.hasLore() ? new ArrayList<>(meta.getLore()) : new ArrayList<>();
-		for (ChosenEnchantment chosen : chosenEnchants) {
-			meta.addEnchant(chosen.enchantment(), chosen.level(), true);
-			String displayLevel;
-			if ("Standard".equalsIgnoreCase(chosen.levelType())) {
-				displayLevel = "lvl_" + chosen.level();
-			} else {
-				displayLevel = toRoman(chosen.level());
+		List<Component> newLore = meta.lore() == null
+				? new ArrayList<>()
+				: new ArrayList<>(meta.lore());
+
+		if (item.getType() == Material.ENCHANTED_BOOK
+				&& meta instanceof EnchantmentStorageMeta storage) {
+			// store enchants so book works in anvil
+			for (ChosenEnchantment c : chosenEnchants) {
+				storage.addStoredEnchant(c.enchantment(), c.level(), true);
 			}
-			String color = getColor(chosen.loreColor());
-			String friendlyName = getFriendlyName(chosen.enchantment());
-			newLore.add(color + friendlyName + " " + displayLevel);
+			item.setItemMeta(storage);
+			return;
 		}
-		meta.setLore(newLore);
+
+		// gear: apply enchants and lore
+		for (ChosenEnchantment c : chosenEnchants) {
+			meta.addEnchant(c.enchantment(), c.level(), true);
+			String displayLevel = c.levelType().equalsIgnoreCase("Standard")
+					? "lvl_" + c.level()
+					: toRoman(c.level());
+			String color = getColor(c.loreColor);
+			String name = getFriendlyName(c.enchantment());
+			newLore.add(LEGACY.deserialize(color + name + " " + displayLevel));
+		}
+
+		meta.lore(newLore);
 		item.setItemMeta(meta);
 	}
 
 	/**
-	 * Retrieves a friendly name for the given enchantment.
-	 *
-	 * @param enchantment The enchantment.
-	 * @return The friendly display name.
+	 * Builds a friendly name from enchant key (split on underscore).
+	 * @param enchantment the enchantment
+	 * @return e.g. "Fire Aspect"
 	 */
-	private static String getFriendlyName(Enchantment enchantment) {
+	public static String getFriendlyName(Enchantment enchantment) {
 		String key = enchantment.getKey().getKey();
-		return FRIENDLY_NAMES.getOrDefault(key, capitalize(key));
+		String[] parts = key.split("_");
+		StringBuilder out = new StringBuilder();
+		for (String part : parts) {
+			if (part.isEmpty()) continue;
+			out.append(Character.toUpperCase(part.charAt(0)))
+			.append(part.substring(1).toLowerCase())
+			.append(' ');
+		}
+		return out.toString().trim();
 	}
 
 	/**
-	 * Capitalizes the first letter of the string.
-	 *
-	 * @param input The input string.
-	 * @return The capitalized string.
+	 * Converts integer to Roman numeral (1–3999).
+	 * @param number positive int
+	 * @return Roman string
 	 */
-	private static String capitalize(String input) {
-		if (input == null || input.isEmpty()) return input;
-		return input.substring(0, 1).toUpperCase() + input.substring(1);
-	}
-
-	/**
-	 * Converts an integer to a Roman numeral string (supports numbers 1–3999).
-	 *
-	 * @param number The number to convert.
-	 * @return The Roman numeral representation.
-	 */
-	private static String toRoman(int number) {
+	static String toRoman(int number) {
 		if (number <= 0) return String.valueOf(number);
-		int[] values =   {1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1};
-		String[] romans = {"M", "CM", "D", "CD", "C", "XC", "L", "XL", "X", "IX", "V", "IV", "I"};
-
-		StringBuilder result = new StringBuilder();
-		for (int i = 0; i < values.length; i++) {
-			while (number >= values[i]) {
-				number -= values[i];
-				result.append(romans[i]);
+		int[] vals = {1000,900,500,400,100,90,50,40,10,9,5,4,1};
+		String[] romans = {"M","CM","D","CD","C","XC","L","XL","X","IX","V","IV","I"};
+		StringBuilder r = new StringBuilder();
+		for (int i = 0; i < vals.length; i++) {
+			while (number >= vals[i]) {
+				number -= vals[i];
+				r.append(romans[i]);
 			}
 		}
-		return result.toString();
+		return r.toString();
 	}
 
 	/**
-	 * Returns the Minecraft color code corresponding to the provided color name.
-	 * Accepts mixed-case input (for example, "ReD" or "blue") and returns the proper code.
-	 *
-	 * @param colorName The color name as defined in your config.
-	 * @return The Minecraft color code string.
+	 * Maps a color name to its chat code via Cc.
+	 * @param colorName e.g. "red" or "DARK_AQUA"
+	 * @return chat code like §c or §3
 	 */
-	private static String getColor(String colorName) {
-		if (colorName == null || colorName.isEmpty()) {
+	public static String getColor(String colorName) {
+		if (colorName == null) {
 			return Cc.GRAY.getMinecraft();
 		}
-		return switch (colorName.trim().toUpperCase()) {
-		case "BLACK" -> Cc.BLACK.getMinecraft();
-		case "DARK_BLUE" -> Cc.DARK_BLUE.getMinecraft();
-		case "DARK_GREEN" -> Cc.DARK_GREEN.getMinecraft();
-		case "DARK_AQUA" -> Cc.DARK_AQUA.getMinecraft();
-		case "DARK_RED" -> Cc.DARK_RED.getMinecraft();
-		case "DARK_PURPLE" -> Cc.DARK_PURPLE.getMinecraft();
-		case "GOLD" -> Cc.GOLD.getMinecraft();
-		case "GRAY" -> Cc.GRAY.getMinecraft();
-		case "DARK_GRAY" -> Cc.DARK_GRAY.getMinecraft();
-		case "BLUE" -> Cc.BLUE.getMinecraft();
-		case "GREEN" -> Cc.GREEN.getMinecraft();
-		case "AQUA" -> Cc.AQUA.getMinecraft();
-		case "RED" -> Cc.RED.getMinecraft();
-		case "LIGHT_PURPLE" -> Cc.LIGHT_PURPLE.getMinecraft();
-		case "YELLOW" -> Cc.YELLOW.getMinecraft();
-		case "WHITE" -> Cc.WHITE.getMinecraft();
-		default -> Cc.GRAY.getMinecraft();
-		};
+		switch (colorName.trim().toUpperCase()) {
+		case "BLACK":        return Cc.BLACK.getMinecraft();
+		case "DARK_BLUE":    return Cc.DARK_BLUE.getMinecraft();
+		case "DARK_GREEN":   return Cc.DARK_GREEN.getMinecraft();
+		case "DARK_AQUA":    return Cc.DARK_AQUA.getMinecraft();
+		case "DARK_RED":     return Cc.DARK_RED.getMinecraft();
+		case "DARK_PURPLE":  return Cc.DARK_PURPLE.getMinecraft();
+		case "GOLD":         return Cc.GOLD.getMinecraft();
+		case "GRAY":         return Cc.GRAY.getMinecraft();
+		case "DARK_GRAY":    return Cc.DARK_GRAY.getMinecraft();
+		case "BLUE":         return Cc.BLUE.getMinecraft();
+		case "GREEN":        return Cc.GREEN.getMinecraft();
+		case "AQUA":         return Cc.AQUA.getMinecraft();
+		case "RED":          return Cc.RED.getMinecraft();
+		case "LIGHT_PURPLE": return Cc.LIGHT_PURPLE.getMinecraft();
+		case "YELLOW":       return Cc.YELLOW.getMinecraft();
+		case "WHITE":        return Cc.WHITE.getMinecraft();
+		default:             return Cc.GRAY.getMinecraft();
+		}
 	}
 }

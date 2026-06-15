@@ -8,13 +8,13 @@ import org.bukkit.potion.PotionType;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
- * Randomizes a tipped arrow with a valid vanilla potion effect for Minecraft Java 1.21.6.
+ * Randomizes a tipped arrow with a valid vanilla potion effect for Minecraft Java 26.1.2.
  * 
  * To use: Call randomizeTippedArrow(ItemStack) on any TIPPED_ARROW item.
  */
 public class TippedArrowRandomizer {
 
-	// All valid vanilla tipped arrow types for Java 1.21.6.
+	// All valid vanilla tipped arrow types for Java 26.1.2.
 	// Grouped by effect.
 
 	private static final PotionType[] ARROW_POTION_TYPES = {
@@ -127,19 +127,17 @@ public class TippedArrowRandomizer {
 			PotionType.STRONG_TURTLE_MASTER
 	};
 
-	private final ThreadLocalRandom random = ThreadLocalRandom.current();
-
 	/**
 	 * Applies a random vanilla tipped arrow effect to the given ItemStack.
 	 * @param item Must be a TIPPED_ARROW.
 	 */
-	public void randomizeTippedArrow(ItemStack item) {
+	public static void randomizeTippedArrow(ItemStack item) {
 		if (item == null || item.getType() != Material.TIPPED_ARROW) return;
 
 		PotionMeta meta = (PotionMeta) item.getItemMeta();
 		if (meta == null) return;
 
-		PotionType type = ARROW_POTION_TYPES[random.nextInt(ARROW_POTION_TYPES.length)];
+		PotionType type = ARROW_POTION_TYPES[ThreadLocalRandom.current().nextInt(ARROW_POTION_TYPES.length)];
 		meta.setBasePotionType(type);
 
 		item.setItemMeta(meta);

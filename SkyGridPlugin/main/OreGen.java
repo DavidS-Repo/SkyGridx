@@ -48,8 +48,12 @@ public class OreGen implements Listener {
 						try {
 							double chance = Double.parseDouble(parts[1].trim()) / 100.0;
 							if (oreMaterial != null && chance > 0 && chance <= 1) {
-								oreChances.computeIfAbsent(currentBlockType, k -> new ArrayList<>())
-								.add(new OreChance(oreMaterial, chance));
+								List<OreChance> chances = oreChances.get(currentBlockType);
+								if (chances == null) {
+									chances = new ArrayList<>();
+									oreChances.put(currentBlockType, chances);
+								}
+								chances.add(new OreChance(oreMaterial, chance));
 							} else {
 								plugin.getLogger().warning("Invalid ore chance or material in ores.yml: " + line);
 							}

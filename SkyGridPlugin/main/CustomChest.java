@@ -1,5 +1,9 @@
 package main;
 
+import io.papermc.paper.registry.RegistryAccess;
+import io.papermc.paper.registry.RegistryKey;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.block.Block;
@@ -17,10 +21,7 @@ import org.bukkit.loot.LootTable;
 import org.bukkit.loot.LootTables;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.scheduler.BukkitRunnable;
 
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.objects.Object2ReferenceMap;
@@ -28,7 +29,6 @@ import it.unimi.dsi.fastutil.objects.Object2ReferenceOpenHashMap;
 
 import java.io.File;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
@@ -39,13 +39,14 @@ public class CustomChest {
 	private static JavaPlugin plugin;
 	private static int maxItemsPerSlot;
 	private static final Material[] MATERIALS = Material.values();
+	private static final LegacyComponentSerializer LEGACY = LegacyComponentSerializer.legacySection();
 
 	public static NamespacedKey UNPOPULATED_KEY;
 	private static NamespacedKey CUSTOM_REF_KEY;
 
-	private final Int2ObjectMap<ChestConfig> chestConfigsByHash = new Int2ObjectOpenHashMap<>();
-	private final Map<String, ChestConfig> chestConfigsByName = new HashMap<>();
-	private final Map<String, IntSet> biomeToChestHashes = new HashMap<>();
+	private volatile Map<Integer, ChestConfig> chestConfigsByHash = Map.of();
+	private volatile Map<String, ChestConfig> chestConfigsByName = Map.of();
+	private volatile Map<String, IntSet> biomeToChestHashes = Map.of();
 
 	private CustomChest(JavaPlugin plugin) {
 		CustomChest.plugin = plugin;
@@ -83,8 +84,8 @@ public class CustomChest {
 
 		String biomeRaw = block.getBiome().getKey().getKey().toUpperCase();
 
-		IntSet possible = biomeToChestHashes.getOrDefault(biomeRaw, new IntOpenHashSet());
-		if (possible.isEmpty()) {
+		IntSet possible = biomeToChestHashes.get(biomeRaw);
+		if (possible == null || possible.isEmpty()) {
 			plugin.getLogger().warning("No chest config for biome: " + biomeRaw + " at " + chest.getLocation());
 			return;
 		}
@@ -142,8 +143,8 @@ public class CustomChest {
 
 		if (cfg == null) {
 			String biomeKey = chest.getBlock().getBiome().getKey().getKey().toUpperCase();
-			IntSet set = biomeToChestHashes.getOrDefault(biomeKey, new IntOpenHashSet());
-			if (set.isEmpty()) {
+			IntSet set = biomeToChestHashes.get(biomeKey);
+			if (set == null || set.isEmpty()) {
 				plugin.getLogger().warning("No chest config for biome: " + biomeKey + " when populating chest");
 				return;
 			}
@@ -154,15 +155,7 @@ public class CustomChest {
 			return;
 		}
 
-		calculateItemsToPlace(cfg.itemsData, chest.getInventory())
-		.thenAccept(stacks ->
-		new BukkitRunnable() {
-			@Override
-			public void run() {
-				placeItemsInChest(chest.getInventory(), stacks);
-			}
-		}.runTask(plugin)
-				);
+		placeItemsInChest(chest.getInventory(), calculateItemsToPlace(cfg.itemsData, chest.getInventory()));
 	}
 
 	/**
@@ -175,77 +168,66 @@ public class CustomChest {
 			cfg = chestConfigsByName.get(refName);
 		} else {
 			String biomeKey = chest.getBlock().getBiome().getKey().getKey().toUpperCase();
-			IntSet set = biomeToChestHashes.getOrDefault(biomeKey, new IntOpenHashSet());
-			if (set.isEmpty()) return;
+			IntSet set = biomeToChestHashes.get(biomeKey);
+			if (set == null || set.isEmpty()) return;
 			cfg = chestConfigsByHash.get(set.iterator().nextInt());
 		}
 
 		if (cfg == null || cfg.itemsData == null) return;
 
-		calculateItemsToPlace(cfg.itemsData, chest.getInventory())
-		.thenAccept(stacks ->
-		new BukkitRunnable() {
-			@Override
-			public void run() {
-				placeItemsInChest(chest.getInventory(), stacks);
-			}
-		}.runTask(plugin)
-				);
+		placeItemsInChest(chest.getInventory(), calculateItemsToPlace(cfg.itemsData, chest.getInventory()));
 	}
 
-	private CompletableFuture<ItemStack[]> calculateItemsToPlace(ItemsData data, Inventory inv) {
-		return CompletableFuture.supplyAsync(() -> {
-			ThreadLocalRandom rng = ThreadLocalRandom.current();
-			ItemStack[] out = new ItemStack[inv.getSize()];
+	private ItemStack[] calculateItemsToPlace(ItemsData data, Inventory inv) {
+		ThreadLocalRandom rng = ThreadLocalRandom.current();
+		ItemStack[] out = new ItemStack[inv.getSize()];
 
-			int[] counts = getCurrentItemCounts(inv);
-			List<Integer> free = getEmptySlotList(inv);
+		int[] counts = getCurrentItemCounts(inv);
+		List<Integer> free = getEmptySlotList(inv);
 
-			for (ItemSettings chance : data.chanceItems) {
-				if (rng.nextDouble(100) >= chance.chancePerChestPercent) continue;
-				if (free.isEmpty()) break;
+		for (ItemSettings chance : data.chanceItems) {
+			if (rng.nextDouble(100) >= chance.chancePerChestPercent) continue;
+			if (free.isEmpty()) break;
 
-				int slot = free.remove(rng.nextInt(free.size()));
-				int left = chance.maxAmount - counts[chance.materialOrdinal];
-				if (left <= 0) continue;
+			int slot = free.remove(rng.nextInt(free.size()));
+			int left = chance.maxAmount - counts[chance.materialOrdinal];
+			if (left <= 0) continue;
 
-				int amt = rng.nextInt(chance.minAmount, Math.min(left, maxItemsPerSlot) + 1);
-				if (amt <= 0) continue;
+			int amt = rng.nextInt(chance.minAmount, Math.min(left, maxItemsPerSlot) + 1);
+			if (amt <= 0) continue;
 
-				out[slot] = buildStack(chance, amt, rng);
-				counts[chance.materialOrdinal] += amt;
-			}
+			out[slot] = buildStack(chance, amt, rng);
+			counts[chance.materialOrdinal] += amt;
+		}
 
-			int[] slots = free.stream().mapToInt(i -> i).toArray();
-			for (int s : slots) {
-				ItemSettings picked = data.getRandomWeightedItem();
-				if (picked == null) continue;
+		int[] slots = free.stream().mapToInt(i -> i).toArray();
+		for (int s : slots) {
+			ItemSettings picked = data.getRandomWeightedItem();
+			if (picked == null) continue;
 
-				int left = picked.maxAmount - counts[picked.materialOrdinal];
-				if (left <= 0) continue;
+			int left = picked.maxAmount - counts[picked.materialOrdinal];
+			if (left <= 0) continue;
 
-				int cap = Math.min(left, maxItemsPerSlot);
-				if (cap < picked.minAmount) continue;
+			int cap = Math.min(left, maxItemsPerSlot);
+			if (cap < picked.minAmount) continue;
 
-				int amt = rng.nextInt(picked.minAmount, cap + 1);
-				if (amt <= 0) continue;
+			int amt = rng.nextInt(picked.minAmount, cap + 1);
+			if (amt <= 0) continue;
 
-				out[s] = buildStack(picked, amt, rng);
-				counts[picked.materialOrdinal] += amt;
-			}
+			out[s] = buildStack(picked, amt, rng);
+			counts[picked.materialOrdinal] += amt;
+		}
 
-			return out;
-		});
+		return out;
 	}
 
-	@SuppressWarnings("deprecation")
 	private ItemStack buildStack(ItemSettings settings, int amount, ThreadLocalRandom rng) {
 		Material mat = MATERIALS[settings.materialOrdinal];
 		ItemStack stack = new ItemStack(mat, amount);
 
 		if (settings.customName != null && !settings.customName.isEmpty()) {
 			ItemMeta nm = stack.getItemMeta();
-			nm.setDisplayName(settings.customName);
+			nm.displayName(LEGACY.deserialize(settings.customName));
 			stack.setItemMeta(nm);
 		}
 
@@ -256,7 +238,7 @@ public class CustomChest {
 					if (rng.nextDouble(100) < es.weight) {
 						int lvl = rng.nextInt(es.minLevel, es.maxLevel + 1);
 						if (lvl > 0) {
-							Enchantment ench = Enchantment.getByName(es.enchantmentName.toUpperCase());
+							Enchantment ench = resolveEnchantment(es.enchantmentName);
 							if (ench != null) {
 								storage.addStoredEnchant(ench, lvl, true);
 							}
@@ -267,16 +249,16 @@ public class CustomChest {
 			} else {
 				ItemMeta meta = stack.getItemMeta();
 				meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
-				List<String> lore = meta.hasLore()
-						? new ArrayList<>(meta.getLore())
-								: new ArrayList<>();
+				List<Component> lore = meta.lore() == null
+						? new ArrayList<>()
+						: new ArrayList<>(meta.lore());
 				String lt = "standard".equalsIgnoreCase(settings.levelType) ? "Standard" : "Roman";
 
 				for (EnchantmentSetting es : settings.enchantments) {
 					if (rng.nextDouble(100) < es.weight) {
 						int lvl = rng.nextInt(es.minLevel, es.maxLevel + 1);
 						if (lvl > 0) {
-							Enchantment ench = Enchantment.getByName(es.enchantmentName.toUpperCase());
+							Enchantment ench = resolveEnchantment(es.enchantmentName);
 							if (ench != null) {
 								meta.addEnchant(ench, lvl, true);
 								String lvlText = lt.equals("Standard")
@@ -284,22 +266,38 @@ public class CustomChest {
 												: EnchantmentNameSupport.toRoman(lvl);
 								String color = EnchantmentNameSupport.getColor(es.loreColor);
 								String name = EnchantmentNameSupport.getFriendlyName(ench);
-								lore.add(color + name + " " + lvlText);
+								lore.add(LEGACY.deserialize(color + name + " " + lvlText));
 							}
 						}
 					}
 				}
-				meta.setLore(lore);
+				meta.lore(lore);
 				stack.setItemMeta(meta);
 			}
 		}
 
 		if (mat == Material.TIPPED_ARROW) {
-			TippedArrowRandomizer randomizer = new TippedArrowRandomizer();
-			randomizer.randomizeTippedArrow(stack);
+			TippedArrowRandomizer.randomizeTippedArrow(stack);
 		}
 
 		return stack;
+	}
+
+	private Enchantment resolveEnchantment(String configuredName) {
+		if (configuredName == null || configuredName.isBlank()) {
+			return null;
+		}
+		String key = configuredName.trim().toLowerCase(Locale.ROOT);
+		if (!key.contains(":")) {
+			key = "minecraft:" + key;
+		}
+		NamespacedKey namespacedKey = NamespacedKey.fromString(key);
+		if (namespacedKey == null) {
+			return null;
+		}
+		return RegistryAccess.registryAccess()
+				.getRegistry(RegistryKey.ENCHANTMENT)
+				.get(namespacedKey);
 	}
 
 	private List<Integer> getEmptySlotList(Inventory inv) {
@@ -328,7 +326,7 @@ public class CustomChest {
 	}
 
 	private void loadChestSettingsAsync() {
-		CompletableFuture.runAsync(() -> {
+		SkyGridScheduler.runAsync(plugin, () -> {
 			File f = new File(plugin.getDataFolder(), "SkygridBlocks/ChestSettings.yml");
 			if (!f.exists()) {
 				plugin.getLogger().severe("ChestSettings.yml not found.");
@@ -337,26 +335,33 @@ public class CustomChest {
 			FileConfiguration cfg = YamlConfiguration.loadConfiguration(f);
 			maxItemsPerSlot = cfg.getInt("MaxItemsPerSlot", 2);
 
-			chestConfigsByHash.clear();
-			chestConfigsByName.clear();
-			biomeToChestHashes.clear();
-
 			if (!cfg.isConfigurationSection("ChestSettings")) {
 				plugin.getLogger().severe("Missing ChestSettings section");
 				return;
 			}
 
+			Map<Integer, ChestConfig> newConfigsByHash = new HashMap<>();
+			Map<String, ChestConfig> newConfigsByName = new HashMap<>();
+			Map<String, IntSet> newBiomeToChestHashes = new HashMap<>();
+
 			ConfigurationSection root = cfg.getConfigurationSection("ChestSettings");
 			for (String key : root.getKeys(false)) {
 				ChestConfig c = parseSingleChest(key, root.getConfigurationSection(key));
-				chestConfigsByHash.put(key.hashCode(), c);
-				chestConfigsByName.put(key, c);
+				newConfigsByHash.put(key.hashCode(), c);
+				newConfigsByName.put(key, c);
 				for (String b : root.getStringList(key + ".Biomes")) {
-					biomeToChestHashes
-					.computeIfAbsent(b.toUpperCase(), __ -> new IntOpenHashSet())
-					.add(key.hashCode());
+					String biomeKey = b.toUpperCase(Locale.ROOT);
+					IntSet chestHashes = newBiomeToChestHashes.get(biomeKey);
+					if (chestHashes == null) {
+						chestHashes = new IntOpenHashSet();
+						newBiomeToChestHashes.put(biomeKey, chestHashes);
+					}
+					chestHashes.add(key.hashCode());
 				}
 			}
+			chestConfigsByHash = Map.copyOf(newConfigsByHash);
+			chestConfigsByName = Map.copyOf(newConfigsByName);
+			biomeToChestHashes = Map.copyOf(newBiomeToChestHashes);
 		});
 	}
 

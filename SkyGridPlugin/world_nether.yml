@@ -12,6 +12,25 @@
 # - Percentages represent the relative chance of each block appearing.
 # - The total percentage for each distribution does not need to sum to 100%.
 #   The system will handle scaling as necessary.
+# - Simple entries still use MATERIAL: chance.
+# - Expanded parent entries may use SkyGrid shorthand, where MATERIAL: chance has
+#   indented face attachments below it. SkyGrid rewrites this internally before loading.
+#   Expanded entries can also use valid YAML with a nested chance value.
+#   Face keys: top/up, bottom/down, east, west, north, south.
+#   Random face keys: rends chooses one random top/bottom face; rsides chooses one random side face.
+#   Attachment pools always choose one material when used; include AIR to sometimes place nothing.
+#   Example:
+#     GRASS_BLOCK: 25
+#       top:
+#         SUGAR_CANE: 20
+#       east:
+#         WATER: 10
+#       rends:
+#         RED_MUSHROOM: 20
+#         BROWN_MUSHROOM: 20
+#       rsides:
+#         MYCELIUM: 50
+#         MUSHROOM_STEM: 14
 # - Ensure that all block names correspond to valid Bukkit `Material` enums.
 #   Reference: [Bukkit Material Documentation](https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Material.html)
 #
@@ -30,6 +49,7 @@ biomes:
 distributions:
   # Distribution for SOUL_SAND_VALLEY
   custom_soul_sand_valley:
+    # Expanded shorthand: BlockID: Percentage with indented face attachment sections below it.
     ANCIENT_DEBRIS: 0.1
     BASALT: 20
     BLACKSTONE: 60

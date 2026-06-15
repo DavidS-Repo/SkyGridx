@@ -3,7 +3,6 @@ package main;
 import java.util.Map;
 import java.util.UUID;
 
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -18,7 +17,6 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.scheduler.BukkitRunnable;
 
 /**
  * Listener that isolates respawn via respawn anchors in custom worlds
@@ -44,19 +42,16 @@ public class AnchorIsolation implements Listener {
         Block block = event.getClickedBlock();
         if (block == null || block.getType() != Material.RESPAWN_ANCHOR) return;
         World world = block.getWorld();
-        if (!world.getName().startsWith(WorldManager.PREFIX)) return;
+        if (!WorldManager.isCustomWorld(world)) return;
 
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                Block b = world.getBlockAt(block.getX(), block.getY(), block.getZ());
-                if (b.getType() != Material.RESPAWN_ANCHOR) return;
-                RespawnAnchor data = (RespawnAnchor) b.getBlockData();
-                if (data.getCharges() == 0) {
-                    anchorManager.removeCustomAnchor(event.getPlayer().getUniqueId());
-                }
+        SkyGridScheduler.runRegionLater(plugin, block.getLocation(), () -> {
+            Block b = world.getBlockAt(block.getX(), block.getY(), block.getZ());
+            if (b.getType() != Material.RESPAWN_ANCHOR) return;
+            RespawnAnchor data = (RespawnAnchor) b.getBlockData();
+            if (data.getCharges() == 0) {
+                anchorManager.removeCustomAnchor(event.getPlayer().getUniqueId());
             }
-        }.runTaskLater(plugin, 1L);
+        }, 1L);
     }
 
     /**
@@ -69,7 +64,7 @@ public class AnchorIsolation implements Listener {
         Block block = event.getClickedBlock();
         if (block == null || block.getType() != Material.RESPAWN_ANCHOR) return;
         World world = block.getWorld();
-        if (!world.getName().startsWith(WorldManager.PREFIX)) return;
+        if (!WorldManager.isCustomWorld(world)) return;
         if (event.getItem() != null && event.getItem().getType() == Material.GLOWSTONE) return;
 
         RespawnAnchor data = (RespawnAnchor) block.getBlockData();
@@ -86,7 +81,7 @@ public class AnchorIsolation implements Listener {
         Block block = event.getBlock();
         if (block.getType() != Material.RESPAWN_ANCHOR) return;
         World world = block.getWorld();
-        if (!world.getName().startsWith(WorldManager.PREFIX)) return;
+        if (!WorldManager.isCustomWorld(world)) return;
 
         Location loc = block.getLocation();
         UUID toRemove = null;
@@ -106,27 +101,25 @@ public class AnchorIsolation implements Listener {
     }
 
     /**
-     * Redirect respawn to custom anchor or default world spawn
+     * Redirect respawn to a SkyGrid custom anchor when one exists.
      */
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onCustomRespawn(PlayerRespawnEvent event) {
         Player player = event.getPlayer();
         World deathWorld = player.getWorld();
-        if (!deathWorld.getName().startsWith(WorldManager.PREFIX)) return;
+        if (!WorldManager.isCustomWorld(deathWorld)) return;
+        if (!PluginSettings.isRespawnIsolationEnabled()) return;
 
         UUID id = player.getUniqueId();
+        if (!anchorManager.hasCustomAnchor(id)) return;
+
         World targetWorld;
         Location targetLoc;
 
-        if (anchorManager.hasCustomAnchor(id)) {
-            targetLoc = anchorManager.getCustomAnchor(id);
-            if (targetLoc == null) return;
-            targetWorld = targetLoc.getWorld();
-        } else {
-            targetWorld = Bukkit.getWorld(WorldManager.PREFIX + "world");
-            if (targetWorld == null) return;
-            targetLoc = targetWorld.getSpawnLocation();
-        }
+        targetLoc = anchorManager.getCustomAnchor(id);
+        if (targetLoc == null) return;
+        targetWorld = targetLoc.getWorld();
+        if (targetWorld == null) return;
 
         event.setRespawnLocation(new Location(
             targetWorld,
@@ -135,31 +128,28 @@ public class AnchorIsolation implements Listener {
             targetLoc.getBlockZ() + 0.5
         ));
 
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                tpr.findNonAirBlock(
-                    player,
-                    targetWorld,
-                    targetLoc.getBlockX(),
-                    targetLoc.getBlockY(),
-                    targetLoc.getBlockZ(),
-                    true
-                );
-                Block b = targetWorld.getBlockAt(
-                    targetLoc.getBlockX(),
-                    targetLoc.getBlockY(),
-                    targetLoc.getBlockZ()
-                );
-                if (b.getType() != Material.RESPAWN_ANCHOR) {
+        SkyGridScheduler.runRegionLater(plugin, targetLoc, () -> {
+            tpr.findNonAirBlock(
+                player,
+                targetWorld,
+                targetLoc.getBlockX(),
+                targetLoc.getBlockY(),
+                targetLoc.getBlockZ(),
+                true
+            );
+            Block b = targetWorld.getBlockAt(
+                targetLoc.getBlockX(),
+                targetLoc.getBlockY(),
+                targetLoc.getBlockZ()
+            );
+            if (b.getType() != Material.RESPAWN_ANCHOR) {
+                anchorManager.removeCustomAnchor(id);
+            } else {
+                RespawnAnchor d = (RespawnAnchor) b.getBlockData();
+                if (d.getCharges() == 0) {
                     anchorManager.removeCustomAnchor(id);
-                } else {
-                    RespawnAnchor d = (RespawnAnchor) b.getBlockData();
-                    if (d.getCharges() == 0) {
-                        anchorManager.removeCustomAnchor(id);
-                    }
                 }
             }
-        }.runTaskLater(plugin, 2L);
+        }, 2L);
     }
 }

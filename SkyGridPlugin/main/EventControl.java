@@ -22,7 +22,6 @@ import org.bukkit.event.player.PlayerPortalEvent;
 import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
 import org.bukkit.event.world.StructureGrowEvent;
 import org.bukkit.plugin.Plugin;
-import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -262,10 +261,9 @@ public class EventControl implements Listener {
 		World fromWorld = from.getWorld();
 		if (fromWorld == null || !WorldManager.isCustomWorld(player)) return;
 
-		String base = WorldManager.PREFIX + "world";
-		String overworldName = base;
-		String netherName = base + "_nether";
-		String endName = base + "_the_end";
+		String overworldName = WorldManager.getWorldName(Environment.NORMAL);
+		String netherName = WorldManager.getWorldName(Environment.NETHER);
+		String endName = WorldManager.getWorldName(Environment.THE_END);
 		TeleportCause cause = event.getCause();
 		Location dest = null;
 
@@ -284,12 +282,15 @@ public class EventControl implements Listener {
 		else if (fromWorld.getName().equals(overworldName) && cause == TeleportCause.END_PORTAL) {
 			World end = Bukkit.getWorld(endName);
 			if (end != null) {
-				createEndPlatform(end);
 				Location spawn = new Location(end, 100.5, 65, 0.5);
-				event.setTo(spawn);
+				event.setCancelled(true);
 				event.setCanCreatePortal(false);
 				event.setSearchRadius(0);
 				event.setCreationRadius(0);
+				SkyGridScheduler.runRegion(plugin, end, spawn.getBlockX() >> 4, spawn.getBlockZ() >> 4, () -> {
+					createEndPlatform(end);
+					player.teleportAsync(spawn);
+				});
 			}
 		}
 
@@ -304,9 +305,8 @@ public class EventControl implements Listener {
 		World fromWorld = from.getWorld();
 		if (fromWorld == null || !WorldManager.isCustomWorld(from.getBlock())) return;
 
-		String base = WorldManager.PREFIX + "world";
-		String overworldName = base;
-		String netherName = base + "_nether";
+		String overworldName = WorldManager.getWorldName(Environment.NORMAL);
+		String netherName = WorldManager.getWorldName(Environment.NETHER);
 		Environment env = fromWorld.getEnvironment();
 		Location dest = null;
 
@@ -329,9 +329,8 @@ public class EventControl implements Listener {
 		World from = event.getFrom();
 		World to = player.getWorld();
 
-		String base = WorldManager.PREFIX + "world";
-		String customEnd = base + "_the_end";
-		String customOver = base;
+		String customEnd = WorldManager.getWorldName(Environment.THE_END);
+		String customOver = WorldManager.getWorldName(Environment.NORMAL);
 
 		if (!from.getName().equals(customEnd)) return;
 
@@ -340,37 +339,34 @@ public class EventControl implements Listener {
 		}
 
 		if (!to.getName().equals(customOver)) {
-			new BukkitRunnable() {
-				@Override
-				public void run() {
-					World over = Bukkit.getWorld(customOver);
-					if (over == null) return;
+			SkyGridScheduler.runEntity(player, plugin, () -> {
+				World over = Bukkit.getWorld(customOver);
+				if (over == null) return;
 
-					CustomBedManager bedManager = CustomBedManager.getInstance();
-					Location bed = bedManager.getCustomBed(player.getUniqueId());
+				CustomBedManager bedManager = CustomBedManager.getInstance();
+				Location bed = bedManager.getCustomBed(player.getUniqueId());
 
-					if (bed != null && bed.getWorld().getName().equals(customOver)) {
-						tpr.findNonAirBlock(
-								player,
-								over,
-								bed.getBlockX(),
-								bed.getBlockY(),
-								bed.getBlockZ(),
-								true
-								);
-					} else {
-						Location spawn = over.getSpawnLocation();
-						tpr.findNonAirBlock(
-								player,
-								over,
-								spawn.getBlockX(),
-								spawn.getBlockY(),
-								spawn.getBlockZ(),
-								true
-								);
-					}
+				if (bed != null && bed.getWorld().getName().equals(customOver)) {
+					tpr.findNonAirBlock(
+							player,
+							over,
+							bed.getBlockX(),
+							bed.getBlockY(),
+							bed.getBlockZ(),
+							true
+							);
+				} else {
+					Location spawn = over.getSpawnLocation();
+					tpr.findNonAirBlock(
+							player,
+							over,
+							spawn.getBlockX(),
+							spawn.getBlockY(),
+							spawn.getBlockZ(),
+							true
+							);
 				}
-			}.runTask(plugin);
+			});
 		}
 	}
 

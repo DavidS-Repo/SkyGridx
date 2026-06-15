@@ -3,7 +3,6 @@ package main;
 import java.util.Map;
 import java.util.UUID;
 
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -18,7 +17,6 @@ import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.scheduler.BukkitRunnable;
 
 public class BedIsolation implements Listener {
 	private final JavaPlugin plugin;
@@ -40,7 +38,7 @@ public class BedIsolation implements Listener {
 		if (!mat.name().endsWith("_BED")) return;
 
 		World world = event.getClickedBlock().getWorld();
-		if (!world.getName().startsWith(WorldManager.PREFIX)) return;
+		if (!WorldManager.isCustomWorld(world)) return;
 
 		// find the foot half no matter which half was clicked
 		BlockData data = event.getClickedBlock().getBlockData();
@@ -64,7 +62,7 @@ public class BedIsolation implements Listener {
 
 		Location loc = event.getBlock().getLocation();
 		World world = loc.getWorld();
-		if (!world.getName().startsWith(WorldManager.PREFIX)) return;
+		if (!WorldManager.isCustomWorld(world)) return;
 
 		// convert broken block to its foot half
 		BlockData data = event.getBlock().getBlockData();
@@ -103,9 +101,13 @@ public class BedIsolation implements Listener {
 	public void onCustomRespawn(PlayerRespawnEvent event) {
 		Player player = event.getPlayer();
 		World deathWorld = player.getWorld();
-		if (!deathWorld.getName().startsWith(WorldManager.PREFIX)) return;
+		if (!WorldManager.isCustomWorld(deathWorld)) return;
+		if (!PluginSettings.isRespawnIsolationEnabled()) return;
 
 		UUID id = player.getUniqueId();
+		CustomAnchorManager anchorManager = CustomAnchorManager.getInstance();
+		if (anchorManager != null && anchorManager.hasCustomAnchor(id)) return;
+
 		World targetWorld;
 		Location targetLoc;
 
@@ -113,9 +115,9 @@ public class BedIsolation implements Listener {
 			targetLoc = bedManager.getCustomBed(id);
 			if (targetLoc == null) return;
 			targetWorld = targetLoc.getWorld();
+			if (targetWorld == null) return;
 		} else {
-			String customName = WorldManager.PREFIX + "world";
-			targetWorld = Bukkit.getWorld(customName);
+			targetWorld = WorldManager.getWorldForEnvironment(World.Environment.NORMAL);
 			if (targetWorld == null) return;
 			targetLoc = targetWorld.getSpawnLocation();
 		}
@@ -127,18 +129,13 @@ public class BedIsolation implements Listener {
 				targetLoc.getBlockZ() + 0.5
 				));
 
-		new BukkitRunnable() {
-			@Override
-			public void run() {
-				tpr.findNonAirBlock(
-						player,
-						targetWorld,
-						targetLoc.getBlockX(),
-						targetLoc.getBlockY(),
-						targetLoc.getBlockZ(),
-						true
-						);
-			}
-		}.runTaskLater(plugin, 1L);
+		SkyGridScheduler.runEntityLater(player, plugin, () -> tpr.findNonAirBlock(
+				player,
+				targetWorld,
+				targetLoc.getBlockX(),
+				targetLoc.getBlockY(),
+				targetLoc.getBlockZ(),
+				true
+				), 1L);
 	}
 }

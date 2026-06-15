@@ -1,8 +1,5 @@
 package main;
 
-import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -12,16 +9,18 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.EnumSet;
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class TPRCommand implements CommandExecutor {
 	private final JavaPlugin plugin;
-	private final Object2ObjectOpenHashMap<UUID, Object2LongOpenHashMap<World.Environment>> lastTeleportTimes = new Object2ObjectOpenHashMap<>();
-	private final Object2LongOpenHashMap<UUID> lastCommandTimes = new Object2LongOpenHashMap<>();
+	private final ConcurrentMap<UUID, ConcurrentMap<World.Environment, Long>> lastTeleportTimes = new ConcurrentHashMap<>();
+	private final ConcurrentMap<UUID, Long> lastCommandTimes = new ConcurrentHashMap<>();
 	private static final String ERROR_MESSAGE = "Only players can use this command.";
 	private static final EnumSet<Material> DANGEROUSBLOCKS;
 	private static final int Lx, Sx, Lz, Sz, Y, b2b, tprN, tprE, tprO;
@@ -45,11 +44,10 @@ public class TPRCommand implements CommandExecutor {
 
 	@Override
 	public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-		if (!(sender instanceof Player)) {
+		if (!(sender instanceof Player player)) {
 			Cc.sendS(sender, Cc.RED, ERROR_MESSAGE);
 			return true;
 		}
-		Player player = (Player) sender;
 		World world = getWorldByLabel(label, args);
 		if (world == null) {
 			Cc.sendS(player, Cc.RED, "Target world not found!");
@@ -82,12 +80,7 @@ public class TPRCommand implements CommandExecutor {
 	}
 
 	private World getWorldForEnvironment(World.Environment env) {
-		String worldName = WorldManager.PREFIX + switch (env) {
-		case NETHER -> "world_nether";
-		case THE_END -> "world_the_end";
-		default -> "world";
-		};
-		return Bukkit.getWorld(worldName);
+		return WorldManager.getWorldForEnvironment(env);
 	}
 
 	private void handleCooldownMessages(Player player, World world) {
@@ -125,8 +118,10 @@ public class TPRCommand implements CommandExecutor {
 		if ((currentTime - lastCommandTime) < b2bDelay) {
 			return false;
 		}
-		Object2LongOpenHashMap<World.Environment> environmentTimes =
-				lastTeleportTimes.getOrDefault(playerId, new Object2LongOpenHashMap<>());
+		Map<World.Environment, Long> environmentTimes = lastTeleportTimes.get(playerId);
+		if (environmentTimes == null) {
+			return true;
+		}
 		long lastTeleportTime = environmentTimes.getOrDefault(world.getEnvironment(), 0L);
 		int delay = getTeleportDelay(world);
 		return (currentTime - lastTeleportTime) >= delay * 1000L;
@@ -151,7 +146,10 @@ public class TPRCommand implements CommandExecutor {
 		if (!lastTeleportTimes.containsKey(playerId)) {
 			return 0;
 		}
-		Object2LongOpenHashMap<World.Environment> environmentTimes = lastTeleportTimes.get(playerId);
+		Map<World.Environment, Long> environmentTimes = lastTeleportTimes.get(playerId);
+		if (environmentTimes == null) {
+			return 0;
+		}
 		long lastTeleportTime = environmentTimes.getOrDefault(world.getEnvironment(), 0L);
 		int delay = getTeleportDelay(world);
 		long remaining = lastTeleportTime + (delay * 1000L) - System.currentTimeMillis();
@@ -185,38 +183,49 @@ public class TPRCommand implements CommandExecutor {
 	public void findNonAirBlock(Player player, World world, int destinationX, int destinationY, int destinationZ, boolean isRegularTeleport) {
 		int chunkX = destinationX >> 4;
 		int chunkZ = destinationZ >> 4;
-		world.loadChunk(chunkX, chunkZ, true);
-		new BukkitRunnable() {
-			@Override
-			public void run() {
-				if (!world.isChunkLoaded(chunkX, chunkZ)) {
-					return;
-				}
-				for (int dx = -2; dx <= 2; dx++) {
-					for (int dz = -2; dz <= 2; dz++) {
-						for (int dy = 0; dy <= 10; dy++) {
-							int x = destinationX + dx;
-							int y = destinationY + dy;
-							int z = destinationZ + dz;
-							Block block = world.getBlockAt(x, y, z);
-							if (!block.getType().isAir() && !isDangerousBlock(block.getType())) {
-								if (isRegularTeleport) {
-									UUID playerId = player.getUniqueId();
-									Object2LongOpenHashMap<World.Environment> environmentTimes =
-											lastTeleportTimes.getOrDefault(playerId, new Object2LongOpenHashMap<>());
-									environmentTimes.put(world.getEnvironment(), System.currentTimeMillis());
-									lastTeleportTimes.put(playerId, environmentTimes);
-									lastCommandTimes.put(playerId, System.currentTimeMillis());
-								}
-								player.teleport(new Location(world, x + 0.5, y + 1, z + 0.5));
-								cancel();
-								return;
-							}
+		Location chunkLocation = new Location(world, chunkX << 4, destinationY, chunkZ << 4);
+		world.getChunkAtAsync(chunkLocation).thenRun(() ->
+				SkyGridScheduler.runRegion(plugin, world, chunkX, chunkZ,
+						() -> findSafeBlockAndTeleport(player, world, destinationX, destinationY, destinationZ, isRegularTeleport)))
+		.exceptionally(error -> {
+			plugin.getLogger().warning("Failed to load teleport chunk: " + error.getMessage());
+			return null;
+		});
+	}
+
+	private void findSafeBlockAndTeleport(Player player, World world, int destinationX, int destinationY, int destinationZ,
+			boolean isRegularTeleport) {
+		for (int dx = -2; dx <= 2; dx++) {
+			for (int dz = -2; dz <= 2; dz++) {
+				for (int dy = 0; dy <= 10; dy++) {
+					int x = destinationX + dx;
+					int y = destinationY + dy;
+					int z = destinationZ + dz;
+					Block block = world.getBlockAt(x, y, z);
+					if (!block.getType().isAir() && !isDangerousBlock(block.getType())) {
+						if (isRegularTeleport) {
+							recordTeleport(player.getUniqueId(), world.getEnvironment());
 						}
+						player.teleportAsync(new Location(world, x + 0.5, y + 1, z + 0.5));
+						return;
 					}
 				}
 			}
-		}.runTaskTimer(plugin, 0L, 1L);
+		}
+	}
+
+	private void recordTeleport(UUID playerId, World.Environment environment) {
+		long now = System.currentTimeMillis();
+		ConcurrentMap<World.Environment, Long> environmentTimes = lastTeleportTimes.get(playerId);
+		if (environmentTimes == null) {
+			ConcurrentMap<World.Environment, Long> newTimes = new ConcurrentHashMap<>();
+			environmentTimes = lastTeleportTimes.putIfAbsent(playerId, newTimes);
+			if (environmentTimes == null) {
+				environmentTimes = newTimes;
+			}
+		}
+		environmentTimes.put(environment, now);
+		lastCommandTimes.put(playerId, now);
 	}
 
 	public void teleportPlayerForFirstJoin(Player player, World world) {

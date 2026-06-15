@@ -8,6 +8,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -110,7 +111,8 @@ public class PortalLocationManager {
 	 */
 	public synchronized void clearAllPortals() {
 		portalLocations.clear();
-		try (FileOutputStream out = new FileOutputStream(dataFile, false)) {
+		try {
+			Files.write(dataFile.toPath(), new byte[0]);
 		} catch (IOException ex) {
 			plugin.getLogger().severe("Failed to clear portals.dat: " + ex.getMessage());
 		}

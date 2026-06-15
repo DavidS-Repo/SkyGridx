@@ -151,6 +151,19 @@ fog:
   # Set to true to automatically enable fog when the plugin starts.
   autoEnable: false
 
+# Compatibility settings
+compatibility:
+  # When true, SkyGrid controls death respawns for players who die in SkyGrid worlds.
+  # This keeps them inside the SkyGrid world set, using SkyGrid custom beds, anchors,
+  # or the SkyGrid overworld spawn as a fallback.
+  # Set to false if Multiverse, CMI, or another spawn manager should fully decide
+  # where players respawn after dying in a SkyGrid world.
+  respawnIsolation: true
+
+  # Warn during startup when Multiverse-Core is detected, since Multiverse worlds
+  # should be imported or created with the SkyGrid generator before new chunks are made.
+  multiverseWarnings: true
+
 # Event Control settings
 EventControl:
   # (true to enable event check, false to disable)

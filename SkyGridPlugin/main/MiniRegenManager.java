@@ -1,5 +1,6 @@
 package main;
 
+import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
 import org.bukkit.Chunk;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -8,9 +9,8 @@ import org.bukkit.configuration.ConfigurationSection;
 import java.io.File;
 import java.io.InputStream;
 import java.io.FileOutputStream;
-import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.List;
 import it.unimi.dsi.fastutil.objects.Object2DoubleOpenHashMap;
@@ -20,7 +20,7 @@ public class MiniRegenManager {
 	private final Generator generator;
 	private final Map<String, MiniRegenSettings> miniRegenSettings;
 	private final Map<String, MaterialManager.MaterialDistribution> miniRegenDistributions;
-	private final AsyncDelayedScheduler scheduler = new AsyncDelayedScheduler();
+	private final Map<String, ScheduledTask> scheduledTasks;
 	private final File folder;
 	private final File settingsFile;
 	private final File materialsFile;
@@ -28,8 +28,9 @@ public class MiniRegenManager {
 	public MiniRegenManager(SkyGridPlugin plugin, Generator generator) {
 		this.plugin = plugin;
 		this.generator = generator;
-		this.miniRegenSettings = new HashMap<>();
-		this.miniRegenDistributions = new HashMap<>();
+		this.miniRegenSettings = new ConcurrentHashMap<>();
+		this.miniRegenDistributions = new ConcurrentHashMap<>();
+		this.scheduledTasks = new ConcurrentHashMap<>();
 		this.folder = new File(plugin.getDataFolder(), "MiniRegen");
 		if (!folder.exists()) {
 			folder.mkdirs();
@@ -115,7 +116,7 @@ public class MiniRegenManager {
 						for (String matKey : distSection.getKeys(false)) {
 							double percentage = distSection.getDouble(matKey);
 							Material material = Material.getMaterial(matKey.trim().toUpperCase());
-							if (material != null) {
+							if (material != null && percentage > 0) {
 								distributionMap.put(material, percentage);
 							} else {
 								plugin.getLogger().warning(Cc.YELLOW.getAnsi() + "Invalid material '" + matKey 
@@ -142,22 +143,35 @@ public class MiniRegenManager {
 
 	private void scheduleTaskForChunk(MiniRegenSettings settings) {
 		String key = settings.alias;
-		scheduler.scheduleAtFixedRate(() -> {
-			if (!plugin.isEnabled()) return;
-			if (!miniRegenSettings.containsKey(key)) return;
-			plugin.getServer().getScheduler().runTask(plugin, () -> {
-				if (!plugin.isEnabled()) return;
-				World world = plugin.getServer().getWorld(settings.worldName);
-				if (world != null) {
-					Chunk chunk = world.getChunkAt(settings.chunkX, settings.chunkZ);
-					chunk.setForceLoaded(true);
-					MaterialManager.MaterialDistribution distribution = miniRegenDistributions.get(settings.distribution);
-					if (distribution != null && chunk != null) {
-						generator.regenerateMiniChunk(chunk, distribution);
-					}
-				}
-			});
-		}, settings.interval, settings.interval, TimeUnit.SECONDS, () -> plugin.isEnabled());
+		ScheduledTask oldTask = scheduledTasks.remove(key);
+		if (oldTask != null) {
+			oldTask.cancel();
+		}
+
+		World world = WorldManager.getWorldByConfiguredName(settings.worldName);
+		if (world == null) {
+			plugin.getLogger().warning("Mini regen world not loaded: " + settings.worldName);
+			return;
+		}
+
+		long periodTicks = Math.max(1L, settings.interval * 20L);
+		ScheduledTask task = SkyGridScheduler.runRegionTimer(plugin, world, settings.chunkX, settings.chunkZ, scheduled -> {
+			if (!plugin.isEnabled() || !miniRegenSettings.containsKey(key)) {
+				scheduled.cancel();
+				scheduledTasks.remove(key, scheduled);
+				return;
+			}
+
+			MaterialManager.MaterialDistribution distribution = miniRegenDistributions.get(settings.distribution);
+			if (distribution == null) {
+				return;
+			}
+
+			Chunk chunk = world.getChunkAt(settings.chunkX, settings.chunkZ);
+			chunk.addPluginChunkTicket(plugin);
+			generator.regenerateMiniChunk(chunk, distribution);
+		}, periodTicks, periodTicks);
+		scheduledTasks.put(key, task);
 	}
 
 	public void addMiniRegen(String worldName, int chunkX, int chunkZ, String alias, String distribution, int interval, String group) {
@@ -170,6 +184,10 @@ public class MiniRegenManager {
 
 	public void removeMiniRegen(String alias) {
 		miniRegenSettings.remove(alias);
+		ScheduledTask task = scheduledTasks.remove(alias);
+		if (task != null) {
+			task.cancel();
+		}
 		updateSettingsFile();
 	}
 
@@ -179,6 +197,10 @@ public class MiniRegenManager {
 			MiniRegenSettings settings = miniRegenSettings.get(alias);
 			if (settings.group != null && settings.group.equalsIgnoreCase(group)) {
 				miniRegenSettings.remove(alias);
+				ScheduledTask task = scheduledTasks.remove(alias);
+				if (task != null) {
+					task.cancel();
+				}
 			}
 		}
 		updateSettingsFile();
@@ -202,7 +224,10 @@ public class MiniRegenManager {
 	}
 
 	public void shutdown() {
-		scheduler.setEnabled(false);
+		for (ScheduledTask task : scheduledTasks.values()) {
+			task.cancel();
+		}
+		scheduledTasks.clear();
 	}
 
 	public Map<String, MiniRegenSettings> getMiniRegenSettings() {

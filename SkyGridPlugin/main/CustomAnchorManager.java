@@ -1,6 +1,5 @@
 package main;
 
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -17,7 +16,7 @@ import java.util.UUID;
  * Manages storage of player respawn anchor locations
  */
 public class CustomAnchorManager {
-    private static CustomAnchorManager instance;
+    private static volatile CustomAnchorManager instance;
     private final Plugin plugin;
     private final File anchorFile;
     private final Map<UUID, Location> anchorSpawns = new HashMap<>();
@@ -57,7 +56,10 @@ public class CustomAnchorManager {
                 continue;
             }
             String worldName = config.getString(key + ".world");
-            World world = Bukkit.getWorld(worldName);
+            World world = WorldManager.getWorldByConfiguredName(worldName);
+            if (world == null) {
+                continue;
+            }
             int x = config.getInt(key + ".x");
             int y = config.getInt(key + ".y");
             int z = config.getInt(key + ".z");
@@ -72,13 +74,16 @@ public class CustomAnchorManager {
      * Save current anchor map to disk
      */
     private void saveSnapshot() {
-        Map<UUID, Location> snapshot = new HashMap<>(anchorSpawns);
+        Map<UUID, Location> snapshot;
+        synchronized (anchorSpawns) {
+            snapshot = new HashMap<>(anchorSpawns);
+        }
         YamlConfiguration config = new YamlConfiguration();
         for (var entry : snapshot.entrySet()) {
             UUID uuid = entry.getKey();
             Location loc = entry.getValue();
             World world = loc.getWorld();
-            if (!world.getName().startsWith(WorldManager.PREFIX)) continue;
+            if (!WorldManager.isCustomWorld(world)) continue;
             String key = uuid.toString();
             config.set(key + ".world", world.getName());
             config.set(key + ".x", loc.getBlockX());
@@ -98,7 +103,7 @@ public class CustomAnchorManager {
      */
     public void setCustomAnchor(Player player, Location loc) {
         World world = loc.getWorld();
-        if (world.getName().startsWith(WorldManager.PREFIX)) {
+        if (WorldManager.isCustomWorld(world)) {
             synchronized (anchorSpawns) {
                 anchorSpawns.put(player.getUniqueId(), loc);
             }

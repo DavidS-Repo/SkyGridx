@@ -131,6 +131,10 @@ public class PluginSettings {
 		// Fog setting
 		config.addDefault("fog.autoEnable", false);
 
+		// Compatibility settings
+		config.addDefault("compatibility.respawnIsolation", true);
+		config.addDefault("compatibility.multiverseWarnings", true);
+
 		// Event Control Settings
 		config.addDefault("EventControl.GRAVITY_AFFECTED_BLOCKS.Materials", List.of(
 				"SAND",
@@ -289,6 +293,14 @@ public class PluginSettings {
 
 	public static boolean isFogAutoEnabled() {
 		return config.getBoolean("fog.autoEnable");
+	}
+
+	public static boolean isRespawnIsolationEnabled() {
+		return config.getBoolean("compatibility.respawnIsolation");
+	}
+
+	public static boolean isMultiverseWarningsEnabled() {
+		return config.getBoolean("compatibility.multiverseWarnings");
 	}
 
 	public static EnumSet<Material> getGravityAffectedBlocks() {

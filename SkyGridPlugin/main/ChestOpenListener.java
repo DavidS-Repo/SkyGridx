@@ -5,6 +5,7 @@ import org.bukkit.block.Block;
 import org.bukkit.block.Chest;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.loot.LootTable;
 import org.bukkit.persistence.PersistentDataType;
@@ -27,7 +28,7 @@ public class ChestOpenListener implements Listener {
 	 */
 	@EventHandler
 	public void onPlayerInteract(PlayerInteractEvent event) {
-		if (!event.getAction().toString().contains("RIGHT_CLICK_BLOCK")) {
+		if (event.getAction() != Action.RIGHT_CLICK_BLOCK) {
 			return;
 		}
 
@@ -47,7 +48,8 @@ public class ChestOpenListener implements Listener {
 				CustomChest.getInstance(plugin).populateChestOnOpen(chest, info);
 				regionData.markChestLooted(chest.getLocation());
 			} else if (info.type == ChestRegionData.ChestType.VANILLA) {
-				LootTable table = plugin.getServer().getLootTable(NamespacedKey.fromString(info.lootTableKey));
+				NamespacedKey key = NamespacedKey.fromString(info.lootTableKey);
+				LootTable table = key == null ? null : plugin.getServer().getLootTable(key);
 				if (table != null) {
 					chest.setLootTable(table);
 					chest.update();

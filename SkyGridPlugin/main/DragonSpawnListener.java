@@ -10,9 +10,8 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.scheduler.BukkitRunnable;
 
-import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class DragonSpawnListener implements Listener {
 
@@ -27,20 +26,17 @@ public class DragonSpawnListener implements Listener {
 		if (event.getEntityType() != EntityType.ENDER_DRAGON) return;
 
 		World world = event.getLocation().getWorld();
-		if (world == null || !world.getName().equals("skygridx_world_the_end")) return;
+		if (!WorldManager.isSkyGridEndWorld(world)) return;
 
 		DragonBattle battle = world.getEnderDragonBattle();
 		if (battle == null) return;
 
 		// Only run our code if this is the first time the dragon is spawning
 		if (!battle.hasBeenPreviouslyKilled()) {
-			new BukkitRunnable() {
-				@Override
-				public void run() {
-					clearObstructions(world);
-					generatePillars(world);
-				}
-			}.runTaskLater(plugin, 100L); // 5 seconds later
+			SkyGridScheduler.runRegionLater(plugin, world, 0, 0, () -> {
+				clearObstructions(world);
+				generatePillars(world);
+			}, 100L); // 5 seconds later
 		}
 	}
 
@@ -71,7 +67,7 @@ public class DragonSpawnListener implements Listener {
 	}
 
 	private void generatePillars(World world) {
-		Random random = new Random();
+		ThreadLocalRandom random = ThreadLocalRandom.current();
 		int pillarCount = VoidWorldGenerator.PILLAR_COUNT;
 		int mainRadius = VoidWorldGenerator.MAIN_RADIUS;
 

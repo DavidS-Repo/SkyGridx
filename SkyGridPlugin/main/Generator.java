@@ -1,13 +1,15 @@
 package main;
 
-import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Beehive;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 import org.bukkit.block.data.Ageable;
 import org.bukkit.block.data.BlockData;
+import org.bukkit.block.data.Directional;
+import org.bukkit.block.data.FaceAttachable;
 import org.bukkit.block.data.type.Bamboo;
 import org.bukkit.block.data.type.CaveVines;
 import org.bukkit.block.data.type.Leaves;
@@ -32,10 +34,7 @@ import java.util.concurrent.ThreadLocalRandom;
  * Generates and processes Skygrid chunks and blocks.
  */
 public class Generator implements Listener {
-	private static final String PREFIX = "skygridx_";
-
 	private final SkyGridPlugin plugin;
-	private final ThreadLocalRandom random;
 	private final MaterialManager materialManager;
 	private final Spawner spawner;
 	private final CustomChest chest;
@@ -65,7 +64,6 @@ public class Generator implements Listener {
 
 	public Generator(SkyGridPlugin plugin) {
 		this.plugin = plugin;
-		this.random = ThreadLocalRandom.current();
 		this.materialManager = new MaterialManager(plugin);
 		this.spawner = Spawner.getInstance(plugin);
 		this.chest = CustomChest.getInstance(plugin);
@@ -108,10 +106,6 @@ public class Generator implements Listener {
 	/**
 	 * Checks if a world is a Skygrid world.
 	 */
-	private boolean isSkygridWorld(String name) {
-		return name.startsWith(PREFIX);
-	}
-
 	/**
 	 * Handles chunk load event for Skygrid worlds.
 	 */
@@ -119,18 +113,22 @@ public class Generator implements Listener {
 	public void onChunkLoad(ChunkLoadEvent event) {
 		World world = event.getWorld();
 		String worldName = world.getName();
-		if (!isSkygridWorld(worldName)) {
+		if (!WorldManager.isCustomWorld(world)) {
 			return;
 		}
 
 		Chunk chunk = event.getChunk();
 
 		if (event.isNewChunk()) {
-			Bukkit.getScheduler().runTaskLater(
-					plugin,
-					() -> processChunk(chunk, world, worldName),
-					PluginSettings.getProcessDelay()
-					);
+			int processDelay = PluginSettings.getProcessDelay();
+			if (processDelay <= 0) {
+				SkyGridScheduler.runRegion(plugin, world, chunk.getX(), chunk.getZ(),
+						() -> processChunk(chunk, world, worldName));
+			} else {
+				SkyGridScheduler.runRegionLater(plugin, world, chunk.getX(), chunk.getZ(),
+						() -> processChunk(chunk, world, worldName),
+						processDelay);
+			}
 		}
 	}
 
@@ -140,15 +138,17 @@ public class Generator implements Listener {
 	public void processLoadedChunks() {
 		for (World.Environment dim : DIMENSIONS_TO_PROCESS) {
 			Set<Chunk> toProcess = new HashSet<>();
-			for (World world : Bukkit.getWorlds()) {
-				if (world.getEnvironment() == dim && isSkygridWorld(world.getName())) {
+			for (World world : plugin.getServer().getWorlds()) {
+				if (world.getEnvironment() == dim && WorldManager.isCustomWorld(world)) {
 					for (Chunk chunk : world.getLoadedChunks()) {
 						toProcess.add(chunk);
 					}
 				}
 			}
 			for (Chunk chunk : toProcess) {
-				processChunk(chunk, chunk.getWorld(), chunk.getWorld().getName());
+				World world = chunk.getWorld();
+				SkyGridScheduler.runRegion(plugin, world, chunk.getX(), chunk.getZ(),
+						() -> processChunk(chunk, world, world.getName()));
 			}
 		}
 	}
@@ -157,10 +157,11 @@ public class Generator implements Listener {
 	 * Regenerates all loaded chunks in all Skygrid worlds.
 	 */
 	public void regenerateAllLoadedChunks() {
-		for (World world : Bukkit.getWorlds()) {
-			if (!isSkygridWorld(world.getName())) continue;
+		for (World world : plugin.getServer().getWorlds()) {
+			if (!WorldManager.isCustomWorld(world)) continue;
 			for (Chunk chunk : world.getLoadedChunks()) {
-				processChunk(chunk, world, world.getName());
+				SkyGridScheduler.runRegion(plugin, world, chunk.getX(), chunk.getZ(),
+						() -> processChunk(chunk, world, world.getName()));
 			}
 		}
 	}
@@ -180,7 +181,7 @@ public class Generator implements Listener {
 			for (int z = 1; z <= 15; z += 4) {
 				for (int y = minY; y <= maxY; y += 4) {
 					Block block = chunk.getBlock(x, y, z);
-					setBlockTypeAndHandle(block, dist.next(), chestRecords);
+					setGridBlockAndHandle(block, dist.next(), chestRecords);
 				}
 			}
 		}
@@ -206,9 +207,9 @@ public class Generator implements Listener {
 				for (int y = minY; y <= maxY; y += 4) {
 					Block block = chunk.getBlock(x, y, z);
 					String biome = block.getBiome().getKey().toString();
-					Material mat = materialManager.getRandomMaterialForWorld(worldName, biome);
-					if (mat != null) {
-						setBlockTypeAndHandle(block, mat, chestRecords);
+					MaterialManager.GridBlock gridBlock = materialManager.getRandomGridBlockForWorld(worldName, biome);
+					if (gridBlock != null) {
+						setGridBlockAndHandle(block, gridBlock, chestRecords);
 					}
 				}
 			}
@@ -223,7 +224,47 @@ public class Generator implements Listener {
 	 * Sets a block type and applies special handling for some types.
 	 */
 	private void setBlockTypeAndHandle(Block block, Material mat, List<ChestRegionData.ChestRecord> chestRecords) {
+		setBlockTypeAndHandle(block, mat, chestRecords, null);
+	}
+
+	/**
+	 * Sets a parent grid block, then places any configured face attachments.
+	 */
+	private void setGridBlockAndHandle(Block block, MaterialManager.GridBlock gridBlock, List<ChestRegionData.ChestRecord> chestRecords) {
+		setBlockTypeAndHandle(block, gridBlock.material(), chestRecords);
+
+		MaterialManager.FaceAttachment[] attachments = gridBlock.attachments();
+		for (MaterialManager.FaceAttachment attachment : attachments) {
+			if (attachment.face() != BlockFace.UP) {
+				setAttachmentBlock(block, attachment, chestRecords);
+			}
+		}
+		for (MaterialManager.FaceAttachment attachment : attachments) {
+			if (attachment.face() == BlockFace.UP) {
+				setAttachmentBlock(block, attachment, chestRecords);
+			}
+		}
+	}
+
+	private void setAttachmentBlock(Block parentBlock, MaterialManager.FaceAttachment attachment, List<ChestRegionData.ChestRecord> chestRecords) {
+		Block attachmentBlock = parentBlock.getRelative(attachment.face());
+		if (!isWithinBuildHeight(attachmentBlock)) {
+			return;
+		}
+		setBlockTypeAndHandle(attachmentBlock, attachment.material(), chestRecords, attachment.face());
+	}
+
+	private boolean isWithinBuildHeight(Block block) {
+		int y = block.getY();
+		World world = block.getWorld();
+		return y >= world.getMinHeight() && y < world.getMaxHeight();
+	}
+
+	private void setBlockTypeAndHandle(Block block, Material mat, List<ChestRegionData.ChestRecord> chestRecords, BlockFace attachmentFace) {
 		block.setType(mat, false);
+		if (attachmentFace != null) {
+			orientAttachment(block, attachmentFace);
+		}
 
 		if (LEAVES.contains(mat)) {
 			handleLeaves(block);
@@ -245,6 +286,31 @@ public class Generator implements Listener {
 
 		if (mat == Material.END_PORTAL_FRAME || mat == Material.END_PORTAL) {
 			plugin.getPortalManager().addPortal(block.getLocation());
+		}
+	}
+
+	private void orientAttachment(Block block, BlockFace attachmentFace) {
+		BlockData data = block.getBlockData();
+		boolean changed = false;
+
+		if (data instanceof FaceAttachable attachable) {
+			if (attachmentFace == BlockFace.UP) {
+				attachable.setAttachedFace(FaceAttachable.AttachedFace.FLOOR);
+			} else if (attachmentFace == BlockFace.DOWN) {
+				attachable.setAttachedFace(FaceAttachable.AttachedFace.CEILING);
+			} else {
+				attachable.setAttachedFace(FaceAttachable.AttachedFace.WALL);
+			}
+			changed = true;
+		}
+
+		if (data instanceof Directional directional && directional.getFaces().contains(attachmentFace)) {
+			directional.setFacing(attachmentFace);
+			changed = true;
+		}
+
+		if (changed) {
+			block.setBlockData(data, false);
 		}
 	}
 
@@ -301,7 +367,7 @@ public class Generator implements Listener {
 	 */
 	private Bamboo.Leaves getRandomLeafSize() {
 		Bamboo.Leaves[] vals = Bamboo.Leaves.values();
-		return vals[random.nextInt(vals.length)];
+		return vals[ThreadLocalRandom.current().nextInt(vals.length)];
 	}
 
 	/**
@@ -323,7 +389,7 @@ public class Generator implements Listener {
 	 */
 	private void handleTrial(Block block) {
 		BlockData data = block.getBlockData();
-		boolean ominous = random.nextBoolean();
+		boolean ominous = ThreadLocalRandom.current().nextBoolean();
 		if (data instanceof TrialSpawner ts) {
 			ts.setOminous(ominous);
 			block.setBlockData(ts, false);

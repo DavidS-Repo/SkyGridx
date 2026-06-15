@@ -1,6 +1,5 @@
 package main;
 
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -14,7 +13,7 @@ import java.util.Map;
 import java.util.UUID;
 
 public class CustomBedManager {
-	private static CustomBedManager instance;
+	private static volatile CustomBedManager instance;
 
 	private final Plugin plugin;
 	private final File bedFile;
@@ -54,7 +53,10 @@ public class CustomBedManager {
 				continue;
 			}
 			String worldName = config.getString(key + ".world");
-			World world = Bukkit.getWorld(worldName);
+			World world = WorldManager.getWorldByConfiguredName(worldName);
+			if (world == null) {
+				continue;
+			}
 			int x = config.getInt(key + ".x");
 			int y = config.getInt(key + ".y");
 			int z = config.getInt(key + ".z");
@@ -66,13 +68,16 @@ public class CustomBedManager {
 	}
 
 	private synchronized void saveSnapshot() {
-		Map<UUID, Location> snapshot = new HashMap<>(bedSpawns);
+		Map<UUID, Location> snapshot;
+		synchronized (bedSpawns) {
+			snapshot = new HashMap<>(bedSpawns);
+		}
 		var config = new YamlConfiguration();
 		for (var entry : snapshot.entrySet()) {
 			UUID uuid = entry.getKey();
 			Location loc = entry.getValue();
 			World world = loc.getWorld();
-			if (!world.getName().startsWith(WorldManager.PREFIX)
+			if (!WorldManager.isCustomWorld(world)
 					|| world.getEnvironment() == World.Environment.NETHER
 					|| world.getEnvironment() == World.Environment.THE_END) {
 				continue;
@@ -94,7 +99,7 @@ public class CustomBedManager {
 
 	public void setCustomBed(Player player, Location loc) {
 		World world = loc.getWorld();
-		if (world.getName().startsWith(WorldManager.PREFIX)
+		if (WorldManager.isCustomWorld(world)
 				&& world.getEnvironment() != World.Environment.NETHER
 				&& world.getEnvironment() != World.Environment.THE_END) {
 			synchronized (bedSpawns) {

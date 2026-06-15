@@ -4,17 +4,19 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.server.PluginEnableEvent;
 import org.bukkit.generator.ChunkGenerator;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.scheduler.BukkitRunnable;
 import net.kyori.adventure.text.Component;
 import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
 import java.util.logging.Filter;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class SkyGridPlugin extends JavaPlugin implements Listener {
 	private boolean firstBoot = false;
-	private boolean firstPlayerConnected = false;
-	private boolean chunksLoading = false;
+	private final AtomicBoolean firstPlayerConnected = new AtomicBoolean(false);
+	private final AtomicBoolean chunksLoading = new AtomicBoolean(false);
+	private final AtomicBoolean multiverseWarningLogged = new AtomicBoolean(false);
 	private FirstBootChecker bootChecker;
 	private PluginSettings settings;
 	private Generator generator;
@@ -23,9 +25,12 @@ public class SkyGridPlugin extends JavaPlugin implements Listener {
 	private ChestRegionData chestRegionData;
 
 	@Override
-	public void onEnable() {
-		BukkitYMLPatcher.applyGeneratorSettings(this);
+	public void onLoad() {
+		WorldGeneratorConfigPatcher.applyGeneratorSettings(this);
+	}
 
+	@Override
+	public void onEnable() {
 		// Initialize ChestRegionData early
 		chestRegionData = ChestRegionData.getInstance(this);
 
@@ -33,7 +38,7 @@ public class SkyGridPlugin extends JavaPlugin implements Listener {
 		getServer().getPluginManager().registerEvents(new DragonSpawnListener(this), this);
 		Bukkit.getPluginManager().registerEvents(this, this);
 		// Create an instance of ResourcePackManager
-		ResourcePackManager manager = new ResourcePackManager();
+		ResourcePackManager manager = new ResourcePackManager(this);
 		// Register the instance as a listener
 		getServer().getPluginManager().registerEvents(manager, this);
 		// Ensure plugin folders exist
@@ -43,8 +48,9 @@ public class SkyGridPlugin extends JavaPlugin implements Listener {
 		firstBoot = bootChecker.checkForFirstBoot();
 		// Initialize PluginSettings
 		settings = new PluginSettings(this);
+		warnIfMultiverseDetected();
 		// Create an instance of Fog and pass the ResourcePackManager instance and settings
-		Fog fogCommandExecutor = new Fog(manager, settings);
+		Fog fogCommandExecutor = new Fog(this, manager, settings);
 		// Create a custom filter to suppress specific warnings
 		// Get the logger for your plugin and set the custom filter
 		Filter logFilter = new LogFilter();
@@ -108,11 +114,11 @@ public class SkyGridPlugin extends JavaPlugin implements Listener {
 	}
 
 	public void setChunksLoading(boolean chunksLoading) {
-		this.chunksLoading = chunksLoading;
+		this.chunksLoading.set(chunksLoading);
 	}
 
 	public boolean areChunksLoading() {
-		return chunksLoading;
+		return chunksLoading.get();
 	}
 
 	private void handleGeneration() {
@@ -134,7 +140,7 @@ public class SkyGridPlugin extends JavaPlugin implements Listener {
 
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onAsyncPlayerPreLogin(AsyncPlayerPreLoginEvent event) {
-		if (chunksLoading) {
+		if (chunksLoading.get()) {
 			event.setLoginResult(AsyncPlayerPreLoginEvent.Result.KICK_OTHER);
 			event.kickMessage(Component.text("Chunks are still loading, please wait a moment and try again."));
 		}
@@ -142,21 +148,38 @@ public class SkyGridPlugin extends JavaPlugin implements Listener {
 
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onPlayerJoin(PlayerJoinEvent event) {
-		if (!firstPlayerConnected && firstBoot) {
-			firstPlayerConnected = true;
-			new BukkitRunnable() {
-				@Override
-				public void run() {
-					generator.regenerateAllLoadedChunks();
-					portalManager.clearAllPortals();
-				}
-			}.runTaskLater(this, 40);
+		if (firstBoot && firstPlayerConnected.compareAndSet(false, true)) {
+			SkyGridScheduler.runGlobalLater(this, () -> {
+				generator.regenerateAllLoadedChunks();
+				portalManager.clearAllPortals();
+			}, 40L);
 		}
+	}
+
+	@EventHandler(priority = EventPriority.MONITOR)
+	public void onPluginEnable(PluginEnableEvent event) {
+		if ("Multiverse-Core".equalsIgnoreCase(event.getPlugin().getName())) {
+			warnIfMultiverseDetected();
+		}
+	}
+
+	private void warnIfMultiverseDetected() {
+		if (settings == null || !PluginSettings.isMultiverseWarningsEnabled()) {
+			return;
+		}
+		if (Bukkit.getPluginManager().getPlugin("Multiverse-Core") == null) {
+			return;
+		}
+		if (!multiverseWarningLogged.compareAndSet(false, true)) {
+			return;
+		}
+		getLogger().warning("Multiverse-Core detected. For Paper custom SkyGrid worlds, import or create skygridx_world, skygridx_world_nether, and skygridx_world_the_end in Multiverse with generator 'SkyGrid' before generating new chunks.");
+		getLogger().warning("If Multiverse, CMI, or another spawn plugin should control death respawns, set compatibility.respawnIsolation=false in SkyGrid settings.yml.");
 	}
 
 	@Override
 	public ChunkGenerator getDefaultWorldGenerator(String worldName, String id) {
-		if (worldName.startsWith("skygridx_")) {
+		if (WorldManager.isConfiguredWorldName(worldName)) {
 			return new VoidWorldGenerator();
 		}
 		return null;

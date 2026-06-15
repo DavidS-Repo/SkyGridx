@@ -101,9 +101,8 @@ public class Spawner {
 		String name = world.getName();
 		ObjectArrayList<EntityType> entities = defaultEntitiesCache.get(name);
 
-		if ((entities == null || entities.isEmpty()) && name.startsWith(WorldManager.PREFIX)) {
-			String base = name.substring(WorldManager.PREFIX.length());
-			entities = defaultEntitiesCache.get(base);
+		if (entities == null || entities.isEmpty()) {
+			entities = defaultEntitiesCache.get(WorldManager.getBaseWorldName(name));
 		}
 
 		if (entities == null || entities.isEmpty()) {
@@ -128,9 +127,9 @@ public class Spawner {
 		defaultEntitiesCache.put("world_nether", netherList);
 		defaultEntitiesCache.put("world_the_end", endList);
 
-		defaultEntitiesCache.put(WorldManager.PREFIX + "world", worldList);
-		defaultEntitiesCache.put(WorldManager.PREFIX + "world_nether", netherList);
-		defaultEntitiesCache.put(WorldManager.PREFIX + "world_the_end", endList);
+		defaultEntitiesCache.put(WorldManager.getWorldName(World.Environment.NORMAL), worldList);
+		defaultEntitiesCache.put(WorldManager.getWorldName(World.Environment.NETHER), netherList);
+		defaultEntitiesCache.put(WorldManager.getWorldName(World.Environment.THE_END), endList);
 	}
 
 	private void preprocessSpawnerData() {
