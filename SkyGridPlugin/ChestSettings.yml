@@ -1,26 +1,26 @@
 # ------------------------------------------------------------------------------
-# Chest Settings - Complete Guide and Examples
+# Chest settings guide and examples
 #
 # This file controls how the plugin fills chests for your world.
 #
 # Place this file in your plugin's config folder, usually:
 #    plugins/SkyGrid/SkygridBlocks/ChestSettings.yml
 #
-# WHAT THIS FILE DOES:
+# What this file does:
 #   - Lets you set up custom chest loot for different biome types.
 #   - You can use your own lists of items or use built-in Minecraft loot tables.
 #   - You can mix custom and vanilla pools and make each biome unique.
 #
 # ------------------------------------------------------------------------------
 
-# --- MAX ITEMS PER SLOT ---
+# Max items per slot
 # How many of an item can go in one slot, for custom loot mode.
 # This does NOT affect vanilla (Minecraft) loot tables.
 #
 MaxItemsPerSlot: 16
 
 # ------------------------------------------------------------------------------
-# FORMAT OVERVIEW
+# Format overview
 #
 # You have two main ways to fill chests:
 #
@@ -30,23 +30,23 @@ MaxItemsPerSlot: 16
 # You can also combine them in pools for more variety.
 #
 # ------------------------------------------------------------------------------
-# REFERENCE LINKS
+# Reference links
 #
-# - All Materials (Item Names):  
+# - All Materials (Item Names):
 #     https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Material.html
-# - All Biomes:  
+# - All Biomes:
 #     https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/block/Biome.html
-# - All Enchantments:  
+# - All Enchantments:
 #     https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/enchantments/Enchantment.html
-# - All LootTables:  
+# - All LootTables:
 #     https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/loot/LootTables.html
 #
-# USE THESE EXACT NAMES. Case doesn't matter, but spellings do.
+# Use these names. Case does not matter, but spelling does.
 #
 # ------------------------------------------------------------------------------
-# YAML TIPS (IMPORTANT!)
+# YAML tips
 #
-# - NEVER use tabs! Use spaces only. YAML breaks on tabs.
+# - Do not use tabs. Use spaces only. YAML breaks on tabs.
 # - Indentation matters. Match the samples exactly.
 # - If you need a quote, use double-quotes: "like this"
 # - Comments start with #
@@ -55,16 +55,16 @@ MaxItemsPerSlot: 16
 #
 # ------------------------------------------------------------------------------
 #
-# EXAMPLES BELOW!
+# Examples
 #
 # ------------------------------------------------------------------------------
-# 1. CUSTOM LOOT TABLES (You pick items for chests)
+# 1. Custom loot tables
 #
 # You can use:
-#   - Compact Format (simple, fast, less detail)
-#   - Expanded Format (more options, supports custom names, enchants, etc.)
+#   - Compact format, for simple item lists
+#   - Expanded format, for custom names, enchantments, and other item settings
 #
-# --- COMPACT FORMAT ---
+# Compact format
 #
 #  ChestSettings:
 #    <YourChestName>:
@@ -77,7 +77,7 @@ MaxItemsPerSlot: 16
 #   - weight: How likely this item is compared to others (unless you use p, then it's a % chance for the whole chest)
 #   - min-max: Range of this item in the chest (optional min, defaults to 1)
 #
-# EXAMPLES (COMPACT):
+# Compact example:
 #
 #  ChestSettings:
 #    BasicChest:
@@ -88,7 +88,7 @@ MaxItemsPerSlot: 16
 #        - AIR:100:1          # AIR as filler, makes other items less common
 #      Biomes: [FOREST, PLAINS]
 #
-# --- EXPANDED FORMAT ---
+# Expanded format
 #
 # Lets you control everything (names, enchantments, per-chest chance, colors, etc.)
 #
@@ -110,7 +110,7 @@ MaxItemsPerSlot: 16
 #                    - LoreColor: <color> # RED, BLUE, GREEN, etc. (for lore text)
 #      Biomes: [BIOME1, BIOME2]
 #
-# EXAMPLES (EXPANDED):
+# Expanded example:
 #
 #  ChestSettings:
 #    FancyChest:
@@ -153,7 +153,7 @@ MaxItemsPerSlot: 16
 # You can mix compact and expanded in one Items list if you want!
 #
 # ------------------------------------------------------------------------------
-# 2. MINECRAFT (VANILLA) LOOT TABLES
+# 2. Minecraft loot tables
 #
 # You just pick loot tables. Nothing else.
 # See the link at the top for all possible LootTables.
@@ -172,9 +172,9 @@ MaxItemsPerSlot: 16
 #   - No Items or MaxItemsPerSlot settings are used for these.
 #
 # ------------------------------------------------------------------------------
-# 3. MIXED POOLS (Custom + Vanilla)
+# 3. Mixed pools
 #
-# You can make a pool of options—each chest picks from one, using weight.
+# You can make a pool of options-each chest picks from one, using weight.
 #
 # Example:
 #
@@ -188,7 +188,7 @@ MaxItemsPerSlot: 16
 #      Biomes: [BIRCH_FOREST]
 #
 # ------------------------------------------------------------------------------
-# WHAT HAPPENS WHEN A CHEST IS PLACED:
+# What happens when a chest is placed:
 #
 # - If a chest's biome matches a Biomes list, it can use that config.
 # - If you use LootTables, it picks one at random (based on weight) and fills it with that.
@@ -196,7 +196,7 @@ MaxItemsPerSlot: 16
 # - If a pool has both, it can pick either.
 #
 # ------------------------------------------------------------------------------
-# ITEM OPTIONS EXPLAINED
+# Item options
 #
 # - Weight: Used for "per slot" items, higher = more common
 # - ChancePerChest: Used for rare items you want to try to appear only once (by % chance per chest). If both are set, ChancePerChest is used.
@@ -207,7 +207,7 @@ MaxItemsPerSlot: 16
 # - LoreColor: Use for the colored text of the enchantment name in lore.
 #
 # ------------------------------------------------------------------------------
-# COMMON PITFALLS & TROUBLESHOOTING
+# Common problems
 #
 # - If the plugin logs "Bad material" or "Bad enchantment," check your spelling.
 # - Using the wrong YAML indentation or tabs WILL BREAK the file.
@@ -228,13 +228,13 @@ MaxItemsPerSlot: 16
 #    Using /reload is enough.
 #
 # Q: What if I mess up the YAML?
-#    The plugin might not load, or will log errors. Use a YAML validator if you’re stuck: https://yamlvalidator.com/
+#    The plugin might not load, or will log errors. Use a YAML validator if you're stuck: https://yamlvalidator.com/
 #
 # Q: Can I use comments?
 #    Yes. Start lines with #
 #
 # ------------------------------------------------------------------------------
-# MINIMUM CONFIG
+# Minimum config
 #
 # MaxItemsPerSlot: 3
 #
@@ -245,7 +245,7 @@ MaxItemsPerSlot: 16
 #     Biomes: [PLAINS]
 #
 # ------------------------------------------------------------------------------
-# EVERYTHING ON EXAMPLE
+# Full example
 #
 # MaxItemsPerSlot: 5
 #

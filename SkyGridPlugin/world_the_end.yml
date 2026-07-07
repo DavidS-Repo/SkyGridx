@@ -1,17 +1,17 @@
-# SkyGrid End Block Selection Guide:
+# SkyGrid End block selection guide:
 #
-# This YAML configuration file defines the block distributions for different
+# This file defines the block distributions for different
 # biomes in The End dimension of your SkyGrid world. The configuration is
 # split into two main sections:
-# 
-# 1. biomes: Maps each biome to a specific distribution.
-# 2. distributions: Defines the block materials and their respective percentages.
 #
-# Important Notes:
+# 1. biomes: Maps each biome to a specific distribution.
+# 2. distributions: Defines the block materials and their percentages.
+#
+# Notes:
 # - Each biome must be assigned a distribution.
-# - Percentages represent the relative chance of each block appearing.
+# - Percentages set the relative chance of each block appearing.
 # - The total percentage for each distribution does not need to sum to 100%.
-#   The system will handle scaling as necessary.
+#   The plugin scales the values when needed.
 # - Simple entries still use MATERIAL: chance.
 # - Expanded parent entries may use SkyGrid shorthand, where MATERIAL: chance has
 #   indented face attachments below it. SkyGrid rewrites this internally before loading.
@@ -31,15 +31,15 @@
 #       rsides:
 #         MYCELIUM: 50
 #         MUSHROOM_STEM: 14
-# - Ensure that all block names correspond to valid Bukkit `Material` enums.
-#   Reference: [Bukkit Material Documentation](https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Material.html)
+# - Use valid Bukkit Material enum names.
+#   Reference: https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Material.html
 #
-# Example Usage:
+# Example use:
 # - To assign the same distribution to multiple biomes, map each biome to the desired distribution.
 # - You can define multiple distributions and assign them to different biomes as needed.
 #
-# Supported Biomes:
-# - Refer to [Bukkit Biome Documentation](https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/block/Biome.html) for a list of supported biomes.
+# Supported biomes:
+# - See the Bukkit Biome documentation: https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/block/Biome.html for a list of supported biomes.
 
 biomes:
   END_HIGHLANDS:

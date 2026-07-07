@@ -4,13 +4,13 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>SkyGrid</groupId>
 	<artifactId>SkyGrid</artifactId>
-	<version>26.1.2</version>
+	<version>26.2</version>
 	<name>SkyGrid</name>
 	<description>A plugin that generates a SkyGrid in Minecraft worlds and more.</description>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<java.version>25</java.version>
-		<paper.api.version>26.1.2.build.67-stable</paper.api.version>
+		<paper.api.version>[26.2.build,26.3)</paper.api.version>
 		<fastutil.version>8.5.18</fastutil.version>
 	</properties>
 	<repositories>

@@ -1,10 +1,10 @@
 name: SkyGrid
-version: 26.1.2
+version: 26.2
 main: main.SkyGridPlugin
 load: STARTUP
 author: Go0fy_Go0ber
 description: A plugin that generates a SkyGrid and more.
-api-version: '26.1.2'
+api-version: '26.2'
 folia-supported: true
 paperweight-mappings-namespace: mojang
 worlds:

@@ -1,16 +1,16 @@
-# SkyGrid World Block Selection Guide:
+# SkyGrid world block selection guide:
 
-# This YAML configuration file defines the block distributions for different biomes
-# in your SkyGrid world. The configuration is split into two main sections:
-# 
-# 1. biomes: Maps each biome to a specific distribution.
-# 2. distributions: Defines the block materials and their respective percentages.
+# This file defines the block distributions for different biomes
+# in your SkyGrid world. The configuration has two sections:
 #
-# Important Notes:
+# 1. biomes: Maps each biome to a specific distribution.
+# 2. distributions: Defines the block materials and their percentages.
+#
+# Notes:
 # - Each biome must be assigned a distribution.
-# - Percentages represent the relative chance of each block appearing.
+# - Percentages set the relative chance of each block appearing.
 # - The total percentage for each distribution does not need to sum to 100%.
-#   The system will handle scaling as necessary.
+#   The plugin scales the values when needed.
 # - Simple entries still use MATERIAL: chance.
 # - Expanded parent entries may use SkyGrid shorthand, where MATERIAL: chance has
 #   indented face attachments below it. SkyGrid rewrites this internally before loading.
@@ -30,15 +30,15 @@
 #       rsides:
 #         MYCELIUM: 50
 #         MUSHROOM_STEM: 14
-# - Ensure that all block names correspond to valid Bukkit `Material` enums.
-#   Reference: [Bukkit Material Documentation](https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Material.html)
+# - Use valid Bukkit Material enum names.
+#   Reference: https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Material.html
 #
-# Example Usage:
+# Example use:
 # - To assign the same distribution to multiple biomes, map each biome to the desired distribution.
 # - You can define multiple distributions and assign them to different biomes as needed.
 #
-# Supported Biomes:
-# - Refer to [Bukkit Biome Documentation](https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/block/Biome.html) for a list of supported biomes.
+# Supported biomes:
+# - See the Bukkit Biome documentation: https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/block/Biome.html for a list of supported biomes.
 
 biomes:
   MUSHROOM_FIELDS:
@@ -56,7 +56,7 @@ distributions:
     BROWN_MUSHROOM: 20
     RED_MUSHROOM_BLOCK: 10
     BROWN_MUSHROOM_BLOCK: 10
-    MUSHROOM_STEM: 
+    MUSHROOM_STEM: 10
     MYCELIUM: 50
     STONE: 25
     CHEST: 10
@@ -73,7 +73,7 @@ distributions:
   # biomes:
   #   SOME_OTHER_BIOME:
   #     distribution: alternate_distribution
-  
+
 # Optional default distribution for biomes not explicitly defined in the 'biomes' section.
 # This ensures that a fallback distribution is available.
 default_distribution:
@@ -111,6 +111,7 @@ default_distribution:
   CHEST: 2.5
   CHISELED_COPPER: 0.1
   CHISELED_STONE_BRICKS: 0.5
+  CINNABAR: 8
   CLAY: 20
   COAL_ORE: 1.0
   COARSE_DIRT: 5
@@ -199,6 +200,7 @@ default_distribution:
   PISTON: 0.1
   PODZOL: 5
   POINTED_DRIPSTONE: 1
+  POTENT_SULFUR: 0.25
   POPPY: 0.5
   POTATOES: 0.5
   PRISMARINE: 1
@@ -236,6 +238,8 @@ default_distribution:
   STICKY_PISTON: 0.08
   STONE: 140
   STONE_BRICKS: 2
+  SULFUR: 8
+  SULFUR_SPIKE: 0.5
   SUGAR_CANE: 5
   SUNFLOWER: 0.5
   SUSPICIOUS_GRAVEL: 10

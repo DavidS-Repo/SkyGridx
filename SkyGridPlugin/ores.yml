@@ -1,6 +1,6 @@
-# Ore Replacement Chances
+# Ore replacement chances
 
-# This file specifies the chances of different ores replacing generated blocks.
+# This file sets the chances of ores replacing generated blocks.
 # When lava or water generates stone, cobblestone, or basalt, they can be replaced
 # with any valid block from the Bukkit Material list:
 # https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Material.html
@@ -12,11 +12,11 @@
 # Block_Type:
 #   - The block that is generated (STONE, COBBLESTONE, or BASALT).
 # Material_Name: Percentage
-#   - Each material name corresponds to the replacement block.
-#   - The percentage is the likelihood of that material being chosen.
+#   - Each material name is the replacement block.
+#   - The percentage is the chance that material is chosen.
 
 # Notes:
-# - Percentages are adjusted proportionally if the total exceeds 100.
+# - Percentages are scaled if the total exceeds 100.
 # - Comments starting with '#' are ignored.
 
 # Example:
