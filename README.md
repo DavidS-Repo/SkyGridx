@@ -4,11 +4,11 @@ Join our **Discord Community** for help, support, issues, feedback, and discussi
 Click here to join: **[Join Our Discord](https://discord.gg/nSWCXFp4UA)**  
 
 ## Download Links:
-- [**Paper, Pufferfish, Purpur, Leaf, Folia**](https://www.davids-repo.dev/skygridx/assets/SkyGrid-26.1.2.jar)
+- [**Paper, Pufferfish, Purpur, Leaf, Folia**](https://www.davids-repo.dev/skygridx/assets/SkyGrid-26.2.jar)
 
 ## Overview
 
-The SkyGrid Plugin offers access to the latest blocks (26.1.2) and empowers users to fully customize the grids in the Overworld, Nether, and End dimensions. The initial generation process, which typically takes ~1 minute, adapts to the server's capabilities. Subsequently, all generation activities occur efficiently in real-time.
+The SkyGrid Plugin offers access to the latest blocks (26.2) and empowers users to fully customize the grids in the Overworld, Nether, and End dimensions. The initial generation process, which typically takes ~1 minute, adapts to the server's capabilities. Subsequently, all generation activities occur efficiently in real-time.
 
 This plugin also includes a built-in random teleport command for each dimension, ensuring that players can safely explore their chosen realm. Furthermore, it features an ore generator that can modify stone generation to create various blocks of your choice. While currently configured primarily for ores, the possibilities are virtually endless.
 
