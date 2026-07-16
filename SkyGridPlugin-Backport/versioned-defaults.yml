@@ -1,0 +1,544 @@
+# SkyGrid version-aware fresh-install catalog
+#
+# The files bundled beside this one are the Minecraft 1.21.0 baseline. On a
+# genuinely fresh install, SkyGrid detects the running Minecraft version and
+# cumulatively applies each matching "defaults" section below.
+#
+# "catalog" records API names introduced or removed in that release. Some
+# catalog entries are intentionally not placed into defaults: boats, projectile
+# entity types, mannequins, and technical test blocks are not valid mob-spawner
+# or SkyGrid-generation choices.
+#
+# Existing installations are never merged or rewritten from this file.
+
+versions:
+  '1.21.1':
+    catalog:
+      materials: []
+      entities: []
+      biomes: []
+      enchantments: []
+
+  '1.21.2':
+    catalog:
+      materials:
+        - BLACK_BUNDLE
+        - BLUE_BUNDLE
+        - BORDURE_INDENTED_BANNER_PATTERN
+        - BROWN_BUNDLE
+        - CYAN_BUNDLE
+        - FIELD_MASONED_BANNER_PATTERN
+        - GRAY_BUNDLE
+        - GREEN_BUNDLE
+        - LIGHT_BLUE_BUNDLE
+        - LIGHT_GRAY_BUNDLE
+        - LIME_BUNDLE
+        - MAGENTA_BUNDLE
+        - ORANGE_BUNDLE
+        - PINK_BUNDLE
+        - PURPLE_BUNDLE
+        - RED_BUNDLE
+        - WHITE_BUNDLE
+        - YELLOW_BUNDLE
+      entities:
+        - ACACIA_BOAT
+        - ACACIA_CHEST_BOAT
+        - BAMBOO_CHEST_RAFT
+        - BAMBOO_RAFT
+        - BIRCH_BOAT
+        - BIRCH_CHEST_BOAT
+        - CHERRY_BOAT
+        - CHERRY_CHEST_BOAT
+        - DARK_OAK_BOAT
+        - DARK_OAK_CHEST_BOAT
+        - JUNGLE_BOAT
+        - JUNGLE_CHEST_BOAT
+        - MANGROVE_BOAT
+        - MANGROVE_CHEST_BOAT
+        - OAK_BOAT
+        - OAK_CHEST_BOAT
+        - SPRUCE_BOAT
+        - SPRUCE_CHEST_BOAT
+      removed-entities:
+        - BOAT
+        - CHEST_BOAT
+      biomes: []
+      enchantments: []
+    defaults:
+      chest-items:
+        - BLACK_BUNDLE:2:1
+        - BLUE_BUNDLE:2:1
+        - BORDURE_INDENTED_BANNER_PATTERN:1:1
+        - BROWN_BUNDLE:2:1
+        - CYAN_BUNDLE:2:1
+        - FIELD_MASONED_BANNER_PATTERN:1:1
+        - GRAY_BUNDLE:2:1
+        - GREEN_BUNDLE:2:1
+        - LIGHT_BLUE_BUNDLE:2:1
+        - LIGHT_GRAY_BUNDLE:2:1
+        - LIME_BUNDLE:2:1
+        - MAGENTA_BUNDLE:2:1
+        - ORANGE_BUNDLE:2:1
+        - PINK_BUNDLE:2:1
+        - PURPLE_BUNDLE:2:1
+        - RED_BUNDLE:2:1
+        - WHITE_BUNDLE:2:1
+        - YELLOW_BUNDLE:2:1
+
+  '1.21.3':
+    catalog:
+      materials: []
+      entities: []
+      biomes: []
+      enchantments: []
+
+  '1.21.4':
+    catalog:
+      materials:
+        - CHISELED_RESIN_BRICKS
+        - CLOSED_EYEBLOSSOM
+        - CREAKING_HEART
+        - CREAKING_SPAWN_EGG
+        - OPEN_EYEBLOSSOM
+        - PALE_HANGING_MOSS
+        - PALE_MOSS_BLOCK
+        - PALE_MOSS_CARPET
+        - PALE_OAK_BOAT
+        - PALE_OAK_BUTTON
+        - PALE_OAK_CHEST_BOAT
+        - PALE_OAK_DOOR
+        - PALE_OAK_FENCE
+        - PALE_OAK_FENCE_GATE
+        - PALE_OAK_HANGING_SIGN
+        - PALE_OAK_LEAVES
+        - PALE_OAK_LOG
+        - PALE_OAK_PLANKS
+        - PALE_OAK_PRESSURE_PLATE
+        - PALE_OAK_SAPLING
+        - PALE_OAK_SIGN
+        - PALE_OAK_SLAB
+        - PALE_OAK_STAIRS
+        - PALE_OAK_TRAPDOOR
+        - PALE_OAK_WALL_HANGING_SIGN
+        - PALE_OAK_WALL_SIGN
+        - PALE_OAK_WOOD
+        - POTTED_CLOSED_EYEBLOSSOM
+        - POTTED_OPEN_EYEBLOSSOM
+        - POTTED_PALE_OAK_SAPLING
+        - RESIN_BLOCK
+        - RESIN_BRICK
+        - RESIN_BRICK_SLAB
+        - RESIN_BRICK_STAIRS
+        - RESIN_BRICK_WALL
+        - RESIN_BRICKS
+        - RESIN_CLUMP
+        - STRIPPED_PALE_OAK_LOG
+        - STRIPPED_PALE_OAK_WOOD
+      entities:
+        - CREAKING
+        - PALE_OAK_BOAT
+        - PALE_OAK_CHEST_BOAT
+      biomes:
+        - PALE_GARDEN
+      enchantments: []
+    defaults:
+      world-materials:
+        CHISELED_RESIN_BRICKS: 0.05
+        CLOSED_EYEBLOSSOM: 0.05
+        CREAKING_HEART: 0.001
+        OPEN_EYEBLOSSOM: 0.05
+        PALE_HANGING_MOSS: 0.5
+        PALE_MOSS_BLOCK: 0.5
+        PALE_MOSS_CARPET: 0.5
+        PALE_OAK_BUTTON: 0.1
+        PALE_OAK_DOOR: 0.1
+        PALE_OAK_FENCE: 0.2
+        PALE_OAK_FENCE_GATE: 0.1
+        PALE_OAK_HANGING_SIGN: 0.05
+        PALE_OAK_LEAVES: 3
+        PALE_OAK_LOG: 1
+        PALE_OAK_PLANKS: 0.5
+        PALE_OAK_PRESSURE_PLATE: 0.1
+        PALE_OAK_SAPLING: 0.1
+        PALE_OAK_SIGN: 0.05
+        PALE_OAK_SLAB: 0.2
+        PALE_OAK_STAIRS: 0.2
+        PALE_OAK_TRAPDOOR: 0.1
+        PALE_OAK_WALL_HANGING_SIGN: 0.05
+        PALE_OAK_WALL_SIGN: 0.05
+        PALE_OAK_WOOD: 0.5
+        POTTED_CLOSED_EYEBLOSSOM: 0.02
+        POTTED_OPEN_EYEBLOSSOM: 0.02
+        POTTED_PALE_OAK_SAPLING: 0.02
+        RESIN_BLOCK: 0.05
+        RESIN_BRICK_SLAB: 0.1
+        RESIN_BRICK_STAIRS: 0.1
+        RESIN_BRICK_WALL: 0.1
+        RESIN_BRICKS: 0.1
+        STRIPPED_PALE_OAK_LOG: 0.5
+        STRIPPED_PALE_OAK_WOOD: 0.5
+      chest-items:
+        - CREAKING_SPAWN_EGG:0.2p:1
+        - PALE_OAK_BOAT:2:1
+        - PALE_OAK_CHEST_BOAT:2:1
+        - RESIN_BRICK:5:4
+        - RESIN_CLUMP:5:2
+      overworld-entities:
+        - CREAKING:2
+      biomes:
+        - PALE_GARDEN
+      dangerous-materials:
+        - CLOSED_EYEBLOSSOM
+        - OPEN_EYEBLOSSOM
+        - PALE_HANGING_MOSS
+        - PALE_OAK_SAPLING
+
+  '1.21.5':
+    catalog:
+      materials:
+        - BLUE_EGG
+        - BROWN_EGG
+        - BUSH
+        - CACTUS_FLOWER
+        - FIREFLY_BUSH
+        - LEAF_LITTER
+        - SHORT_DRY_GRASS
+        - TALL_DRY_GRASS
+        - TEST_BLOCK
+        - TEST_INSTANCE_BLOCK
+        - WILDFLOWERS
+      entities:
+        - LINGERING_POTION
+        - SPLASH_POTION
+      removed-entities:
+        - POTION
+      biomes: []
+      enchantments: []
+      excluded-materials:
+        - TEST_BLOCK
+        - TEST_INSTANCE_BLOCK
+    defaults:
+      world-materials:
+        BUSH: 0.5
+        CACTUS_FLOWER: 0.5
+        FIREFLY_BUSH: 0.5
+        LEAF_LITTER: 0.5
+        SHORT_DRY_GRASS: 0.5
+        TALL_DRY_GRASS: 0.5
+        WILDFLOWERS: 0.5
+      chest-items:
+        - BLUE_EGG:5:4
+        - BROWN_EGG:5:4
+      dangerous-materials:
+        - BUSH
+        - CACTUS_FLOWER
+        - FIREFLY_BUSH
+        - LEAF_LITTER
+        - SHORT_DRY_GRASS
+        - TALL_DRY_GRASS
+        - WILDFLOWERS
+
+  '1.21.6':
+    catalog:
+      materials:
+        - BLACK_HARNESS
+        - BLUE_HARNESS
+        - BROWN_HARNESS
+        - CYAN_HARNESS
+        - DRIED_GHAST
+        - GRAY_HARNESS
+        - GREEN_HARNESS
+        - HAPPY_GHAST_SPAWN_EGG
+        - LIGHT_BLUE_HARNESS
+        - LIGHT_GRAY_HARNESS
+        - LIME_HARNESS
+        - MAGENTA_HARNESS
+        - MUSIC_DISC_TEARS
+        - ORANGE_HARNESS
+        - PINK_HARNESS
+        - PURPLE_HARNESS
+        - RED_HARNESS
+        - WHITE_HARNESS
+        - YELLOW_HARNESS
+      entities:
+        - HAPPY_GHAST
+      biomes: []
+      enchantments: []
+    defaults:
+      nether-materials:
+        DRIED_GHAST: 2
+      chest-items:
+        - BLACK_HARNESS:2:1
+        - BLUE_HARNESS:2:1
+        - BROWN_HARNESS:2:1
+        - CYAN_HARNESS:2:1
+        - GRAY_HARNESS:2:1
+        - GREEN_HARNESS:2:1
+        - HAPPY_GHAST_SPAWN_EGG:0.2p:1
+        - LIGHT_BLUE_HARNESS:2:1
+        - LIGHT_GRAY_HARNESS:2:1
+        - LIME_HARNESS:2:1
+        - MAGENTA_HARNESS:2:1
+        - MUSIC_DISC_TEARS:1p:1
+        - ORANGE_HARNESS:2:1
+        - PINK_HARNESS:2:1
+        - PURPLE_HARNESS:2:1
+        - RED_HARNESS:2:1
+        - WHITE_HARNESS:2:1
+        - YELLOW_HARNESS:2:1
+      overworld-entities:
+        - HAPPY_GHAST:2
+
+  '1.21.7':
+    catalog:
+      materials:
+        - MUSIC_DISC_LAVA_CHICKEN
+      entities: []
+      biomes: []
+      enchantments: []
+    defaults:
+      chest-items:
+        - MUSIC_DISC_LAVA_CHICKEN:1p:1
+
+  '1.21.8':
+    catalog:
+      materials: []
+      entities: []
+      biomes: []
+      enchantments: []
+
+  '1.21.9':
+    catalog:
+      materials:
+        - ACACIA_SHELF
+        - BAMBOO_SHELF
+        - BIRCH_SHELF
+        - CHERRY_SHELF
+        - COPPER_AXE
+        - COPPER_BARS
+        - COPPER_BOOTS
+        - COPPER_CHAIN
+        - COPPER_CHEST
+        - COPPER_CHESTPLATE
+        - COPPER_GOLEM_SPAWN_EGG
+        - COPPER_GOLEM_STATUE
+        - COPPER_HELMET
+        - COPPER_HOE
+        - COPPER_HORSE_ARMOR
+        - COPPER_LANTERN
+        - COPPER_LEGGINGS
+        - COPPER_NUGGET
+        - COPPER_PICKAXE
+        - COPPER_SHOVEL
+        - COPPER_SWORD
+        - COPPER_TORCH
+        - COPPER_WALL_TORCH
+        - CRIMSON_SHELF
+        - DARK_OAK_SHELF
+        - EXPOSED_COPPER_BARS
+        - EXPOSED_COPPER_CHAIN
+        - EXPOSED_COPPER_CHEST
+        - EXPOSED_COPPER_GOLEM_STATUE
+        - EXPOSED_COPPER_LANTERN
+        - EXPOSED_LIGHTNING_ROD
+        - IRON_CHAIN
+        - JUNGLE_SHELF
+        - MANGROVE_SHELF
+        - OAK_SHELF
+        - OXIDIZED_COPPER_BARS
+        - OXIDIZED_COPPER_CHAIN
+        - OXIDIZED_COPPER_CHEST
+        - OXIDIZED_COPPER_GOLEM_STATUE
+        - OXIDIZED_COPPER_LANTERN
+        - OXIDIZED_LIGHTNING_ROD
+        - PALE_OAK_SHELF
+        - SPRUCE_SHELF
+        - WARPED_SHELF
+        - WAXED_COPPER_BARS
+        - WAXED_COPPER_CHAIN
+        - WAXED_COPPER_CHEST
+        - WAXED_COPPER_GOLEM_STATUE
+        - WAXED_COPPER_LANTERN
+        - WAXED_EXPOSED_COPPER_BARS
+        - WAXED_EXPOSED_COPPER_CHAIN
+        - WAXED_EXPOSED_COPPER_CHEST
+        - WAXED_EXPOSED_COPPER_GOLEM_STATUE
+        - WAXED_EXPOSED_COPPER_LANTERN
+        - WAXED_EXPOSED_LIGHTNING_ROD
+        - WAXED_LIGHTNING_ROD
+        - WAXED_OXIDIZED_COPPER_BARS
+        - WAXED_OXIDIZED_COPPER_CHAIN
+        - WAXED_OXIDIZED_COPPER_CHEST
+        - WAXED_OXIDIZED_COPPER_GOLEM_STATUE
+        - WAXED_OXIDIZED_COPPER_LANTERN
+        - WAXED_OXIDIZED_LIGHTNING_ROD
+        - WAXED_WEATHERED_COPPER_BARS
+        - WAXED_WEATHERED_COPPER_CHAIN
+        - WAXED_WEATHERED_COPPER_CHEST
+        - WAXED_WEATHERED_COPPER_GOLEM_STATUE
+        - WAXED_WEATHERED_COPPER_LANTERN
+        - WAXED_WEATHERED_LIGHTNING_ROD
+        - WEATHERED_COPPER_BARS
+        - WEATHERED_COPPER_CHAIN
+        - WEATHERED_COPPER_CHEST
+        - WEATHERED_COPPER_GOLEM_STATUE
+        - WEATHERED_COPPER_LANTERN
+        - WEATHERED_LIGHTNING_ROD
+      removed-materials:
+        - CHAIN
+      entities:
+        - COPPER_GOLEM
+        - MANNEQUIN
+      biomes: []
+      enchantments: []
+      excluded-entities:
+        - MANNEQUIN
+    defaults:
+      world-materials:
+        ACACIA_SHELF: 0.3
+        BAMBOO_SHELF: 0.3
+        BIRCH_SHELF: 0.3
+        CHERRY_SHELF: 0.3
+        COPPER_BARS: 0.2
+        COPPER_CHAIN: 0.1
+        COPPER_CHEST: 1.5
+        COPPER_GOLEM_STATUE: 0.05
+        COPPER_LANTERN: 0.3
+        COPPER_TORCH: 0.1
+        COPPER_WALL_TORCH: 0.1
+        CRIMSON_SHELF: 0.3
+        DARK_OAK_SHELF: 0.3
+        EXPOSED_COPPER_BARS: 0.2
+        EXPOSED_COPPER_CHAIN: 0.1
+        EXPOSED_COPPER_CHEST: 0.5
+        EXPOSED_COPPER_GOLEM_STATUE: 0.05
+        EXPOSED_COPPER_LANTERN: 0.2
+        EXPOSED_LIGHTNING_ROD: 0.1
+        IRON_CHAIN: 0.1
+        JUNGLE_SHELF: 0.3
+        MANGROVE_SHELF: 0.3
+        OAK_SHELF: 0.3
+        OXIDIZED_COPPER_BARS: 0.2
+        OXIDIZED_COPPER_CHAIN: 0.1
+        OXIDIZED_COPPER_CHEST: 0.5
+        OXIDIZED_COPPER_GOLEM_STATUE: 0.05
+        OXIDIZED_COPPER_LANTERN: 0.2
+        OXIDIZED_LIGHTNING_ROD: 0.1
+        PALE_OAK_SHELF: 0.3
+        SPRUCE_SHELF: 0.3
+        WARPED_SHELF: 0.3
+        WAXED_COPPER_BARS: 0.2
+        WAXED_COPPER_CHAIN: 0.1
+        WAXED_COPPER_CHEST: 0.5
+        WAXED_COPPER_GOLEM_STATUE: 0.05
+        WAXED_COPPER_LANTERN: 0.2
+        WAXED_EXPOSED_COPPER_BARS: 0.2
+        WAXED_EXPOSED_COPPER_CHAIN: 0.1
+        WAXED_EXPOSED_COPPER_CHEST: 0.5
+        WAXED_EXPOSED_COPPER_GOLEM_STATUE: 0.05
+        WAXED_EXPOSED_COPPER_LANTERN: 0.2
+        WAXED_EXPOSED_LIGHTNING_ROD: 0.1
+        WAXED_LIGHTNING_ROD: 0.1
+        WAXED_OXIDIZED_COPPER_BARS: 0.2
+        WAXED_OXIDIZED_COPPER_CHAIN: 0.1
+        WAXED_OXIDIZED_COPPER_CHEST: 0.5
+        WAXED_OXIDIZED_COPPER_GOLEM_STATUE: 0.05
+        WAXED_OXIDIZED_COPPER_LANTERN: 0.2
+        WAXED_OXIDIZED_LIGHTNING_ROD: 0.1
+        WAXED_WEATHERED_COPPER_BARS: 0.2
+        WAXED_WEATHERED_COPPER_CHAIN: 0.1
+        WAXED_WEATHERED_COPPER_CHEST: 0.5
+        WAXED_WEATHERED_COPPER_GOLEM_STATUE: 0.05
+        WAXED_WEATHERED_COPPER_LANTERN: 0.2
+        WAXED_WEATHERED_LIGHTNING_ROD: 0.1
+        WEATHERED_COPPER_BARS: 0.2
+        WEATHERED_COPPER_CHAIN: 0.1
+        WEATHERED_COPPER_CHEST: 0.5
+        WEATHERED_COPPER_GOLEM_STATUE: 0.05
+        WEATHERED_COPPER_LANTERN: 0.2
+        WEATHERED_LIGHTNING_ROD: 0.1
+      chest-items:
+        - COPPER_AXE:5:1
+        - COPPER_BOOTS:5:1
+        - COPPER_CHESTPLATE:5:1
+        - COPPER_GOLEM_SPAWN_EGG:0.2p:1
+        - COPPER_HELMET:5:1
+        - COPPER_HOE:5:1
+        - COPPER_HORSE_ARMOR:3:1
+        - COPPER_LEGGINGS:5:1
+        - COPPER_NUGGET:10:8
+        - COPPER_PICKAXE:5:1
+        - COPPER_SHOVEL:5:1
+        - COPPER_SWORD:5:1
+      overworld-entities:
+        - COPPER_GOLEM:2
+      chest-material-renames:
+        CHAIN: IRON_CHAIN
+
+  '1.21.10':
+    catalog:
+      materials: []
+      entities: []
+      biomes: []
+      enchantments: []
+
+  '1.21.11':
+    catalog:
+      materials:
+        - CAMEL_HUSK_SPAWN_EGG
+        - COPPER_NAUTILUS_ARMOR
+        - COPPER_SPEAR
+        - DIAMOND_NAUTILUS_ARMOR
+        - DIAMOND_SPEAR
+        - GOLDEN_NAUTILUS_ARMOR
+        - GOLDEN_SPEAR
+        - IRON_NAUTILUS_ARMOR
+        - IRON_SPEAR
+        - NAUTILUS_SPAWN_EGG
+        - NETHERITE_HORSE_ARMOR
+        - NETHERITE_NAUTILUS_ARMOR
+        - NETHERITE_SPEAR
+        - PARCHED_SPAWN_EGG
+        - STONE_SPEAR
+        - WOODEN_SPEAR
+        - ZOMBIE_NAUTILUS_SPAWN_EGG
+      entities:
+        - CAMEL_HUSK
+        - NAUTILUS
+        - PARCHED
+        - ZOMBIE_NAUTILUS
+      biomes: []
+      enchantments:
+        - LUNGE
+    defaults:
+      chest-items:
+        - CAMEL_HUSK_SPAWN_EGG:0.2p:1
+        - COPPER_NAUTILUS_ARMOR:2:1
+        - COPPER_SPEAR:3:1
+        - DIAMOND_NAUTILUS_ARMOR:1:1
+        - DIAMOND_SPEAR:
+            - ChancePerChest: 1
+            - MaxAmount: 1
+            - Enchantments:
+                - LUNGE:
+                    - Weight: 40
+                    - MinLevel: 1
+                    - MaxLevel: 1
+        - GOLDEN_NAUTILUS_ARMOR:2:1
+        - GOLDEN_SPEAR:2:1
+        - IRON_NAUTILUS_ARMOR:2:1
+        - IRON_SPEAR:2:1
+        - NAUTILUS_SPAWN_EGG:0.2p:1
+        - NETHERITE_HORSE_ARMOR:1:1
+        - NETHERITE_NAUTILUS_ARMOR:1:1
+        - NETHERITE_SPEAR:1:1
+        - PARCHED_SPAWN_EGG:0.2p:1
+        - STONE_SPEAR:3:1
+        - WOODEN_SPEAR:3:1
+        - ZOMBIE_NAUTILUS_SPAWN_EGG:0.2p:1
+      overworld-entities:
+        - CAMEL_HUSK:2
+        - PARCHED:2
+      water-entities:
+        - NAUTILUS:2
+        - ZOMBIE_NAUTILUS:2
